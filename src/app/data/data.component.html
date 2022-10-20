@@ -1,0 +1,43 @@
+<div class="row">
+  <div class="col"  style="border-style: hidden hidden hidden dotted;">
+    <p>Choose the csv formatted data you would like to use.</p>
+    <app-fileupload
+      [fileextension]="'csv'"
+      (fileadded)="addData($event)"
+    ></app-fileupload>
+  </div>
+</div>
+<br>
+<div class="row">
+  <div class="col" >
+    <h1>Data layers</h1>
+    <p>Choose the column to join on (Eg. The suburb column)</p>
+    <app-geocolumn [(geocolumn)]="geoColumn"
+      [tableheaders]="d | jsontocsv | tableheaders"
+    ></app-geocolumn>
+  </div>
+</div>
+<!-- {{ d | jsontocsv | json }}
+    {{d|json}} -->
+<div class="row">
+  <div class="col">
+
+  </div>
+</div>
+<div class="row">
+  <div class="col">
+    <app-stylerule (stylerulesChange)="updateStyleRules($event)" [stylerules]="stylerules"
+    [tableheaders]="d|jsontocsv|tableheaders" [featureCollectionIndex]="featurecollectionlayerindex">
+
+    </app-stylerule>
+    <!-- {{featurecollectionlayerindex}}
+    {{stylerules|json}} -->
+  </div>
+</div>
+<table class="table">
+  <tbody>
+    <tr *ngFor="let item of d | jsontocsv">
+      <td *ngFor="let item of item">{{ item }}</td>
+    </tr>
+  </tbody>
+</table>

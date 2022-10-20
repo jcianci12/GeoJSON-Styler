@@ -1,0 +1,31 @@
+<!-- {{stylerules|json}} -->
+<button mat-button (click)="addrule()" ><mat-icon>add</mat-icon></button>
+<div class="row" *ngFor="let item of stylerules;let i = index">
+  <div class="col-1">
+    <button mat-button (click)="removeRule(i)"><mat-icon>delete</mat-icon></button>
+
+  </div>
+  <div class="col">
+    <mat-form-field appearance="fill" style="width: 100%;">
+      <mat-label>Select the style type</mat-label>
+      <mat-select [(value)]="item.ruletype" (valueChange)="updateRule(i)">
+        <mat-option *ngFor="let column of styleruleOptions" [value]="column">
+          {{ column }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
+  <div class="col">
+    <mat-form-field appearance="fill" style="width: 100%;">
+      <mat-label>Select the data column</mat-label>
+      <mat-select [(value)]="item.column" (valueChange)="updateRule(i)">
+        <mat-option *ngFor="let column of tableheaders" [value]="column.value">
+          {{ column.viewValue }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
+
+</div>
+
+
