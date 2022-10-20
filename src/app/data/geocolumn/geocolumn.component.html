@@ -1,0 +1,10 @@
+<mat-form-field appearance="fill">
+  <mat-label>Select the geography column</mat-label>
+  <mat-select [(value)]="geocolumn">
+    <mat-option *ngFor="let column of tableheaders" [value]="column.value">
+      {{ column.viewValue }}
+    </mat-option>
+  </mat-select>
+</mat-form-field>
+
+

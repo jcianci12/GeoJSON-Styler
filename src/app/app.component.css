@@ -1,0 +1,21 @@
+.map-container {
+  height: 100%;
+  /* Fallback for vmin */
+  padding: 0px 1rem 1rem 1rem;
+  padding: 0px 1vmin 1vmin 1vmin;
+}
+
+.map-frame {
+  height: 100%;
+  width: 100%;
+/*   We use outline over border as has issues in some cases */
+  outline: 1px solid black;
+}
+
+.vertical-center {
+  margin: 0;
+  position: absolute;
+  top: 50%;
+  -ms-transform: translateY(-50%);
+  transform: translateY(-50%);
+}
