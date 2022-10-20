@@ -39,7 +39,7 @@
                 {
                   "type": "initial",
                   "maximumWarning": "500kb",
-                  "maximumError": "1mb"
+                  "maximumError": "2mb"
                 },
                 {
                   "type": "anyComponentStyle",
@@ -47,6 +47,9 @@
                   "maximumError": "4kb"
                 }
               ],
+              "optimization": {
+                "fonts": false
+            }  ,
               "fileReplacements": [
                 {
                   "replace": "src/environments/environment.ts",
