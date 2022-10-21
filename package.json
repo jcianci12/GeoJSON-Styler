@@ -5,7 +5,7 @@
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
-    "githubbuild":"ng build --base-href /GeoJSON-Styler/",
+    "githubbuild":"ng build --base-href https://jcianci12.github.io/GeoJSON-Styler/",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
   },
