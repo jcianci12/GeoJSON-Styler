@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "mozziedbclientapp": {
+    "GeoJson-Styler": {
       "projectType": "application",
       "schematics": {},
       "root": "",
@@ -73,10 +73,10 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "browserTarget": "mozziedbclientapp:build:production"
+              "browserTarget": "GeoJson-Styler:build:production"
             },
             "development": {
-              "browserTarget": "mozziedbclientapp:build:development"
+              "browserTarget": "GeoJson-Styler:build:development"
             }
           },
           "defaultConfiguration": "development"
@@ -84,7 +84,7 @@
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "mozziedbclientapp:build"
+            "browserTarget": "GeoJson-Styler:build"
           }
         },
         "test": {

@@ -15,7 +15,7 @@ import { MatCheckboxChange } from '@angular/material/checkbox';
   providers: [HttpClient],
 })
 export class AppComponent implements OnInit {
-  title = 'mozziedbclientapp';
+  title = 'GeoJson-Styler';
   public featureCollectionLayers: FeatureCollectionLayer[] = [];
   _triggerval: number = 0;
   get triggerval() {
