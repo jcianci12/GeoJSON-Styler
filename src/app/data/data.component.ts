@@ -16,23 +16,23 @@ export class DataComponent implements OnInit {
   get stylerules() {
     return this._stylerules;
   }
-  @Input() feature!:number
+  @Input() feature!: number;
   @Input() set stylerules(val: stylerule[]) {
     this._stylerules = val;
     //this.stylerulesChange.emit(this._stylerules);
-    this.updateData()
+    this.updateData();
   }
   _stylerules: stylerule[] = [];
 
   @Input() featurecollectionlayerindex!: number;
-  @Input() featureCollectionLayers!:FeatureCollectionLayer[]
+  @Input() featureCollectionLayers!: FeatureCollectionLayer[];
 
   get geoColumn() {
     return this._geoColumn;
   }
   set geoColumn(val: string) {
     this._geoColumn = val;
-    this.updateData()
+    this.updateData();
   }
   // @Output() stylerulesChange = new EventEmitter<stylerule[]>();
   // @Output() geoColumnChange = new EventEmitter<string>();
@@ -46,20 +46,17 @@ export class DataComponent implements OnInit {
 
   updateStyleRules(val: stylerule[]) {
     this.stylerules = val;
-    this.updateData()
+    this.updateData();
   }
 
   updateData() {
     if (this.featureCollectionLayers) {
-      let _temp = this.featureCollectionLayers[
-        this.featurecollectionlayerindex
-      ]
+      let _temp =
+        this.featureCollectionLayers[this.featurecollectionlayerindex];
       _temp.styledata = new JsontocsvPipe().csvJSON(this.d);
-      _temp.geocolumn = this.geoColumn
-      _temp.stylerules = this.stylerules
-      this.featureCollectionLayers[
-        this.featurecollectionlayerindex
-      ]=_temp;
+      _temp.geocolumn = this.geoColumn;
+      _temp.stylerules = this.stylerules;
+      this.featureCollectionLayers[this.featurecollectionlayerindex] = _temp;
       this.fcs.FeatureCollectionLayerObservable.next(
         this.featureCollectionLayers
       );
@@ -81,4 +78,10 @@ export interface stylerule {
   ruletype: ruletype;
 }
 
-export type ruletype = 'shading colour/opacity' | 'opacity' | 'colour'|'text';
+export type ruletype = 'shading colour/opacity' | 'opacity' | 'colour' | 'text';
+
+export interface textrule {
+  xoffset: number;
+  yoffset: number;
+}
+
