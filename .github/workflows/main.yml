@@ -25,8 +25,7 @@ jobs:
         run: |
           npm i
           npm run build
-      - name: Push Build to Releases
-        uses: ncipollo/release-action@v1
+      - name: Deploy 🚀
+        uses: JamesIves/github-pages-deploy-action@v4
         with:
-          artifacts: "dist/angular-githubaction/*"
-          token: ${{ secrets.TOKEN }}
+          folder: build # The folder the action should deploy.
