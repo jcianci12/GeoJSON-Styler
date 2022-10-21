@@ -112,7 +112,7 @@ export class MapComponent implements OnInit {
                 //use the geocolumn index
                 let suburb = stylerow[geocolumnindex];
                 if (
-                  propertytomatch &&
+                  propertytomatch && suburb &&
                   propertytomatch.toLowerCase() == suburb.toLowerCase()
                 ) {
                   let geo = geoJSON(feature);
