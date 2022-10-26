@@ -7,7 +7,7 @@ services:
       context: .
       dockerfile: dockerfile
     ports:
-      - 90:80
+      - 92:80
 
 
     restart: unless-stopped
