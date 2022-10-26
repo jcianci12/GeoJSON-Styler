@@ -21,6 +21,7 @@ import { JsontocsvPipe } from './jsontocsv.pipe';
 import { TableheadersPipe } from './tableheaders.pipe';
 import { GeocolumnComponent } from './data/geocolumn/geocolumn.component';
 import { StyleruleComponent } from './data/stylerule/stylerule.component';
+import { NavbarComponent } from './navbar/navbar.component';
 
 @NgModule({
   declarations: [
@@ -37,7 +38,8 @@ import { StyleruleComponent } from './data/stylerule/stylerule.component';
     JsontocsvPipe,
     TableheadersPipe,
     GeocolumnComponent,
-    StyleruleComponent
+    StyleruleComponent,
+    NavbarComponent
   ],
   imports: [
     BrowserModule,

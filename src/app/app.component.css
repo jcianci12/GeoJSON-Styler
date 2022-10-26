@@ -1,8 +1,11 @@
 .map-container {
   height: 100%;
   /* Fallback for vmin */
-  padding: 0px 1rem 1rem 1rem;
-  padding: 0px 1vmin 1vmin 1vmin;
+  padding: 5px 1rem 1rem 1rem;
+  padding: 5px 1vmin 1vmin 1vmin;
+  max-height: 800px;
+  min-height: 80vh;
+
 }
 
 .map-frame {
@@ -19,3 +22,4 @@
   -ms-transform: translateY(-50%);
   transform: translateY(-50%);
 }
+
