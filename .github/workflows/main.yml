@@ -1,4 +1,7 @@
-on: push
+on:
+  push:
+    branches:
+      - home
 name: Build Angular
 jobs:
   build-and-deploy:
