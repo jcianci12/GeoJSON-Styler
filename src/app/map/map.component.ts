@@ -14,6 +14,7 @@ import {
   tileLayer,
   ZoomAnimEvent,
 } from 'leaflet';
+import { colour, opacity, text } from '../data/data.component';
 import { FeatureCollectionLayer } from '../featureCollection';
 import { FeaturecollectionService } from '../featurecollection.service';
 import { FeaturefilterPipe } from '../featurefilter.pipe';
@@ -121,21 +122,21 @@ export class MapComponent implements OnInit {
                     let value = stylerow[styledatacolumnindex];
 
                     switch (s.ruletype) {
-                      case 'opacity': {
+                      case new opacity(): {
                         //get the index of the data column
                         geo.setStyle({
                           fillOpacity: Number.parseFloat(value),
                         });
                         break;
                       }
-                      case 'colour': {
+                      case new colour(): {
                         //get the index of the data column
                         geo.setStyle({
                           fillColor: value,
                         });
                         break;
                       }
-                      case 'text': {
+                      case new text(): {
                         let label = L.marker(geo.getBounds().getCenter(), {
                           icon: L.divIcon({
                             className: 'text-labels', // Set class for CSS styling

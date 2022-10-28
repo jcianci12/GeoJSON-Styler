@@ -115,6 +115,6 @@ export class AppComponent implements OnInit {
   }
 
   get style():stylerule[]{
-    return [ { "column": "opacity", "ruletype": "opacity" }, { "column": "qld_loca_2", "ruletype": "text" }, { "column": "colour", "ruletype": "colour" } ]
+    return [ ]
   }
 }

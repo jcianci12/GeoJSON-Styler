@@ -78,10 +78,34 @@ export interface stylerule {
   ruletype: ruletype;
 }
 
-export type ruletype = 'shading colour/opacity' | 'opacity' | 'colour' | 'text';
+export type ruletype = opacity|colour|text;
 
-export interface textrule {
-  xoffset: number;
-  yoffset: number;
+export class opacity {
+  constructor() {
+    this.opacityvalue = 1;
+    this.rulename = "opacity"
+  }
+  opacityvalue: number;
+  rulename:string
+
 }
+export class colour {
+  constructor() {
+    this.colour = "grey";
+    this.rulename = "colour"
 
+  }
+  colour: string;
+  rulename:string
+
+}
+export class text {
+  constructor() {
+    this.textvalue = "";
+    this.rulename = "text"
+
+  }
+  textvalue: string;
+  rulename:string
+
+}

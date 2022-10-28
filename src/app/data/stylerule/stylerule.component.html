@@ -10,7 +10,7 @@
       <mat-label>Select the style type</mat-label>
       <mat-select [(value)]="item.ruletype" (valueChange)="updateRule(i)">
         <mat-option *ngFor="let column of styleruleOptions" [value]="column">
-          {{ column }}
+          {{ column.rulename }}
         </mat-option>
       </mat-select>
     </mat-form-field>

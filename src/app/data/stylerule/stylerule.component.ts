@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { FeaturecollectionService } from 'src/app/featurecollection.service';
 import { Select } from 'src/app/tableheaders.pipe';
-import { ruletype, stylerule } from '../data.component';
+import { colour, opacity, ruletype, stylerule, text } from '../data.component';
 
 @Component({
   selector: 'app-stylerule',
@@ -11,9 +11,9 @@ import { ruletype, stylerule } from '../data.component';
 export class StyleruleComponent implements OnInit {
   constructor(private fcs: FeaturecollectionService) {}
   styleruleOptions: ruletype[] = [
-    'shading colour/opacity',
-    'opacity',
-    'colour','text'
+    new opacity(),
+
+    new colour(),new text()
   ];
   @Input() tableheaders: Select[] = [];
   _stylerules: stylerule[] = [];
@@ -37,7 +37,7 @@ export class StyleruleComponent implements OnInit {
 
   addrule() {
     let _temp = this.stylerules;
-    _temp.push({ column: '', ruletype: 'opacity' });
+    _temp.push({ column: '', ruletype: new opacity() });
     this.stylerules = _temp;
   }
 
