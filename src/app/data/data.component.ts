@@ -12,6 +12,7 @@ export class DataComponent implements OnInit {
   d: string | any =
     'qld_loca_2,opacity,colour\r\nBeenleigh,0.5,blue\r\nSunnybank,0.7,red\r\n';
   _geoColumn: string = 'qld_loca_2';
+  endpointurl:string = ""
 
   get stylerules() {
     return this._stylerules;

@@ -95,7 +95,7 @@ import { MatPaginatorModule } from '@angular/material/paginator';
         MatTableModule,
         MatPaginatorModule,
         MatMenuModule,
-        MatCheckboxModule,MatExpansionModule
+        MatCheckboxModule,MatExpansionModule,MatTabsModule
     ],
     providers: [
         MatDatepickerModule,
