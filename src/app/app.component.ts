@@ -8,6 +8,7 @@ import { FeatureCollectionLayer } from './featureCollection';
 import { stylerule } from './data/data.component';
 import { FeaturecollectionService } from './featurecollection.service';
 import { MatCheckboxChange } from '@angular/material/checkbox';
+import { GeoColumnMapping } from './data/geocolumn/geocolumn.component';
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
@@ -45,7 +46,7 @@ export class AppComponent implements OnInit {
           terms: [],
           triggerval: 0,
         },
-        this.style
+        this.style,{GEOColumn:"qld_loca_2",GEOJSON:"suburb"}
       );
 
       this.featureCollectionLayers.push(l);
@@ -58,7 +59,7 @@ export class AppComponent implements OnInit {
           terms: [],
           triggerval: 0,
         },
-        this.style
+        this.style,{GEOColumn:"qld_loca_2",GEOJSON:"suburb"}
       );
 
       this.featureCollectionLayers.push(l);
@@ -77,7 +78,7 @@ export class AppComponent implements OnInit {
     this.featureCollectionLayers[index].stylerules = val;
     this.featureCollectionLayers[index].terms!.triggerval++;
   }
-  updateGeoColumn(val:string,index:number){
+  updateGeoColumn(val:GeoColumnMapping,index:number){
     this.featureCollectionLayers[index].geocolumn = val;
     this.featureCollectionLayers[index].terms!.triggerval++;
   }

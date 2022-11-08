@@ -1,16 +1,56 @@
+import { HttpClient } from '@angular/common/http';
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { GeoDataEndpointClient } from 'src/api/api';
 
 @Component({
   selector: 'app-jsonendpoint',
   templateUrl: './jsonendpoint.component.html',
-  styleUrls: ['./jsonendpoint.component.css']
+  styleUrls: ['./jsonendpoint.component.css'],
 })
 export class JsonendpointComponent implements OnInit {
-@Input() endpointurl:string = ""
-@Output() endpointurlChange = new EventEmitter<string>();
-  constructor() { }
-
-  ngOnInit(): void {
+  private _endpointurl: string = '';
+  @Input() set endpointurl(val: string) {
+    this._endpointurl = val;
+    this.getData()
   }
+  get endpointurl() {
+    return this._endpointurl;
+  }
+
+  @Output() dataChange = new EventEmitter<string>();
+  constructor(private api: GeoDataEndpointClient, private http: HttpClient) {}
+
+  ngOnInit(): void {}
+
+  getData() {
+    return this.http.get<[][]>(this.endpointurl).subscribe((d) => {
+      console.log(d);
+      let t =       this.ConvertToCSV(d,Object.keys(d[0]))
+
+      this.dataChange.emit(t)
+
+
+    });
+  }
+
+  ConvertToCSV(objArray:Object[], headerList:string[]) {
+    let array = typeof objArray != 'object' ? JSON.parse(objArray) : objArray;
+    let str = '';
+    let row = 'S.No,';
+    for (let index in headerList) {
+     row += headerList[index] + ',';
+    }
+    row = row.slice(0, -1);
+    str += row + '\r\n';
+    for (let i = 0; i < array.length; i++) {
+     let line = (i+1)+'';
+     for (let index in headerList) {
+      let head = headerList[index];
+      line += ',' + array[i][head];
+     }
+     str += line + '\r\n';
+    }
+    return str;
+   }
 
 }

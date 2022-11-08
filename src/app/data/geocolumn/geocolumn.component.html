@@ -1,10 +1,19 @@
 <mat-form-field appearance="fill">
-  <mat-label>Select the geography column</mat-label>
-  <mat-select [(value)]="geocolumn">
+  <mat-label>GEOJSON</mat-label>
+  <mat-select [(value)]="geocolumn.GEOJSON">
+    <mat-option *ngFor="let column of (featureCollectionLayer|firstfeature)?.properties|keyvalue" [value]="column.key">
+      {{ column.key }}
+    </mat-option>
+  </mat-select>
+</mat-form-field>
+>>
+<mat-form-field appearance="fill">
+  <mat-label>Location DATA (Usually suburb)</mat-label>
+  <mat-select [(value)]="geocolumn.GEOColumn">
     <mat-option *ngFor="let column of tableheaders" [value]="column.value">
       {{ column.viewValue }}
     </mat-option>
   </mat-select>
 </mat-form-field>
 
-
+{{(featureCollectionLayer|firstfeature)?.properties|json}}

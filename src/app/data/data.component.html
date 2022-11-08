@@ -10,8 +10,7 @@
         ></app-fileupload>
       </mat-tab>
       <mat-tab label="JSON">
-        <app-jsonendpoint [(endpointurl)]="endpointurl"></app-jsonendpoint>
-        {{endpointurl}}
+        <app-jsonendpoint [endpointurl]="endpointurl" (dataChange)="addJSONData($event)" ></app-jsonendpoint>
 
       </mat-tab>
     </mat-tab-group>
@@ -23,9 +22,11 @@
     <h1>Data layers</h1>
     <p>Choose the column to join on (Eg. The suburb column)</p>
     <app-geocolumn
+    [featureCollectionLayer]="featureCollectionLayers[featurecollectionlayerindex]"
       [(geocolumn)]="geoColumn"
       [tableheaders]="d | jsontocsv | tableheaders"
     ></app-geocolumn>
+
   </div>
 </div>
 <!-- {{ d | jsontocsv | json }}

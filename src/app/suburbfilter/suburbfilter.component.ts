@@ -9,7 +9,7 @@ import { FeatureCollectionLayer } from '../featureCollection';
   styleUrls: ['./suburbfilter.component.css'],
 })
 export class SuburbfilterComponent implements OnInit {
- @Input() featureCollectionLayer:FeatureCollectionLayer =new FeatureCollectionLayer([],new terms(),[])
+ @Input() featureCollectionLayer:FeatureCollectionLayer =new FeatureCollectionLayer([],new terms(),[],{GEOColumn:"suburb",GEOJSON:"qld_loca_2"})
   @Input() feature: Feature | null | undefined;
   @Output() termChange = new EventEmitter<terms>();
   constructor() {}
