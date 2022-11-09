@@ -5,7 +5,7 @@
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
-    "githubbuild":"ng build --base-href https://jcianci12.github.io/GeoJSON-Styler/",
+    "githubbuild": "ng build --base-href https://jcianci12.github.io/GeoJSON-Styler/",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
   },
@@ -24,9 +24,11 @@
     "@asymmetrik/ngx-leaflet": "^14.0.1",
     "@types/geojson": "^7946.0.10",
     "@types/leaflet": "^1.8.0",
+    "@types/leaflet.fullscreen": "^1.6.1",
     "bootstrap": "^5.2.1",
     "bootstrap-icons": "^1.9.1",
     "leaflet": "^1.9.0",
+    "leaflet.fullscreen": "^2.4.0",
     "rxjs": "~7.5.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.11.4"

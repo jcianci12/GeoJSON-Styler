@@ -14,6 +14,8 @@ import {
   tileLayer,
   ZoomAnimEvent,
 } from 'leaflet';
+import "leaflet.fullscreen"
+
 import { colour, opacity, text } from '../data/data.component';
 import { FeatureCollectionLayer } from '../featureCollection';
 import { FeaturecollectionService } from '../featurecollection.service';
@@ -41,6 +43,13 @@ export class MapComponent implements OnInit {
     ],
     zoom: 1,
     center: latLng(0, 0),
+    fullscreenControl: true,
+    fullscreenControlOptions: {
+      position: "topleft",
+      title: "Vollbild-Anzeige",
+      titleCancel: "Vollbild-Anzeige verlassen",
+      forcePseudoFullscreen: true // limit fullscreen to window of map
+    }
   };
   private _featureCollection!: FeatureCollectionLayer[];
   private featureGroup = new FeatureGroup();
@@ -97,46 +106,50 @@ export class MapComponent implements OnInit {
           );
           ffp.features.forEach((feature) => {
             //add the layer to the group
+            let _fc = this._featureCollection[i];
 
             //is there a geo column?
-            let geocolumn = this._featureCollection[i].geocolumn
-              .toString()
-              .toLowerCase(); //"qld_loca_2"
+            let geocolumn =
+              _fc.geocolumn?.GEOJSON.toString().toLowerCase(); //"qld_loca_2"
+              let csvgeocolumn = _fc.geocolumn?.GEOColumn.toString().toLowerCase();
 
             if (geocolumn) {
               let styledata = this._featureCollection[i].styledata;
               let stylerules = this._featureCollection[i].stylerules;
               //get the index of the geo column
-              let geocolumnindex = styledata[0].indexOf(geocolumn);
+              let geocolumnindex = styledata[0].indexOf(csvgeocolumn);
               let propertytomatch = feature.properties?.[geocolumn];
               styledata.forEach((stylerow) => {
                 //use the geocolumn index
-                let suburb = stylerow[geocolumnindex];
+                let _suburb = stylerow[geocolumnindex];
+
+
                 if (
-                  propertytomatch && suburb &&
-                  propertytomatch.toLowerCase() == suburb.toLowerCase()
+                  propertytomatch &&
+                  _suburb &&
+                  propertytomatch.toLowerCase() == _suburb.toLowerCase()
                 ) {
                   let geo = geoJSON(feature);
                   stylerules.forEach((s) => {
                     let styledatacolumnindex = styledata[0].indexOf(s.column);
                     let value = stylerow[styledatacolumnindex];
 
-                    switch (s.ruletype) {
-                      case new opacity(): {
+                    switch (s.ruletype.rulename) {
+                      case "opacity": {
                         //get the index of the data column
                         geo.setStyle({
                           fillOpacity: Number.parseFloat(value),
                         });
                         break;
                       }
-                      case new colour(): {
+                      case 'colour': {
                         //get the index of the data column
                         geo.setStyle({
                           fillColor: value,
                         });
                         break;
                       }
-                      case new text(): {
+                      case 'text': {
                         let label = L.marker(geo.getBounds().getCenter(), {
                           icon: L.divIcon({
                             className: 'text-labels', // Set class for CSS styling

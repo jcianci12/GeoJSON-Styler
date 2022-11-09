@@ -9,7 +9,7 @@
 >>
 <mat-form-field appearance="fill">
   <mat-label>Location DATA (Usually suburb)</mat-label>
-  <mat-select [(value)]="geocolumn.GEOColumn">
+  <mat-select [(value)]="geocolumn.GEOColumn" >
     <mat-option *ngFor="let column of tableheaders" [value]="column.value">
       {{ column.viewValue }}
     </mat-option>

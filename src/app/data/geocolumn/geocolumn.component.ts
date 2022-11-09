@@ -22,9 +22,7 @@ get geocolumn(){
 }
 @Output() geocolumnChange = new EventEmitter<GeoColumnMapping>()
   constructor() { }
-
   ngOnInit(): void {
-
   }
 }
 export interface GeoColumnMapping{
