@@ -28,7 +28,14 @@ export class JsonendpointComponent implements OnInit {
       let t =       this.ConvertToCSV(d,Object.keys(d[0]))
 
       this.dataChange.emit(t)
+      console.log(t)
 
+
+    },e=>{
+      this.http.get('./assets/demodata.csv').subscribe(i=>{
+        this.dataChange.emit(i as string)
+
+      });
 
     });
   }

@@ -33,11 +33,13 @@ export class StyleruleComponent implements OnInit {
   @Output() stylerulesChange: EventEmitter<stylerule[]> = new EventEmitter<
     stylerule[]
   >();
-  ngOnInit(): void {}
+  ngOnInit(): void {
+    this.addrule()
+  }
 
   addrule() {
     let _temp = this.stylerules;
-    _temp.push({ column: '', ruletype: new opacity() });
+    _temp.push({ column: 'demoint', ruletype: new text() });
     this.stylerules = _temp;
   }
 

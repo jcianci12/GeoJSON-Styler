@@ -22,7 +22,7 @@ export class JsontocsvPipe implements PipeTransform {
 
       for (var i = 0; i < lines.length; i++) {
         //var obj: any = {};
-        console.log(i);
+        // console.log(i);
         var currentline = lines[i].split(',');
         result.push(currentline);
         // for (var j = 0; j < headers.length; j++) {
@@ -35,5 +35,6 @@ export class JsontocsvPipe implements PipeTransform {
 
     //return result; //JavaScript object
     return result; //JSON
+
   }
 }
