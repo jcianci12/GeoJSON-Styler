@@ -10,11 +10,7 @@ import { colour, opacity, ruletype, stylerule, text } from '../data.component';
 })
 export class StyleruleComponent implements OnInit {
   constructor(private fcs: FeaturecollectionService) {}
-  styleruleOptions: ruletype[] = [
-    new opacity(),
-
-    new colour(),new text()
-  ];
+  styleruleOptions: string[] = [new opacity(), new colour(), new text()].map(i=>i.rulename);
   @Input() tableheaders: Select[] = [];
   _stylerules: stylerule[] = [];
   @Input() featureCollectionIndex: number = 0;
@@ -34,7 +30,7 @@ export class StyleruleComponent implements OnInit {
     stylerule[]
   >();
   ngOnInit(): void {
-    this.addrule()
+    this.addrule();
   }
 
   addrule() {
@@ -45,10 +41,9 @@ export class StyleruleComponent implements OnInit {
 
   removeRule(index: number) {
     this.stylerules.splice(index, 1);
-    this.stylerules = this.stylerules
+    this.stylerules = this.stylerules;
   }
-  updateRule(index:number ) {
-    this.stylerules =this.stylerules
+  updateRule(index: number) {
+    this.stylerules = this.stylerules;
   }
-
 }
