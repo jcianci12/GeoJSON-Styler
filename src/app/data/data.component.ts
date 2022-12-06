@@ -128,12 +128,12 @@ export class text {
   constructor() {
     this.textvalue = '';
     this.rulename = 'text';
-    this.offsetx = 0
-    this.offsety = 0
+    this.latoffset = 0
+    this.lngoffset = 0
   }
   textvalue: string;
   rulename: string;
-  offsetx:number;
-  offsety:number;
+  latoffset:number;
+  lngoffset:number;
 }
 

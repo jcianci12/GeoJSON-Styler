@@ -40,6 +40,6 @@ export class StylepropertiesComponent implements OnInit {
   }
 get propertylist():string[]{
   //only show the props that are static
-  return Object.keys(this.ruletype).filter(i=>i=="offsetx"||i=="offsety")
+  return Object.keys(this.ruletype).filter(i=>i=="latoffset"||i=="lngoffset")
 }
 }

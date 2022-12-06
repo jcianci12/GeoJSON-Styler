@@ -150,13 +150,21 @@ export class MapComponent implements OnInit {
                         break;
                       }
                       case 'text': {
-                        let label = L.marker(geo.getBounds().getCenter(), {
+
+// let point = this.map!.latLngToContainerPoint(geo.getBounds().getCenter())
+//console.log("before",geo.getBounds().getCenter().lat,"after",(s.ruletype as text).latoffset+geo.getBounds().getCenter().lat)
+                        let lat = Number.parseFloat(   (s.ruletype as text).latoffset?.toString())+geo.getBounds().getCenter().lat
+                        let lng = Number.parseFloat(   (s.ruletype as text).lngoffset?.toString())+geo.getBounds().getCenter().lng
+
+                        let label = L.marker([lat,lng], {
                           icon: L.divIcon({
                             className: 'text-labels', // Set class for CSS styling
                             html: value,
                           }),
                           zIndexOffset: 1000, // Make appear above other map features
                         });
+                        //apply the offset
+
                         label.addTo(this.featureGroup);
                         break;
                       }
