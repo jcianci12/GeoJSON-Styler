@@ -14,7 +14,7 @@ import {
   tileLayer,
   ZoomAnimEvent,
 } from 'leaflet';
-import "leaflet.fullscreen"
+import 'leaflet.fullscreen';
 
 import { colour, opacity, text } from '../data/data.component';
 import { FeatureCollectionLayer } from '../featureCollection';
@@ -45,11 +45,11 @@ export class MapComponent implements OnInit {
     center: latLng(0, 0),
     fullscreenControl: true,
     fullscreenControlOptions: {
-      position: "topleft",
-      title: "Vollbild-Anzeige",
-      titleCancel: "Vollbild-Anzeige verlassen",
-      forcePseudoFullscreen: true // limit fullscreen to window of map
-    }
+      position: 'topleft',
+      title: 'Vollbild-Anzeige',
+      titleCancel: 'Vollbild-Anzeige verlassen',
+      forcePseudoFullscreen: true, // limit fullscreen to window of map
+    },
   };
   private _featureCollection!: FeatureCollectionLayer[];
   private featureGroup = new FeatureGroup();
@@ -109,9 +109,9 @@ export class MapComponent implements OnInit {
             let _fc = this._featureCollection[i];
 
             //is there a geo column?
-            let geocolumn =
-              _fc.geocolumn?.GEOJSON.toString().toLowerCase(); //"qld_loca_2"
-              let csvgeocolumn = _fc.geocolumn?.GEOColumn.toString().toLowerCase();
+            let geocolumn = _fc.geocolumn?.GEOJSON.toString().toLowerCase(); //"qld_loca_2"
+            let csvgeocolumn =
+              _fc.geocolumn?.GEOColumn.toString().toLowerCase();
 
             if (geocolumn) {
               let styledata = this._featureCollection[i].styledata;
@@ -122,7 +122,6 @@ export class MapComponent implements OnInit {
               styledata.forEach((stylerow) => {
                 //use the geocolumn index
                 let _suburb = stylerow[geocolumnindex];
-
 
                 if (
                   propertytomatch &&
@@ -135,7 +134,7 @@ export class MapComponent implements OnInit {
                     let value = stylerow[styledatacolumnindex];
 
                     switch (s.ruletype.rulename) {
-                      case "opacity": {
+                      case 'opacity': {
                         //get the index of the data column
                         geo.setStyle({
                           fillOpacity: Number.parseFloat(value),
@@ -150,13 +149,17 @@ export class MapComponent implements OnInit {
                         break;
                       }
                       case 'text': {
+                        // let point = this.map!.latLngToContainerPoint(geo.getBounds().getCenter())
+                        //console.log("before",geo.getBounds().getCenter().lat,"after",(s.ruletype as text).latoffset+geo.getBounds().getCenter().lat)
+                        let lat =
+                           (s.ruletype as text).latoffset
+                         +
+                          geo.getBounds().getCenter().lat;
+                        let lng =
+                        Number.parseFloat( (s.ruletype as text).lngoffset.toString()) +
+                          geo.getBounds().getCenter().lng;
 
-// let point = this.map!.latLngToContainerPoint(geo.getBounds().getCenter())
-//console.log("before",geo.getBounds().getCenter().lat,"after",(s.ruletype as text).latoffset+geo.getBounds().getCenter().lat)
-                        let lat = Number.parseFloat(   (s.ruletype as text).latoffset?.toString())+geo.getBounds().getCenter().lat
-                        let lng = Number.parseFloat(   (s.ruletype as text).lngoffset?.toString())+geo.getBounds().getCenter().lng
-
-                        let label = L.marker([lat,lng], {
+                        let label = L.marker([lat, lng], {
                           icon: L.divIcon({
                             className: 'text-labels', // Set class for CSS styling
                             html: value,
