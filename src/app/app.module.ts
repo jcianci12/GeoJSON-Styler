@@ -22,6 +22,7 @@ import { TableheadersPipe } from './tableheaders.pipe';
 import { GeocolumnComponent } from './data/geocolumn/geocolumn.component';
 import { StyleruleComponent } from './data/stylerule/stylerule.component';
 import { JsonendpointComponent } from './data/jsonendpoint/jsonendpoint.component';
+import { StylepropertiesComponent } from './data/stylerule/styleproperties/styleproperties.component';
 
 @NgModule({
   declarations: [
@@ -39,7 +40,8 @@ import { JsonendpointComponent } from './data/jsonendpoint/jsonendpoint.componen
     TableheadersPipe,
     GeocolumnComponent,
     StyleruleComponent,
-    JsonendpointComponent
+    JsonendpointComponent,
+    StylepropertiesComponent
   ],
   imports: [
     BrowserModule,

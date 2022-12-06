@@ -1,0 +1,15 @@
+<div class="row">
+<div class="col" *ngFor="let item of propertylist">
+  <div class="col" *ngIf="ruletype.hasOwnProperty(item)">
+    <mat-form-field class="example-full-width">
+      <mat-label>{{item}}</mat-label>
+      <input
+        matInput
+        [value]="getProperty(item)"
+        (keyup)="setProperty($event, item)"
+      />
+    </mat-form-field>
+  </div></div>
+
+
+</div>

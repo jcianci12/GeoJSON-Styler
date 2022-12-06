@@ -9,7 +9,7 @@
   <div class="col">
     <mat-form-field appearance="fill" style="width: 100%">
       <mat-label>Select the style type</mat-label>
-      <mat-select [(value)]="item.ruletype.rulename" (valueChange)="updateRule(i)">
+      <mat-select [(value)]="item.ruletype.rulename" (valueChange)="updateRule(i,item)">
         <mat-option *ngFor="let column of styleruleOptions" [value]="column">
           {{ column }}
         </mat-option>
@@ -19,11 +19,14 @@
   <div class="col">
     <mat-form-field appearance="fill" style="width: 100%">
       <mat-label>Select the data column</mat-label>
-      <mat-select [(value)]="item.column" (valueChange)="updateRule(i)">
+      <mat-select [(value)]="item.column" (valueChange)="updateRule(i,item)">
         <mat-option *ngFor="let column of tableheaders" [value]="column.value">
           {{ column.viewValue }}
         </mat-option>
       </mat-select>
     </mat-form-field>
   </div>
+  <app-styleproperties class="col" [ruletype]="item.ruletype" (ruletypeChange)="updateRule(i,item)"></app-styleproperties>
+
+
 </div>

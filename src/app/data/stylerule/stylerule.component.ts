@@ -43,7 +43,9 @@ export class StyleruleComponent implements OnInit {
     this.stylerules.splice(index, 1);
     this.stylerules = this.stylerules;
   }
-  updateRule(index: number) {
-    this.stylerules = this.stylerules;
+  updateRule(index: number,stylerule:stylerule) {
+    this.stylerules[index] = stylerule;
+  this.stylerulesChange.emit(this.stylerules)
+
   }
 }
