@@ -66,6 +66,7 @@ export class DataComponent implements OnInit {
   }
 
   updateStyleRules(val: stylerule[]) {
+    this.stylerules = []
     this.stylerules = val;
     this.updateData(this.d);
   }

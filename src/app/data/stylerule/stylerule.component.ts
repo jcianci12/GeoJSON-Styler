@@ -44,7 +44,13 @@ export class StyleruleComponent implements OnInit {
     this.stylerules = this.stylerules;
   }
   updateRule(index: number,stylerule:stylerule) {
-    this.stylerules[index] = stylerule;
+    let ruletypes = [new opacity(),new text(),new colour()]
+    let _temp = this.stylerules
+    this.stylerules = []
+    this.stylerules = _temp
+    this.stylerules[index].ruletype = {} as ruletype
+    this.stylerules[index]  =   {column:stylerule.column,ruletype:stylerule.ruletype}
+
   this.stylerulesChange.emit(this.stylerules)
 
   }
