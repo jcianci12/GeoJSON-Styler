@@ -1,7 +1,14 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { FeaturecollectionService } from 'src/app/featurecollection.service';
 import { Select } from 'src/app/tableheaders.pipe';
-import { colour, opacity, ruletype, stylerule, text } from '../data.component';
+import {
+  colour,
+  opacity,
+  ruletype,
+  stylerule,
+  stylerules,
+  text,
+} from '../data.component';
 
 @Component({
   selector: 'app-stylerule',
@@ -46,18 +53,29 @@ export class StyleruleComponent implements OnInit {
     this.stylerules = this.stylerules;
   }
   updateRule(index: number, stylerule: stylerule) {
+    // let t = stylerules;
 
-    let ruletypes = [new opacity(), new text(), new colour()];
-    let selected = ruletypes.find(i=>i.rulename==stylerule.ruletype.rulename)
+    //get the matching class
+    let matchingrule = [new opacity(), new colour(), new text()].find(
+      (i) => i.rulename == stylerule.ruletype.rulename
+    );
+    Object.keys(matchingrule!).forEach((key: string, ind: number) => {
+      //matchingrule[key]= stylerule[key]
+      if ((stylerule.ruletype as any)[key]) {
+        (matchingrule as any)[key] = (stylerule.ruletype as any)[key];
+      }
+      //console.log("matching rule",matchingrule,"key",key,"index",ind,"stylerule",stylerule)
+    });
+
     //save the data for use later
     let _temp = this.stylerules;
-
-    _temp[index] = { column: stylerule.column, ruletype: selected! };
+    // _temp[index] = { column: stylerule.column, ruletype: selected! };
     this.stylerules = [];
-
     this.stylerules = _temp;
-
-
+    this.stylerules[index] = {
+      column: stylerule.column,
+      ruletype: matchingrule!,
+    };
     this.stylerulesChange.emit(this.stylerules);
   }
 }

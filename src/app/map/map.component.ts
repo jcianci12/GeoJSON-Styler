@@ -153,8 +153,7 @@ export class MapComponent implements OnInit {
                         //console.log("before",geo.getBounds().getCenter().lat,"after",(s.ruletype as text).latoffset+geo.getBounds().getCenter().lat)
 
                         if (
-                          (s.ruletype as text).latoffset &&
-                          (s.ruletype as text).lngoffset
+                          true
                         ) {
                           let lat =
                             (s.ruletype as text).latoffset +

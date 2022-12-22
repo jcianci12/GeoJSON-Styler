@@ -106,6 +106,7 @@ export interface stylerule {
   ruletype: ruletype;
 }
 
+
 export type ruletype = opacity | colour | text;
 export type rulename = 'opacity'|'colour'|'text';
 
@@ -125,6 +126,7 @@ export class colour {
   colour: string;
   rulename: string;
 }
+
 export class text {
   constructor() {
     this.textvalue = '';
@@ -137,4 +139,6 @@ export class text {
   latoffset:number;
   lngoffset:number;
 }
+export const stylerules:ruletype[] = [new opacity(),new colour(),new text()]
+
 
