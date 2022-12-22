@@ -151,24 +151,30 @@ export class MapComponent implements OnInit {
                       case 'text': {
                         // let point = this.map!.latLngToContainerPoint(geo.getBounds().getCenter())
                         //console.log("before",geo.getBounds().getCenter().lat,"after",(s.ruletype as text).latoffset+geo.getBounds().getCenter().lat)
-                        let lat =
-                           (s.ruletype as text).latoffset
-                         +
-                          geo.getBounds().getCenter().lat;
-                        let lng =
-                        Number.parseFloat( (s.ruletype as text).lngoffset.toString()) +
-                          geo.getBounds().getCenter().lng;
 
-                        let label = L.marker([lat, lng], {
-                          icon: L.divIcon({
-                            className: 'text-labels', // Set class for CSS styling
-                            html: value,
-                          }),
-                          zIndexOffset: 1000, // Make appear above other map features
-                        });
-                        //apply the offset
+                        if (
+                          (s.ruletype as text).latoffset &&
+                          (s.ruletype as text).lngoffset
+                        ) {
+                          let lat =
+                            (s.ruletype as text).latoffset +
+                            geo.getBounds().getCenter().lat;
+                          let lng =
+                            Number.parseFloat(
+                              (s.ruletype as text).lngoffset.toString()
+                            ) + geo.getBounds().getCenter().lng;
 
-                        label.addTo(this.featureGroup);
+                          let label = L.marker([lat, lng], {
+                            icon: L.divIcon({
+                              className: 'text-labels', // Set class for CSS styling
+                              html: value,
+                            }),
+                            zIndexOffset: 1000, // Make appear above other map features
+                          });
+                          //apply the offset
+
+                          label.addTo(this.featureGroup);
+                        }
                         break;
                       }
                       default: {

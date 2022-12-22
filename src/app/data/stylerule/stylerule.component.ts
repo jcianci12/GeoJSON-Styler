@@ -10,7 +10,9 @@ import { colour, opacity, ruletype, stylerule, text } from '../data.component';
 })
 export class StyleruleComponent implements OnInit {
   constructor(private fcs: FeaturecollectionService) {}
-  styleruleOptions: string[] = [new opacity(), new colour(), new text()].map(i=>i.rulename);
+  styleruleOptions: string[] = [new opacity(), new colour(), new text()].map(
+    (i) => i.rulename
+  );
   @Input() tableheaders: Select[] = [];
   _stylerules: stylerule[] = [];
   @Input() featureCollectionIndex: number = 0;
@@ -43,15 +45,19 @@ export class StyleruleComponent implements OnInit {
     this.stylerules.splice(index, 1);
     this.stylerules = this.stylerules;
   }
-  updateRule(index: number,stylerule:stylerule) {
-    let ruletypes = [new opacity(),new text(),new colour()]
-    let _temp = this.stylerules
-    this.stylerules = []
-    this.stylerules = _temp
-    this.stylerules[index].ruletype = {} as ruletype
-    this.stylerules[index]  =   {column:stylerule.column,ruletype:stylerule.ruletype}
+  updateRule(index: number, stylerule: stylerule) {
 
-  this.stylerulesChange.emit(this.stylerules)
+    let ruletypes = [new opacity(), new text(), new colour()];
+    let selected = ruletypes.find(i=>i.rulename==stylerule.ruletype.rulename)
+    //save the data for use later
+    let _temp = this.stylerules;
 
+    _temp[index] = { column: stylerule.column, ruletype: selected! };
+    this.stylerules = [];
+
+    this.stylerules = _temp;
+
+
+    this.stylerulesChange.emit(this.stylerules);
   }
 }

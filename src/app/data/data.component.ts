@@ -86,7 +86,7 @@ export class DataComponent implements OnInit {
     }
   }
   addData(data: FileList) {
-    console.log(data);
+    //console.log(data);
     let filereader = new FileReader();
     filereader.onload = (e) => {
       console.log(filereader.result);
@@ -96,7 +96,7 @@ export class DataComponent implements OnInit {
     filereader.readAsText(data[0]);
   }
   addJSONData(data: string) {
-    console.log(data);
+    //console.log(data);
     this.d = data;
     this.updateData(this.d);
   }
