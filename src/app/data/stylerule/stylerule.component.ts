@@ -53,29 +53,29 @@ export class StyleruleComponent implements OnInit {
     this.stylerules = this.stylerules;
   }
   updateRule(index: number, stylerule: stylerule) {
-    // let t = stylerules;
-
-    //get the matching class
+    //get the matching class by the rule name
     let matchingrule = [new opacity(), new colour(), new text()].find(
       (i) => i.rulename == stylerule.ruletype.rulename
     );
-    Object.keys(matchingrule!).forEach((key: string, ind: number) => {
-      //matchingrule[key]= stylerule[key]
+    //loop through the keys of the new object and if there
+    //is a matching key from the users settings, assign it
+    Object.keys(matchingrule!).forEach((key: string) => {
       if ((stylerule.ruletype as any)[key]) {
         (matchingrule as any)[key] = (stylerule.ruletype as any)[key];
       }
       //console.log("matching rule",matchingrule,"key",key,"index",ind,"stylerule",stylerule)
     });
 
-    //save the data for use later
+    //This is needed because angular wont update an object when its child properties change.
+    //therefore we can clear the object and then reassign it
     let _temp = this.stylerules;
-    // _temp[index] = { column: stylerule.column, ruletype: selected! };
     this.stylerules = [];
     this.stylerules = _temp;
     this.stylerules[index] = {
       column: stylerule.column,
       ruletype: matchingrule!,
     };
+    //this is if you want to emit the change up the tree
     this.stylerulesChange.emit(this.stylerules);
   }
 }
