@@ -110,35 +110,42 @@ export interface stylerule {
 export type ruletype = opacity | colour | text;
 export type rulename = 'opacity'|'colour'|'text';
 
-export class opacity {
+export class baseStyle{
+  rulename: string|undefined;
+}
+export class opacity extends baseStyle {
   constructor() {
+    super()
     this.opacityvalue = 1;
     this.rulename = 'opacity';
   }
   opacityvalue: number;
-  rulename: rulename;
 }
-export class colour {
+export class colour extends baseStyle {
   constructor() {
+    super()
     this.colour = 'grey';
     this.rulename = 'colour';
   }
   colour: string;
-  rulename: string;
 }
 
-export class text {
+export class text extends baseStyle {
   constructor() {
+    super();
     this.textvalue = '';
     this.rulename = 'text';
     this.latoffset = 0
     this.lngoffset = 0
+    this.cssstyle = "colour:black"
   }
   textvalue: string;
-  rulename: string;
   latoffset:number;
   lngoffset:number;
+  cssstyle:string;
 }
+
+
 export const stylerules:ruletype[] = [new opacity(),new colour(),new text()]
 
 

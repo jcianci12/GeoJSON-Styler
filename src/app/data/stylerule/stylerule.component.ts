@@ -17,7 +17,7 @@ import {
 })
 export class StyleruleComponent implements OnInit {
   constructor(private fcs: FeaturecollectionService) {}
-  styleruleOptions: string[] = [new opacity(), new colour(), new text()].map(
+  styleruleOptions: (string|undefined)[] = [new opacity(), new colour(), new text()].map(
     (i) => i.rulename
   );
   @Input() tableheaders: Select[] = [];

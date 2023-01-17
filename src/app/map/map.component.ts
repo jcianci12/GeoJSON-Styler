@@ -166,7 +166,7 @@ export class MapComponent implements OnInit {
                           let label = L.marker([lat, lng], {
                             icon: L.divIcon({
                               className: 'text-labels', // Set class for CSS styling
-                              html: value,
+                              html: '<div style="'+(s.ruletype as text).cssstyle+'">' + value+'</div>',
                             }),
                             zIndexOffset: 1000, // Make appear above other map features
                           });

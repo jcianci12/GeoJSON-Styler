@@ -10,7 +10,6 @@ import { ruletype, stylerule, text } from '../../data.component';
 export class StylepropertiesComponent implements OnInit {
   _ruletype!: ruletype;
   @Input() set ruletype(val: ruletype) {
-
     this._ruletype = val;
   }
   get ruletype() {
@@ -28,7 +27,14 @@ export class StylepropertiesComponent implements OnInit {
   setProperty(event: any, property: string) {
     //does the prop exist on the object?
     if (this.ruletype.hasOwnProperty(property)) {
-      (this.ruletype as any)[property] = parseFloat(event.target.value);
+      //check if its a number and handle accordingly
+      if (typeof event.target.value =='string') {
+        (this.ruletype as any)[property] = event.target.value;
+      }
+      else{
+        (this.ruletype as any)[property] = parseFloat(event.target.value);
+
+      }
 
       console.log(this.ruletype);
       this.ruletypeChange.emit(this.ruletype);
@@ -52,8 +58,9 @@ export class StylepropertiesComponent implements OnInit {
   }
   get propertylist(): string[] {
     //only show the props that are static
-    return Object.keys(this.ruletype).filter(
-      (i) => i == 'latoffset' || i == 'lngoffset'
-    );
+    return Object.keys(this.ruletype);
+    // .filter(
+    //   (i) => i == 'latoffset' || i == 'lngoffset'
+    // );
   }
 }
