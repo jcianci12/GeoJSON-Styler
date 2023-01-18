@@ -10,11 +10,12 @@
         <div class="row"  style="border-style: hidden hidden hidden dotted;">
           <div class="col">
 
-            <p>Choose your GeoJSON to use to get started</p>
-            <app-fileupload
+            <p>Add a layer to get started</p>
+            <!-- <app-fileupload
               [fileextension]="'json'"
               (fileadded)="addLayer($event)"
-            ></app-fileupload>
+            ></app-fileupload> -->
+            <button (click)="addLayer()">Add layer</button>
           </div>
         </div>
         <br>

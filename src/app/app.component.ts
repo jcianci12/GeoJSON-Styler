@@ -36,35 +36,9 @@ export class AppComponent implements OnInit {
   constructor(private http: HttpClient,private fcs:FeaturecollectionService) {}
 
   ngOnInit(): void {
-    this.reader.onloadend = () => {
-      let fc = JSON.parse(
-        this.reader.result as string
-      ) as geojson.FeatureCollection;
-      let l = new FeatureCollectionLayer(
-        fc.features,
-        {
-          terms: [],
-          triggerval: 0,
-        },
-        this.style,{GEOColumn:"qld_loca_2",GEOJSON:"suburb"}
-      );
+    this.addlistener()
 
-      this.featureCollectionLayers.push(l);
-    };
-
-    this.getJSON().subscribe((data) => {
-      let l = new FeatureCollectionLayer(
-        data.features,
-        {
-          terms: [],
-          triggerval: 0,
-        },
-        this.style,{GEOColumn:"qld_loca_2",GEOJSON:"suburb"}
-      );
-
-      this.featureCollectionLayers.push(l);
-      console.log(this.featureCollectionLayers[0].stylerules);
-    });
+    this.addLayer()
   }
   updateTerms($event: terms, index: number) {
     this.featureCollectionLayers[index].terms = $event;
@@ -85,12 +59,7 @@ export class AppComponent implements OnInit {
   updateStyleData(val:string[][],index:number){
     this.featureCollectionLayers[index].styledata = val;
   }
-  addLayer(data: any) {
-    //let d = this.reader.readAsText(data.item(0));
-    this.featureCollectionLayers.push(data)
 
-    this.fcs.FeatureCollectionLayerObservable.next(this.featureCollectionLayers)
-  }
   removeLayer(l: number) {
 
     this.featureCollectionLayers.splice(l, 1);
@@ -114,6 +83,39 @@ export class AppComponent implements OnInit {
     this.featureCollectionLayers[index].active = val.checked
     this.fcs.FeatureCollectionLayerObservable.next(this.featureCollectionLayers)
   }
+
+addlistener(){
+  this.reader.onloadend = () => {
+    let fc = JSON.parse(
+      this.reader.result as string
+    ) as geojson.FeatureCollection;
+    let l = new FeatureCollectionLayer(
+      fc.features,
+      {
+        terms: [],
+        triggerval: 0,
+      },
+      this.style,{GEOColumn:"qld_loca_2",GEOJSON:"suburb"}
+    );
+
+    this.featureCollectionLayers.push(l);
+  };
+}
+addLayer(){
+  this.getJSON().subscribe((data) => {
+    let l = new FeatureCollectionLayer(
+      data.features,
+      {
+        terms: [],
+        triggerval: 0,
+      },
+      this.style,{GEOColumn:"qld_loca_2",GEOJSON:"suburb"}
+    );
+
+    this.featureCollectionLayers.push(l);
+    console.log(this.featureCollectionLayers[0].stylerules);
+  });
+}
 
   get style():stylerule[]{
     return [ ]

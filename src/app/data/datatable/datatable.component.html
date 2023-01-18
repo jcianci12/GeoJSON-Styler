@@ -1,0 +1,20 @@
+
+<mat-accordion>
+  <mat-expansion-panel [expanded]="false">
+    <mat-expansion-panel-header>
+      <mat-panel-title>
+        Data
+      </mat-panel-title>
+      <mat-panel-description>
+      </mat-panel-description>
+    </mat-expansion-panel-header>
+    <table class="table">
+      <tbody>
+        <tr *ngFor="let item of d | jsontocsv">
+          <td *ngFor="let item of item">{{ item }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </mat-expansion-panel>
+
+</mat-accordion>

@@ -47,10 +47,5 @@
     {{stylerules|json}} -->
   </div>
 </div>
-<table class="table">
-  <tbody>
-    <tr *ngFor="let item of d | jsontocsv">
-      <td *ngFor="let item of item">{{ item }}</td>
-    </tr>
-  </tbody>
-</table>
+<app-datatable [d]="d"></app-datatable>
+

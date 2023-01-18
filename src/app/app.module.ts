@@ -23,6 +23,7 @@ import { GeocolumnComponent } from './data/geocolumn/geocolumn.component';
 import { StyleruleComponent } from './data/stylerule/stylerule.component';
 import { JsonendpointComponent } from './data/jsonendpoint/jsonendpoint.component';
 import { StylepropertiesComponent } from './data/stylerule/styleproperties/styleproperties.component';
+import { DatatableComponent } from './data/datatable/datatable.component';
 
 @NgModule({
   declarations: [
@@ -41,7 +42,8 @@ import { StylepropertiesComponent } from './data/stylerule/styleproperties/style
     GeocolumnComponent,
     StyleruleComponent,
     JsonendpointComponent,
-    StylepropertiesComponent
+    StylepropertiesComponent,
+    DatatableComponent
   ],
   imports: [
     BrowserModule,
