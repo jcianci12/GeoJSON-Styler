@@ -79,6 +79,7 @@ export class AppComponent implements OnInit {
   receiveZoom(zoom: number) {
     this.zoom = zoom;
   }
+
   updateActive(val:MatCheckboxChange,index:number){
     this.featureCollectionLayers[index].active = val.checked
     this.fcs.FeatureCollectionLayerObservable.next(this.featureCollectionLayers)
@@ -114,6 +115,7 @@ addLayer(){
 
     this.featureCollectionLayers.push(l);
     console.log(this.featureCollectionLayers[0].stylerules);
+
   });
 }
 

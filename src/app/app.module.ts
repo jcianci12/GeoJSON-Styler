@@ -24,6 +24,7 @@ import { StyleruleComponent } from './data/stylerule/stylerule.component';
 import { JsonendpointComponent } from './data/jsonendpoint/jsonendpoint.component';
 import { StylepropertiesComponent } from './data/stylerule/styleproperties/styleproperties.component';
 import { DatatableComponent } from './data/datatable/datatable.component';
+import { LoadsavebuttonComponent } from './data/loadsavebutton/loadsavebutton.component';
 
 @NgModule({
   declarations: [
@@ -43,7 +44,8 @@ import { DatatableComponent } from './data/datatable/datatable.component';
     StyleruleComponent,
     JsonendpointComponent,
     StylepropertiesComponent,
-    DatatableComponent
+    DatatableComponent,
+    LoadsavebuttonComponent
   ],
   imports: [
     BrowserModule,

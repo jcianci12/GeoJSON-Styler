@@ -135,16 +135,22 @@ export class MapComponent implements OnInit {
 
                     switch (s.ruletype.rulename) {
                       case 'opacity': {
-                        //get the index of the data column
                         geo.setStyle({
                           fillOpacity: Number.parseFloat(value),
                         });
                         break;
                       }
                       case 'colour': {
-                        //get the index of the data column
+                        let a = s.ruletype as colour;
+
+                        //if the style has been set globally, use that value
+                        if(a.colour){
+value = a.colour
+                        }
+
                         geo.setStyle({
                           fillColor: value,
+                          color:value
                         });
                         break;
                       }
@@ -152,9 +158,7 @@ export class MapComponent implements OnInit {
                         // let point = this.map!.latLngToContainerPoint(geo.getBounds().getCenter())
                         //console.log("before",geo.getBounds().getCenter().lat,"after",(s.ruletype as text).latoffset+geo.getBounds().getCenter().lat)
 
-                        if (
-                          true
-                        ) {
+                        if (true) {
                           let lat =
                             (s.ruletype as text).latoffset +
                             geo.getBounds().getCenter().lat;
@@ -166,7 +170,12 @@ export class MapComponent implements OnInit {
                           let label = L.marker([lat, lng], {
                             icon: L.divIcon({
                               className: 'text-labels', // Set class for CSS styling
-                              html: '<div style="'+(s.ruletype as text).cssstyle+'">' + value+'</div>',
+                              html:
+                                '<div style="' +
+                                (s.ruletype as text).cssstyle +
+                                '">' +
+                                value +
+                                '</div>',
                             }),
                             zIndexOffset: 1000, // Make appear above other map features
                           });
@@ -176,13 +185,13 @@ export class MapComponent implements OnInit {
                         }
                         break;
                       }
-                      default: {
-                        geo.setStyle({
-                          fillColor: 'grey',
-                          color: 'grey',
-                          fillOpacity: 0.1,
-                        });
-                      }
+                      // default: {
+                      //   geo.setStyle({
+                      //     fillColor: 'grey',
+                      //     color: 'grey',
+                      //     fillOpacity: 0.1,
+                      //   });
+                      // }
                     }
 
                     let l = geo.addTo(this.featureGroup);
