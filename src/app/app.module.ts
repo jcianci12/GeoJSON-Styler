@@ -25,6 +25,7 @@ import { JsonendpointComponent } from './data/jsonendpoint/jsonendpoint.componen
 import { StylepropertiesComponent } from './data/stylerule/styleproperties/styleproperties.component';
 import { DatatableComponent } from './data/datatable/datatable.component';
 import { LoadsavebuttonComponent } from './data/loadsavebutton/loadsavebutton.component';
+import { GeojsonselectorComponent } from './data/geojsonselector/geojsonselector.component';
 
 @NgModule({
   declarations: [
@@ -45,7 +46,8 @@ import { LoadsavebuttonComponent } from './data/loadsavebutton/loadsavebutton.co
     JsonendpointComponent,
     StylepropertiesComponent,
     DatatableComponent,
-    LoadsavebuttonComponent
+    LoadsavebuttonComponent,
+    GeojsonselectorComponent
   ],
   imports: [
     BrowserModule,

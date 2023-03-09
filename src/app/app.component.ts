@@ -65,9 +65,7 @@ export class AppComponent implements OnInit {
     this.featureCollectionLayers.splice(l, 1);
     this.fcs.FeatureCollectionLayerObservable.next(this.featureCollectionLayers)
   }
-  public getJSON(): Observable<any> {
-    return this.http.get('./assets/qldsuburbs.json');
-  }
+
 
   public map: Map | undefined;
   private zoom: number | undefined;
@@ -103,9 +101,9 @@ addlistener(){
   };
 }
 addLayer(){
-  this.getJSON().subscribe((data) => {
+
     let l = new FeatureCollectionLayer(
-      data.features,
+      [],
       {
         terms: [],
         triggerval: 0,
@@ -116,7 +114,6 @@ addLayer(){
     this.featureCollectionLayers.push(l);
     console.log(this.featureCollectionLayers[0].stylerules);
 
-  });
 }
 
   get style():stylerule[]{
