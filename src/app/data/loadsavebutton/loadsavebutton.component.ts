@@ -1,7 +1,8 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { MatSnackBar, MatSnackBarConfig } from '@angular/material/snack-bar';
 import { config, of } from 'rxjs';
 import { FeatureCollectionLayer } from 'src/app/featureCollection';
+import { FeaturecollectionService } from 'src/app/featurecollection.service';
 
 @Component({
   selector: 'app-loadsavebutton',
@@ -9,8 +10,9 @@ import { FeatureCollectionLayer } from 'src/app/featureCollection';
   styleUrls: ['./loadsavebutton.component.css']
 })
 export class LoadsavebuttonComponent {
-@Input() featureCollection:FeatureCollectionLayer[] = []
-  constructor(private matsnack:MatSnackBar) { }
+  @Input() featureCollection: FeatureCollectionLayer[] = []
+  @Output() featureCollectionChange =new EventEmitter<FeatureCollectionLayer[]>()
+  constructor(private matsnack: MatSnackBar, private fcs: FeaturecollectionService) { }
   private setting = {
     element: {
       dynamicDownload: null as unknown as HTMLElement
@@ -20,10 +22,10 @@ export class LoadsavebuttonComponent {
     return of(this.featureCollection);
   }
   dynamicDownloadJson() {
-    this.matsnack.open("Downloading map and style state","Okay", {duration:2000})
+    this.matsnack.open("Downloading map and style state", "Okay", { duration: 2000 })
     this.fakeValidateUserData().subscribe((res: any) => {
       this.dyanmicDownloadByHtmlTag({
-        fileName: 'My Report.json',
+        fileName: 'mapstate.json',
         text: JSON.stringify(res)
       });
     });
@@ -43,5 +45,27 @@ export class LoadsavebuttonComponent {
 
     var event = new MouseEvent("click");
     element.dispatchEvent(event);
+  }
+
+  onFileSelected(event: any): void {
+    const file = event.target.files[0];
+    const fileReader = new FileReader();
+    fileReader.onload = () => {
+      try {
+        const jsonData = JSON.parse(fileReader.result as string);
+        //console.log(jsonData);
+        //this.fcs.FeatureCollectionLayerObservable.next(jsonData);
+        this.featureCollectionChange.emit(jsonData)
+        this.matsnack.open("Successfully loaded map state", "Okay", { duration: 2000 })
+
+        // do something with the parsed JSON data
+      } catch (e) {
+        console.error('Error parsing JSON:', e);
+        this.matsnack.open("File doesnt appear to be valid JSON", "Okay", { duration: 2000 })
+
+        // handle the error, e.g. show an error message to the user
+      }
+    };
+    fileReader.readAsText(file, 'UTF-8');
   }
 }
