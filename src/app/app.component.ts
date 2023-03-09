@@ -37,28 +37,10 @@ export class AppComponent implements OnInit {
 
   ngOnInit(): void {
     this.addlistener()
-
     this.addLayer()
+    this.fcs.FeatureCollectionLayerObservable.subscribe(i=>this.featureCollectionLayers = i)
   }
-  updateTerms($event: terms, index: number) {
-    this.featureCollectionLayers[index].terms = $event;
-    this.featureCollectionLayers[index].terms!.triggerval++;
-    this.triggerval++;
-    // let t = this.featureCollectionLayers
-    // this.featureCollectionLayers = []
-    // this.featureCollectionLayers = t
-  }
-  updatestyles(val: stylerule[], index: number) {
-    this.featureCollectionLayers[index].stylerules = val;
-    this.featureCollectionLayers[index].terms!.triggerval++;
-  }
-  updateGeoColumn(val:GeoColumnMapping,index:number){
-    this.featureCollectionLayers[index].geocolumn = val;
-    this.featureCollectionLayers[index].terms!.triggerval++;
-  }
-  updateStyleData(val:string[][],index:number){
-    this.featureCollectionLayers[index].styledata = val;
-  }
+
 
   removeLayer(l: number) {
 

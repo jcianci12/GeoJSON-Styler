@@ -1,7 +1,7 @@
-import { KeyValuePipe } from '@angular/common';
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { Feature } from 'geojson';
 import { FeatureCollectionLayer } from '../featureCollection';
+import { FeaturecollectionService } from '../featurecollection.service';
 
 @Component({
   selector: 'app-suburbfilter',
@@ -12,7 +12,8 @@ export class SuburbfilterComponent implements OnInit {
  @Input() featureCollectionLayer:FeatureCollectionLayer =new FeatureCollectionLayer([],new terms(),[],{GEOColumn:"suburb",GEOJSON:"qld_loca_2"})
   @Input() feature: Feature | null | undefined;
   @Output() termChange = new EventEmitter<terms>();
-  constructor() {}
+  @Input() layerIndex!:number
+  constructor(private fcs:FeaturecollectionService) {}
   ngOnInit(): void {}
 
   change(key: string, phrase: Event) {
@@ -26,7 +27,10 @@ export class SuburbfilterComponent implements OnInit {
 
     //this.term[(key as any). toString()] = (val.target as HTMLInputElement ).value
     if(this.featureCollectionLayer.terms&& this.featureCollectionLayer.terms.terms){
-          this.termChange.emit(this.featureCollectionLayer.terms);
+      var lastval = this.fcs.FeatureCollectionLayerObservable.getValue()
+      lastval[this.layerIndex]= this.featureCollectionLayer
+          //this.termChange.emit(this.featureCollectionLayer.terms);
+          this.fcs.FeatureCollectionLayerObservable.next(lastval)
 
     }
   }

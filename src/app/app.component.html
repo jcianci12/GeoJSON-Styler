@@ -90,7 +90,7 @@
                 {{ featureCollection.terms | json }}
                 <app-suburbfilter
                   [feature]="featureCollection | firstfeature"
-                  (termChange)="updateTerms($event, i)"
+[layerIndex]="i"
                 ></app-suburbfilter>
               </mat-expansion-panel>
               <mat-expansion-panel>
@@ -107,7 +107,7 @@
                 </mat-expansion-panel-header>
                 <!-- {{featureCollection.terms|json}} -->
                 <app-suburblist
-                  [featureCollection]="featureCollection"
+                  [layerIndex]="i"
                 ></app-suburblist>
               </mat-expansion-panel>
             </ng-container>

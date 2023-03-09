@@ -1,6 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { FeatureCollection } from 'geojson';
 import { FeatureCollectionLayer } from '../featureCollection';
+import { FeaturecollectionService } from '../featurecollection.service';
 import { terms } from '../suburbfilter/suburbfilter.component';
 
 @Component({
@@ -9,9 +10,11 @@ import { terms } from '../suburbfilter/suburbfilter.component';
   styleUrls: ['./suburblist.component.css'],
 })
 export class SuburblistComponent implements OnInit {
-  @Input() featureCollection!: FeatureCollectionLayer
+  featureCollection!: FeatureCollectionLayer
+@Input() layerIndex!:number
+  constructor(private fcs:FeaturecollectionService) {}
 
-  constructor() {}
-
-  ngOnInit(): void {}
+  ngOnInit(): void {
+    this.fcs.FeatureCollectionLayerObservable.subscribe(i=>this.featureCollection = i[this.layerIndex])
+  }
 }

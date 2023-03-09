@@ -23,7 +23,8 @@ export class GeojsonselectorComponent implements OnInit {
       this.featurecollectionLayer = i;
     });
 
-this.addLayer()
+    this.addLayer()
+
   }
 
   onFileSelected(event: any): void {
