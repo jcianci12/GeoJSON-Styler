@@ -28,7 +28,6 @@ export class JsonendpointComponent implements OnInit {
       let t =       this.ConvertToCSV(d,Object.keys(d[0]))
 
       this.dataChange.emit(t)
-      console.log(t)
 
 
     },e=>{

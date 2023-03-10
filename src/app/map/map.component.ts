@@ -94,14 +94,14 @@ export class MapComponent implements OnInit {
             let _fc = this._featureCollection[i];
 
             //is there a geo column?
-            let geocolumn = _fc.geocolumn?.GEOJSON.toString().toLowerCase(); //"qld_loca_2"
-            let csvgeocolumn = _fc.geocolumn?.GEOColumn.toString().toLowerCase();
+            let geocolumn = _fc.geocolumn?.GEOJSON.toString(); //"qld_loca_2"
+            let csvgeocolumn = _fc.geocolumn?.GEOColumn.toString();
 
             if (geocolumn) {
               let styledata = this._featureCollection[i].styledata;
               let stylerules = this._featureCollection[i].stylerules;
               //get the index of the geo column
-              let geocolumnindex = styledata[0].indexOf(csvgeocolumn);
+              let geocolumnindex = styledata[0].findIndex(col=>col.toLowerCase()== csvgeocolumn.toLowerCase());
               let propertytomatch = feature.properties?.[geocolumn];
               styledata.forEach((stylerow) => {
                 //use the geocolumn index

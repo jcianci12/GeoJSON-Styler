@@ -10,12 +10,13 @@ import { Select } from 'src/app/tableheaders.pipe';
   styleUrls: ['./geocolumn.component.css'],
 })
 export class GeocolumnComponent implements OnInit {
-  featureCollectionLayer: FeatureCollectionLayer = new FeatureCollectionLayer([], new terms(), [], { GEOColumn: 'suburb', GEOJSON: 'qld_loca_2' });
+  featureCollectionLayer: FeatureCollectionLayer = new FeatureCollectionLayer([], new terms(), [], { GEOColumn: '', GEOJSON: '' });
   @Input() featureCollectionIndex!: number;
   @Input() tableheaders: Select[] = [];
-  _geocolumn: GeoColumnMapping = { GEOColumn: 'suburb', GEOJSON: 'qld_loca_2' };
+  _geocolumn: GeoColumnMapping = { GEOColumn: '', GEOJSON: '' };
   @Input() set geocolumn(val: GeoColumnMapping) {
     this._geocolumn = val;
+    this.fcs.UpdateLayer(this.featureCollectionLayer,this.featureCollectionIndex)
     this.geocolumnChange.emit();
   }
   get geocolumn() {
@@ -31,8 +32,9 @@ export class GeocolumnComponent implements OnInit {
     });
     //this one does
     this.fcs.FeatureCollectionLayerObservable.subscribe((i) => {
+      this.featureCollectionLayer = new FeatureCollectionLayer(i[this.featureCollectionIndex].features, new terms(), [], { GEOColumn: '', GEOJSON: '' });
 
-      this.featureCollectionLayer = new FeatureCollectionLayer(i[this.featureCollectionIndex].features, new terms(), [], { GEOColumn: 'suburb', GEOJSON: 'qld_loca_2' });
+      this.featureCollectionLayer = i[this.featureCollectionIndex];
     });
   }
 }

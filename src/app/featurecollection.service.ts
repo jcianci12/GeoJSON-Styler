@@ -7,10 +7,18 @@ import { FeatureCollectionLayer } from './featureCollection';
   providedIn: 'root',
 })
 export class FeaturecollectionService {
-  FeatureCollectionLayerObservable: BehaviorSubject<FeatureCollectionLayer[]> =
-    new BehaviorSubject<FeatureCollectionLayer[]>([]);
+  FeatureCollectionLayerObservable: BehaviorSubject<FeatureCollectionLayer[]> = new BehaviorSubject<FeatureCollectionLayer[]>([]);
+  FeatureCollectionLayers: FeatureCollectionLayer[] | undefined;
 
-  constructor() {}
+  constructor() {
+    this.FeatureCollectionLayerObservable.subscribe((i) => (this.FeatureCollectionLayers = i));
+  }
 
+  public UpdateLayer(featureCollectionLayer: FeatureCollectionLayer, Index: number) {
+    if (this.FeatureCollectionLayers) {
+      this.FeatureCollectionLayers[Index] = featureCollectionLayer;
+      this.FeatureCollectionLayerObservable.next(this.FeatureCollectionLayers);
 
+    }
+  }
 }

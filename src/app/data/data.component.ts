@@ -89,7 +89,7 @@ export class DataComponent implements OnInit {
     //console.log(data);
     let filereader = new FileReader();
     filereader.onload = (e) => {
-      console.log(filereader.result);
+     // console.log(filereader.result);
       this.d = filereader.result;
       this.updateData(this.d);
     };
