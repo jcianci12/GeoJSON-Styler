@@ -14,11 +14,5 @@ export class FeaturecollectionService {
     this.FeatureCollectionLayerObservable.subscribe((i) => (this.FeatureCollectionLayers = i));
   }
 
-  public UpdateLayer(featureCollectionLayer: FeatureCollectionLayer, Index: number) {
-    if (this.FeatureCollectionLayers) {
-      this.FeatureCollectionLayers[Index] = featureCollectionLayer;
-      this.FeatureCollectionLayerObservable.next(this.FeatureCollectionLayers);
 
-    }
-  }
 }

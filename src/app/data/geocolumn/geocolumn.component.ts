@@ -16,7 +16,7 @@ export class GeocolumnComponent implements OnInit {
   _geocolumn: GeoColumnMapping = { GEOColumn: '', GEOJSON: '' };
   @Input() set geocolumn(val: GeoColumnMapping) {
     this._geocolumn = val;
-    this.fcs.UpdateLayer(this.featureCollectionLayer,this.featureCollectionIndex)
+    // this.fcs.UpdateLayer(this.featureCollectionLayer,this.featureCollectionIndex)
     this.geocolumnChange.emit();
   }
   get geocolumn() {
