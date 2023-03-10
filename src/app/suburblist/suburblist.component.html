@@ -1,37 +1,18 @@
-{{featureCollection|json}}
-
-<div
-  *ngIf="
-    (featureCollection | featurefilter: 0).features.length > 50;
-    else elsetemplate
-  "
->
+<div *ngIf="(featureCollection | featurefilter : 0).features.length > 50; else elsetemplate">
   <p>
     There are
-    {{ (featureCollection | featurefilter: 0).features.length }} results,
-    showing the first 50
+    {{ (featureCollection | featurefilter : 0).features.length }} results, showing the first 50
   </p>
-  <div
-    *ngFor="
-      let feature of (featureCollection | featurefilter: 0).features
-        | slice: 0:50
-    "
-  >
+  <div *ngFor="let feature of (featureCollection | featurefilter : 0).features | slice : 0 : 50">
     <ng-container *ngIf="feature.properties">
-      <app-suburbrow [feature]=feature></app-suburbrow>
-
+      <app-suburbrow [feature]="feature"></app-suburbrow>
     </ng-container>
   </div>
 </div>
 <ng-template #elsetemplate>
-  <div
-    *ngFor="
-      let feature of (featureCollection | featurefilter: 0).features
-
-    "
-  >
+  <div *ngFor="let feature of (featureCollection | featurefilter : 0).features">
     <ng-container *ngIf="feature.properties">
-
-      <app-suburbrow [feature]=feature></app-suburbrow>
+      <app-suburbrow [feature]="feature"></app-suburbrow>
     </ng-container>
-  </div> </ng-template>
+  </div>
+</ng-template>

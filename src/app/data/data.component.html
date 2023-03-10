@@ -22,7 +22,9 @@
     <h1>Data layers</h1>
     <p>Choose the column to join on (Eg. The suburb column)</p>
     <app-geocolumn
-    [featureCollectionLayer]="featureCollectionLayers[featurecollectionlayerindex]"
+
+    [featureCollectionIndex]="featurecollectionlayerindex"
+
       [(geocolumn)]="geoColumn"
       [tableheaders]="d | jsontocsv | tableheaders"
     ></app-geocolumn>

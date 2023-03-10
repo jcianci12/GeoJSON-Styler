@@ -37,8 +37,9 @@ export class AppComponent implements OnInit {
 
   ngOnInit(): void {
     this.addlistener()
-    this.addLayer()
+
     this.fcs.FeatureCollectionLayerObservable.subscribe(i=>this.featureCollectionLayers = i)
+    this.addLayer()
   }
 
 

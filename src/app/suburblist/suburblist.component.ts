@@ -10,11 +10,14 @@ import { terms } from '../suburbfilter/suburbfilter.component';
   styleUrls: ['./suburblist.component.css'],
 })
 export class SuburblistComponent implements OnInit {
-  featureCollection!: FeatureCollectionLayer
-@Input() layerIndex!:number
-  constructor(private fcs:FeaturecollectionService) {}
+  featureCollection!: FeatureCollectionLayer;
+  @Input() layerIndex!: number;
+  constructor(private fcs: FeaturecollectionService) {}
 
   ngOnInit(): void {
-    this.fcs.FeatureCollectionLayerObservable.subscribe(i=>this.featureCollection = i[this.layerIndex])
+    this.fcs.FeatureCollectionLayerObservable.subscribe((i) => {
+
+      this.featureCollection = i[this.layerIndex];
+    });
   }
 }
