@@ -3,11 +3,9 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { GeoDataEndpointClient } from 'src/api/api';
 import { FeatureCollectionLayer } from '../featureCollection';
 import { FeaturecollectionService } from '../featurecollection.service';
+import { CSVtoJSONPipe } from '../csvtojsonpipe';
+import { GeocolumnComponent, GeoColumnMapping } from './geocolumn/geocolumn.component';
 import { JsontocsvPipe } from '../jsontocsv.pipe';
-import {
-  GeocolumnComponent,
-  GeoColumnMapping,
-} from './geocolumn/geocolumn.component';
 
 @Component({
   selector: 'app-data',
@@ -16,11 +14,9 @@ import {
   providers: [GeoDataEndpointClient],
 })
 export class DataComponent implements OnInit {
-  d: string | any =
-    'qld_loca_2,opacity,colour\r\nBeenleigh,0.5,blue\r\nSunnybank,0.7,red\r\n';
+  d: string | any = 'qld_loca_2,opacity,colour\r\nBeenleigh,0.5,blue\r\nSunnybank,0.7,red\r\n';
   _geoColumn: GeoColumnMapping = { GEOJSON: 'qld_loca_2', GEOColumn: 'suburb' };
-  private _endpointurl: string =
-    'http://localhost:54933/GetSuburbRegistrantCountsForRound?runnumber=11';
+  private _endpointurl: string = 'http://localhost:54933/GetSuburbRegistrantCountsForRound?runnumber=11';
   set endpointurl(val: string) {
     this._endpointurl = val;
     //fetch the data from the endpoint
@@ -36,6 +32,7 @@ export class DataComponent implements OnInit {
   @Input() set stylerules(val: stylerule[]) {
     this._stylerules = val;
     //this.stylerulesChange.emit(this._stylerules);
+   this.d =  new JsontocsvPipe().convertJsonToCsv(val);
     this.updateData(this.d);
   }
   _stylerules: stylerule[] = [];
@@ -47,7 +44,7 @@ export class DataComponent implements OnInit {
     return this._geoColumn;
   }
   set geoColumn(val: GeoColumnMapping) {
-    if (val &&val.GEOColumn && val.GEOJSON) {
+    if (val && val.GEOColumn && val.GEOJSON) {
       this._geoColumn = val;
       this.updateData(this.d);
     }
@@ -56,40 +53,34 @@ export class DataComponent implements OnInit {
   // @Output() geoColumnChange = new EventEmitter<string>();
   // @Output() geoDataChange = new EventEmitter<string[][]>();
 
-  constructor(
-    private fcs: FeaturecollectionService,
-    private api: GeoDataEndpointClient
-  ) {}
+  constructor(private fcs: FeaturecollectionService, private api: GeoDataEndpointClient) {}
 
   ngOnInit(): void {
     this.updateData(this.d);
   }
 
   updateStyleRules(val: stylerule[]) {
-    this.stylerules = []
+    this.stylerules = [];
     this.stylerules = val;
     this.updateData(this.d);
   }
 
   updateData(d: any) {
     if (this.featureCollectionLayers) {
-      let _temp =
-        this.featureCollectionLayers[this.featurecollectionlayerindex];
-      _temp.styledata = new JsontocsvPipe().csvJSON(d);
+      let _temp = this.featureCollectionLayers[this.featurecollectionlayerindex];
+      _temp.styledata = new CSVtoJSONPipe().csvJSON(d);
 
       _temp.geocolumn = this.geoColumn;
       _temp.stylerules = this.stylerules;
       this.featureCollectionLayers[this.featurecollectionlayerindex] = _temp;
-      this.fcs.FeatureCollectionLayerObservable.next(
-        this.featureCollectionLayers
-      );
+      this.fcs.FeatureCollectionLayerObservable.next( this.featureCollectionLayers);
     }
   }
   addData(data: FileList) {
     //console.log(data);
     let filereader = new FileReader();
     filereader.onload = (e) => {
-     // console.log(filereader.result);
+      // console.log(filereader.result);
       this.d = filereader.result;
       this.updateData(this.d);
     };
@@ -106,16 +97,15 @@ export interface stylerule {
   ruletype: ruletype;
 }
 
-
 export type ruletype = opacity | colour | text;
-export type rulename = 'opacity'|'colour'|'text';
+export type rulename = 'opacity' | 'colour' | 'text';
 
-export class baseStyle{
-  rulename: string|undefined;
+export class baseStyle {
+  rulename: string | undefined;
 }
 export class opacity extends baseStyle {
   constructor() {
-    super()
+    super();
     this.opacityvalue = 1;
     this.rulename = 'opacity';
   }
@@ -123,7 +113,7 @@ export class opacity extends baseStyle {
 }
 export class colour extends baseStyle {
   constructor() {
-    super()
+    super();
     this.colour = 'grey';
     this.rulename = 'colour';
   }
@@ -135,17 +125,14 @@ export class text extends baseStyle {
     super();
     this.textvalue = '';
     this.rulename = 'text';
-    this.latoffset = 0
-    this.lngoffset = 0
-    this.cssstyle = "colour:black"
+    this.latoffset = 0;
+    this.lngoffset = 0;
+    this.cssstyle = 'colour:black';
   }
   textvalue: string;
-  latoffset:number;
-  lngoffset:number;
-  cssstyle:string;
+  latoffset: number;
+  lngoffset: number;
+  cssstyle: string;
 }
 
-
-export const stylerules:ruletype[] = [new opacity(),new colour(),new text()]
-
-
+export const stylerules: ruletype[] = [new opacity(), new colour(), new text()];

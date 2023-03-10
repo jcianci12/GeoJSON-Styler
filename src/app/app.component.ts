@@ -77,7 +77,7 @@ addlistener(){
         terms: [],
         triggerval: 0,
       },
-      this.style,{GEOColumn:"qld_loca_2",GEOJSON:"suburb"}
+      this.style,{GEOColumn:"qld_loca_2",GEOJSON:"suburb"},[]
     );
 
     this.featureCollectionLayers.push(l);
@@ -91,7 +91,7 @@ addLayer(){
         terms: [],
         triggerval: 0,
       },
-      this.style,{GEOColumn:"qld_loca_2",GEOJSON:"suburb"}
+      this.style,{GEOColumn:"qld_loca_2",GEOJSON:"suburb"},[]
     );
 
     this.featureCollectionLayers.push(l);

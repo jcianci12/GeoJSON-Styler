@@ -45,16 +45,12 @@ export class GeojsonselectorComponent implements OnInit {
     };
     fileReader.readAsText(file, 'UTF-8');
   }
-  public getJSON(): Observable<any> {
-    return this.http.get('./assets/qldsuburbs.json');
-  }
-  addLayer() {
-    this.getJSON().subscribe((data) => {
 
-      this.featurecollectionLayer![this.layerindex].features = data.features
+  addLayer() {
+
       if (this.featurecollectionLayer)
         this.fcs.FeatureCollectionLayerObservable.next(this.featurecollectionLayer)
 
-    });
+
   }
 }

@@ -17,7 +17,7 @@ import { FirstfeaturePipe } from './firstfeature.pipe';
 import { SlicePipe } from './slice.pipe';
 import { SuburbrowComponent } from './suburblist/suburbrow/suburbrow.component';
 import { DataComponent } from './data/data.component';
-import { JsontocsvPipe } from './jsontocsv.pipe';
+import { CSVtoJSONPipe } from './csvtojsonpipe';
 import { TableheadersPipe } from './tableheaders.pipe';
 import { GeocolumnComponent } from './data/geocolumn/geocolumn.component';
 import { StyleruleComponent } from './data/stylerule/stylerule.component';
@@ -26,6 +26,7 @@ import { StylepropertiesComponent } from './data/stylerule/styleproperties/style
 import { DatatableComponent } from './data/datatable/datatable.component';
 import { LoadsavebuttonComponent } from './data/loadsavebutton/loadsavebutton.component';
 import { GeojsonselectorComponent } from './data/geojsonselector/geojsonselector.component';
+import { JsontocsvPipe } from './jsontocsv.pipe';
 
 @NgModule({
   declarations: [
@@ -39,7 +40,7 @@ import { GeojsonselectorComponent } from './data/geojsonselector/geojsonselector
     SlicePipe,
     SuburbrowComponent,
     DataComponent,
-    JsontocsvPipe,
+    CSVtoJSONPipe,
     TableheadersPipe,
     GeocolumnComponent,
     StyleruleComponent,
@@ -47,7 +48,8 @@ import { GeojsonselectorComponent } from './data/geojsonselector/geojsonselector
     StylepropertiesComponent,
     DatatableComponent,
     LoadsavebuttonComponent,
-    GeojsonselectorComponent
+    GeojsonselectorComponent,
+    JsontocsvPipe
   ],
   imports: [
     BrowserModule,

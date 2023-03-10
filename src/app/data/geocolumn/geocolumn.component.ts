@@ -10,7 +10,7 @@ import { Select } from 'src/app/tableheaders.pipe';
   styleUrls: ['./geocolumn.component.css'],
 })
 export class GeocolumnComponent implements OnInit {
-  featureCollectionLayer: FeatureCollectionLayer = new FeatureCollectionLayer([], new terms(), [], { GEOColumn: '', GEOJSON: '' });
+  featureCollectionLayer: FeatureCollectionLayer = new FeatureCollectionLayer([], new terms(), [], { GEOColumn: '', GEOJSON: '' },[]);
   @Input() featureCollectionIndex!: number;
   @Input() tableheaders: Select[] = [];
   _geocolumn: GeoColumnMapping = { GEOColumn: '', GEOJSON: '' };
@@ -32,7 +32,7 @@ export class GeocolumnComponent implements OnInit {
     });
     //this one does
     this.fcs.FeatureCollectionLayerObservable.subscribe((i) => {
-      this.featureCollectionLayer = new FeatureCollectionLayer(i[this.featureCollectionIndex].features, new terms(), [], { GEOColumn: '', GEOJSON: '' });
+      this.featureCollectionLayer = new FeatureCollectionLayer(i[this.featureCollectionIndex].features, new terms(), [], { GEOColumn: '', GEOJSON: '' },[]);
 
       this.featureCollectionLayer = i[this.featureCollectionIndex];
     });

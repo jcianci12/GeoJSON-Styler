@@ -26,7 +26,7 @@
     [featureCollectionIndex]="featurecollectionlayerindex"
 
       [(geocolumn)]="geoColumn"
-      [tableheaders]="d | jsontocsv | tableheaders"
+      [tableheaders]="d | csvtojson | tableheaders"
     ></app-geocolumn>
 
   </div>
@@ -41,7 +41,7 @@
     <app-stylerule
       (stylerulesChange)="updateStyleRules($event)"
       [stylerules]="stylerules"
-      [tableheaders]="d | jsontocsv | tableheaders"
+      [tableheaders]="d | csvtojson | tableheaders"
       [featureCollectionIndex]="featurecollectionlayerindex"
     >
     </app-stylerule>

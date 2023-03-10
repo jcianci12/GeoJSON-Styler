@@ -1,40 +1,27 @@
 import { Pipe, PipeTransform } from '@angular/core';
 
 @Pipe({
-  name: 'jsontocsv',
+  name: 'jsontocsv'
 })
 export class JsontocsvPipe implements PipeTransform {
-  transform(value: string, ...args: unknown[]):string[][] {
-    return this.csvJSON(value);
+
+  transform(jsonData: any[]): string {
+    const csvString = this.convertJsonToCsv(jsonData);
+    return csvString;
   }
-  public csvJSON(csv: string) {
-    var result = [];
+  convertJsonToCsv(jsonData: any[]): string {
+    const keys = Object.keys(jsonData[0]); // get the property names as CSV headers
+    const csvHeaders = keys.join(',') + '\n'; // create CSV header row
 
-    if (csv) {
-      var lines = csv.split('\r\n');
+    const csvRows = jsonData.map((row) => {
+      return keys.map((key) => {
+        return row[key]; // get the property value for each key
+      }).join(',');
+    }).join('\n'); // create CSV row for each object in the array
 
-      // NOTE: If your columns contain commas in their values, you'll need
-      // to deal with those before doing the next step
-      // (you might convert them to &&& or something, then covert them back later)
-      // jsfiddle showing the issue https://jsfiddle.net/
-
-      //var headers = lines[0].split(',');
-
-      for (var i = 0; i < lines.length; i++) {
-        //var obj: any = {};
-        // console.log(i);
-        var currentline = lines[i].split(',');
-        result.push(currentline);
-        // for (var j = 0; j < headers.length; j++) {
-        //   //obj[headers[j]] = currentline[j];
-        // }
-
-        //result.push(obj);
-      }
-    }
-
-    //return result; //JavaScript object
-    return result; //JSON
-
+    return csvHeaders + csvRows; // combine headers and rows to create CSV string
   }
+
 }
+
+

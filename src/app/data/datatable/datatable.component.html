@@ -10,7 +10,7 @@
     </mat-expansion-panel-header>
     <table class="table">
       <tbody>
-        <tr *ngFor="let item of d | jsontocsv">
+        <tr *ngFor="let item of d | csvtojson">
           <td *ngFor="let item of item">{{ item }}</td>
         </tr>
       </tbody>
