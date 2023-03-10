@@ -2,18 +2,7 @@ import { style } from '@angular/animations';
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import * as geojson from 'geojson';
 import * as L from 'leaflet';
-import {
-  Bounds,
-  FeatureGroup,
-  geoJSON,
-  latLng,
-  Layer,
-  LayerGroup,
-  Map,
-  MapOptions,
-  tileLayer,
-  ZoomAnimEvent,
-} from 'leaflet';
+import { Bounds, FeatureGroup, geoJSON, latLng, Layer, LayerGroup, Map, MapOptions, tileLayer, ZoomAnimEvent } from 'leaflet';
 import 'leaflet.fullscreen';
 
 import { colour, opacity, text } from '../data/data.component';
@@ -37,8 +26,7 @@ export class MapComponent implements OnInit {
         opacity: 0.7,
         maxZoom: 19,
         detectRetina: true,
-        attribution:
-          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
       }),
     ],
     zoom: 1,
@@ -100,18 +88,14 @@ export class MapComponent implements OnInit {
       this._featureCollection
         ?.filter((f) => f.active)
         .forEach((f, i) => {
-          let ffp = new FeaturefilterPipe().transform(
-            f,
-            this._featureCollection[i].terms?.triggerval
-          );
+          let ffp = new FeaturefilterPipe().transform(f, this._featureCollection[i].terms?.triggerval);
           ffp.features.forEach((feature) => {
             //add the layer to the group
             let _fc = this._featureCollection[i];
 
             //is there a geo column?
             let geocolumn = _fc.geocolumn?.GEOJSON.toString().toLowerCase(); //"qld_loca_2"
-            let csvgeocolumn =
-              _fc.geocolumn?.GEOColumn.toString().toLowerCase();
+            let csvgeocolumn = _fc.geocolumn?.GEOColumn.toString().toLowerCase();
 
             if (geocolumn) {
               let styledata = this._featureCollection[i].styledata;
@@ -123,11 +107,7 @@ export class MapComponent implements OnInit {
                 //use the geocolumn index
                 let _suburb = stylerow[geocolumnindex];
 
-                if (
-                  propertytomatch &&
-                  _suburb &&
-                  propertytomatch.toLowerCase() == _suburb.toLowerCase()
-                ) {
+                if (propertytomatch && _suburb && propertytomatch.toLowerCase() == _suburb.toLowerCase()) {
                   let geo = geoJSON(feature);
                   stylerules.forEach((s) => {
                     let styledatacolumnindex = styledata[0].indexOf(s.column);
@@ -144,38 +124,25 @@ export class MapComponent implements OnInit {
                         let a = s.ruletype as colour;
 
                         //if the style has been set globally, use that value
-                        if(a.colour){
-value = a.colour
+                        if (a.colour) {
+                          value = a.colour;
                         }
 
                         geo.setStyle({
                           fillColor: value,
-                          color:value
+                          color: value,
                         });
                         break;
                       }
                       case 'text': {
-                        // let point = this.map!.latLngToContainerPoint(geo.getBounds().getCenter())
-                        //console.log("before",geo.getBounds().getCenter().lat,"after",(s.ruletype as text).latoffset+geo.getBounds().getCenter().lat)
-
                         if (true) {
-                          let lat =
-                            (s.ruletype as text).latoffset +
-                            geo.getBounds().getCenter().lat;
-                          let lng =
-                            Number.parseFloat(
-                              (s.ruletype as text).lngoffset.toString()
-                            ) + geo.getBounds().getCenter().lng;
+                          let lat = (s.ruletype as text).latoffset + geo.getBounds().getCenter().lat;
+                          let lng = Number.parseFloat((s.ruletype as text).lngoffset.toString()) + geo.getBounds().getCenter().lng;
 
                           let label = L.marker([lat, lng], {
                             icon: L.divIcon({
                               className: 'text-labels', // Set class for CSS styling
-                              html:
-                                '<div style="' +
-                                (s.ruletype as text).cssstyle +
-                                '">' +
-                                value +
-                                '</div>',
+                              html: '<div style="' + (s.ruletype as text).cssstyle + '">' + value + '</div>',
                             }),
                             zIndexOffset: 1000, // Make appear above other map features
                           });
@@ -185,13 +152,6 @@ value = a.colour
                         }
                         break;
                       }
-                      // default: {
-                      //   geo.setStyle({
-                      //     fillColor: 'grey',
-                      //     color: 'grey',
-                      //     fillOpacity: 0.1,
-                      //   });
-                      // }
                     }
 
                     let l = geo.addTo(this.featureGroup);
