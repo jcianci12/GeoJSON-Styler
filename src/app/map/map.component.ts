@@ -1,9 +1,11 @@
 import { style } from '@angular/animations';
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import * as geojson from 'geojson';
 import * as L from 'leaflet';
 import { Bounds, FeatureGroup, geoJSON, latLng, Layer, LayerGroup, Map, MapOptions, tileLayer, ZoomAnimEvent } from 'leaflet';
 import 'leaflet.fullscreen';
+import { CSVtoJSONPipe } from '../csvtojsonpipe';
 
 import { colour, opacity, text } from '../data/data.component';
 import { FeatureCollectionLayer } from '../featureCollection';
@@ -49,7 +51,7 @@ export class MapComponent implements OnInit {
   public map: Map | undefined;
   public zoom: number | undefined;
 
-  constructor(private fcs: FeaturecollectionService) {}
+  constructor(private fcs: FeaturecollectionService,private snackbar:MatSnackBar) {}
 
   ngOnInit() {
     this.sub = this.fcs.FeatureCollectionLayerObservable.subscribe((f) => {
@@ -89,6 +91,8 @@ export class MapComponent implements OnInit {
         ?.filter((f) => f.active)
         .forEach((f, i) => {
           let ffp = new FeaturefilterPipe().transform(f, this._featureCollection[i].terms?.triggerval);
+          let styledata = new CSVtoJSONPipe().csvJSON( this._featureCollection[i].styledata as any);
+              let stylerules = this._featureCollection[i].stylerules;
           ffp.features.forEach((feature) => {
             //add the layer to the group
             let _fc = this._featureCollection[i];
@@ -98,10 +102,10 @@ export class MapComponent implements OnInit {
             let csvgeocolumn = _fc.geocolumn?.GEOColumn.toString();
 
             if (geocolumn) {
-              let styledata = this._featureCollection[i].styledata;
-              let stylerules = this._featureCollection[i].stylerules;
+
               //get the index of the geo column
-              let geocolumnindex = styledata[0].findIndex(col=>col.toLowerCase()== csvgeocolumn.toLowerCase());
+              if(styledata.length){
+                let geocolumnindex = styledata[0]?.findIndex(col=>col.toLowerCase()== csvgeocolumn.toLowerCase());
               let propertytomatch = feature.properties?.[geocolumn];
               styledata.forEach((stylerow) => {
                 //use the geocolumn index
@@ -159,6 +163,9 @@ export class MapComponent implements OnInit {
                   });
                 }
               });
+              }
+
+
             }
           });
           this.featureGroup.addTo(this.map!);

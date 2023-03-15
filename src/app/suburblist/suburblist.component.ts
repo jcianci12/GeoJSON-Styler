@@ -16,7 +16,7 @@ export class SuburblistComponent implements OnInit {
 
   ngOnInit(): void {
     this.fcs.FeatureCollectionLayerObservable.subscribe((i) => {
-
+this.featureCollection = new FeatureCollectionLayer([],new terms(),[],{GEOColumn:'',GEOJSON:''},[])
       this.featureCollection = i[this.layerIndex];
     });
   }

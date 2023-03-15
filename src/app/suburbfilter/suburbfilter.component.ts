@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { Feature } from 'geojson';
+import { distinctUntilChanged } from 'rxjs';
 import { FeatureCollectionLayer } from '../featureCollection';
 import { FeaturecollectionService } from '../featurecollection.service';
 
@@ -14,7 +15,11 @@ export class SuburbfilterComponent implements OnInit {
   @Output() termChange = new EventEmitter<terms>();
   @Input() layerIndex!:number
   constructor(private fcs:FeaturecollectionService) {}
-  ngOnInit(): void {}
+  ngOnInit(): void {
+    this.fcs.FeatureCollectionLayerObservable.pipe().subscribe(i=>{
+      this.featureCollectionLayer = i[this.layerIndex]
+    })
+  }
 
   change(key: string, phrase: Event) {
     let val = (phrase.target as HTMLInputElement).value;

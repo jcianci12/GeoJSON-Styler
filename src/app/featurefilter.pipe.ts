@@ -6,6 +6,7 @@ import { terms } from './suburbfilter/suburbfilter.component';
 
 @Pipe({
   name: 'featurefilter',
+  pure:false
 })
 export class FeaturefilterPipe implements PipeTransform {
   transform(
