@@ -3,6 +3,7 @@ import { MatSnackBar, MatSnackBarConfig } from '@angular/material/snack-bar';
 import { config, of } from 'rxjs';
 import { FeatureCollectionLayer } from 'src/app/featureCollection';
 import { FeaturecollectionService } from 'src/app/featurecollection.service';
+import { JsontocsvPipe } from 'src/app/jsontocsv.pipe';
 import { terms } from 'src/app/suburbfilter/suburbfilter.component';
 
 @Component({
@@ -10,7 +11,8 @@ import { terms } from 'src/app/suburbfilter/suburbfilter.component';
   templateUrl: './loadsavebutton.component.html',
   styleUrls: ['./loadsavebutton.component.css'],
 })
-export class LoadsavebuttonComponent {
+export class LoadsavebuttonComponent implements OnInit {
+
   @Input() featureCollection: FeatureCollectionLayer[] = [];
   @Output() featureCollectionChange = new EventEmitter<FeatureCollectionLayer[]>();
   constructor(private matsnack: MatSnackBar, private fcs: FeaturecollectionService) {}
@@ -19,14 +21,20 @@ export class LoadsavebuttonComponent {
       dynamicDownload: null as unknown as HTMLElement,
     },
   };
+  ngOnInit(){
+    this.fcs.FeatureCollectionLayerObservable.subscribe(i=>this.featureCollection = i)
+  }
   fakeValidateUserData() {
     return of(this.featureCollection);
   }
   dynamicDownloadJson() {
     this.matsnack.open('Downloading map and style state', 'Okay', { duration: 2000 });
-    this.fakeValidateUserData().subscribe((res: any) => {
+    this.fakeValidateUserData().subscribe((res: FeatureCollectionLayer[]) => {
+// res.forEach(l=>{
+//   l.styledata = new JsontocsvPipe().convertJsonToCsv(l.styledata)as unknown  as string [][]
+// })
       this.dyanmicDownloadByHtmlTag({
-        fileName: 'mapstate.json',
+        fileName: 'mapstate '+new Date().toString()+'.json',
         text: JSON.stringify(res),
       });
     });

@@ -12,7 +12,7 @@ export class CSVtoJSONPipe implements PipeTransform {
   public csvJSON(csv: string): string[][] {
     const result = [];
 
-    if (csv) {
+    if (csv.length) {
       const lines = csv.split('\r\n');
 
       // loop through each line of the CSV string

@@ -6,6 +6,7 @@ import { FeaturecollectionService } from '../featurecollection.service';
 import { CSVtoJSONPipe } from '../csvtojsonpipe';
 import { GeocolumnComponent, GeoColumnMapping } from './geocolumn/geocolumn.component';
 import { JsontocsvPipe } from '../jsontocsv.pipe';
+import { distinctUntilChanged } from 'rxjs';
 
 @Component({
   selector: 'app-data',
@@ -31,9 +32,10 @@ export class DataComponent implements OnInit {
   @Input() feature!: number;
   @Input() set stylerules(val: stylerule[]) {
     this._stylerules = val;
-    //this.stylerulesChange.emit(this._stylerules);
-   this.d =  new JsontocsvPipe().convertJsonToCsv(val);
-    this.updateData(this.d);
+    //this.featureCollectionLayers[this.featurecollectionlayerindex].stylerules = this._stylerules
+    //this.d =  new JsontocsvPipe().convertJsonToCsv(val);
+
+    //this.updateData(this.d);
   }
   _stylerules: stylerule[] = [];
 
@@ -46,50 +48,50 @@ export class DataComponent implements OnInit {
   set geoColumn(val: GeoColumnMapping) {
     if (val && val.GEOColumn && val.GEOJSON) {
       this._geoColumn = val;
-      this.updateData(this.d);
+      this.updateData();
     }
   }
-  // @Output() stylerulesChange = new EventEmitter<stylerule[]>();
-  // @Output() geoColumnChange = new EventEmitter<string>();
-  // @Output() geoDataChange = new EventEmitter<string[][]>();
 
   constructor(private fcs: FeaturecollectionService, private api: GeoDataEndpointClient) {}
 
   ngOnInit(): void {
-    this.updateData(this.d);
+    this.fcs.FeatureCollectionLayerObservable.pipe(distinctUntilChanged()).subscribe((i) => {
+      this.featureCollectionLayers = i;
+      this.updateData();
+    });
   }
 
   updateStyleRules(val: stylerule[]) {
     this.stylerules = [];
     this.stylerules = val;
-    this.updateData(this.d);
+    this.updateData();
   }
 
-  updateData(d: any) {
+  updateData() {
     if (this.featureCollectionLayers) {
       let _temp = this.featureCollectionLayers[this.featurecollectionlayerindex];
-      _temp.styledata = new CSVtoJSONPipe().csvJSON(d);
-
+//for some reason, in update data im trying to pass a string to this function
+      this.d = _temp.styledata;
       _temp.geocolumn = this.geoColumn;
       _temp.stylerules = this.stylerules;
       this.featureCollectionLayers[this.featurecollectionlayerindex] = _temp;
-      this.fcs.FeatureCollectionLayerObservable.next( this.featureCollectionLayers);
+      this.fcs.FeatureCollectionLayerObservable.next(this.featureCollectionLayers);
     }
   }
   addData(data: FileList) {
-    //console.log(data);
     let filereader = new FileReader();
     filereader.onload = (e) => {
-      // console.log(filereader.result);
+      //this works setting the value from the csv file data.
       this.d = filereader.result;
-      this.updateData(this.d);
+      this.featureCollectionLayers[this.featurecollectionlayerindex].styledata = this.d;
+      this.updateData();
     };
     filereader.readAsText(data[0]);
   }
   addJSONData(data: string) {
     //console.log(data);
     this.d = data;
-    this.updateData(this.d);
+    this.updateData();
   }
 }
 export interface stylerule {
