@@ -33,7 +33,7 @@ export class DataComponent implements OnInit {
   @Input() set stylerules(val: stylerule[]) {
     this._stylerules = val;
     //this.featureCollectionLayers[this.featurecollectionlayerindex].stylerules = this._stylerules
-    this.d =  new JsontocsvPipe().convertJsonToCsv(val);
+    //this.d =  new JsontocsvPipe().convertJsonToCsv(val);
 
     //this.updateData(this.d);
   }
@@ -70,6 +70,7 @@ export class DataComponent implements OnInit {
   updateData() {
     if (this.featureCollectionLayers) {
       let _temp = this.featureCollectionLayers[this.featurecollectionlayerindex];
+//for some reason, in update data im trying to pass a string to this function
       this.d = _temp.styledata;
       _temp.geocolumn = this.geoColumn;
       _temp.stylerules = this.stylerules;
