@@ -16,7 +16,6 @@ import { distinctUntilChanged } from 'rxjs';
 })
 export class DataComponent implements OnInit {
   d: string | any = 'qld_loca_2,opacity,colour\r\nBeenleigh,0.5,blue\r\nSunnybank,0.7,red\r\n';
-  _geoColumn: GeoColumnMapping = { GEOJSON: 'qld_loca_2', GEOColumn: 'suburb' };
   private _endpointurl: string = 'http://localhost:54933/GetSuburbRegistrantCountsForRound?runnumber=11';
   set endpointurl(val: string) {
     this._endpointurl = val;
@@ -42,15 +41,16 @@ export class DataComponent implements OnInit {
   @Input() featurecollectionlayerindex!: number;
   @Input() featureCollectionLayers!: FeatureCollectionLayer[];
 
-  get geoColumn(): GeoColumnMapping {
-    return this._geoColumn;
-  }
-  set geoColumn(val: GeoColumnMapping) {
-    if (val && val.GEOColumn && val.GEOJSON) {
-      this._geoColumn = val;
-      this.updateData();
-    }
-  }
+  // get geoColumn(): GeoColumnMapping {
+  //   return this._geoColumn;
+  // }
+  // set geoColumn(val: GeoColumnMapping) {
+  //   if (val && val.GEOColumn && val.GEOJSON) {
+  //     this._geoColumn = val;
+  //     //this.updateDable();
+  //   }
+  // }
+
 
   constructor(private fcs: FeaturecollectionService, private api: GeoDataEndpointClient) {}
 
@@ -70,10 +70,9 @@ export class DataComponent implements OnInit {
   updateData() {
     if (this.featureCollectionLayers) {
       let _temp = this.featureCollectionLayers[this.featurecollectionlayerindex];
-//for some reason, in update data im trying to pass a string to this function
+      //for some reason, in update data im trying to pass a string to this function
       this.d = _temp.styledata;
-      _temp.geocolumn = this.geoColumn;
-      _temp.stylerules = this.stylerules;
+      this.stylerules = _temp.stylerules;
       this.featureCollectionLayers[this.featurecollectionlayerindex] = _temp;
       this.fcs.FeatureCollectionLayerObservable.next(this.featureCollectionLayers);
     }

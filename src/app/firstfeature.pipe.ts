@@ -2,7 +2,8 @@ import { Pipe, PipeTransform } from '@angular/core';
 import { Feature, FeatureCollection } from 'geojson';
 
 @Pipe({
-  name: 'firstfeature'
+  name: 'firstfeature',
+  pure:false
 })
 export class FirstfeaturePipe implements PipeTransform {
 

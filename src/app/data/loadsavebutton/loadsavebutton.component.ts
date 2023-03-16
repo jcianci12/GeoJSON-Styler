@@ -59,10 +59,7 @@ export class LoadsavebuttonComponent implements OnInit {
     fileReader.onload = () => {
       try {
         const jsonData = JSON.parse(fileReader.result as string);
-        //console.log(jsonData);
-        //this.fcs.FeatureCollectionLayerObservable.next(jsonData);
-        // this.fcs.FeatureCollectionLayerObservable.next([new FeatureCollectionLayer([],new terms(),[],{GEOColumn:"",GEOJSON:""},[])]);
-        this.fcs.FeatureCollectionLayerObservable.next(jsonData);
+           this.fcs.FeatureCollectionLayerObservable.next(jsonData);
 
         this.matsnack.open('Successfully loaded map state', 'Okay', { duration: 2000 });
 
