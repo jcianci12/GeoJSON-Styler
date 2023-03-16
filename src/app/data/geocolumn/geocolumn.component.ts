@@ -11,43 +11,43 @@ import { Select } from 'src/app/tableheaders.pipe';
   styleUrls: ['./geocolumn.component.css'],
 })
 export class GeocolumnComponent implements OnInit {
- featureCollectionLayers!: FeatureCollectionLayer [];
-
+  // Define the class properties
+  featureCollectionLayers!: FeatureCollectionLayer [];
   @Input() featureCollectionIndex!: number;
   @Input() tableheaders: Select[] = [];
-  _geocolumn: GeoColumnMapping = { GEOColumn: '', GEOJSON: '' };
-  // @Input() set geocolumn(val: GeoColumnMapping) {
-  //   this._geocolumn = val;
-  //   // this.fcs.UpdateLayer(this.featureCollectionLayer,this.featureCollectionIndex)
-  //   this.geocolumnChange.emit(this.geocolumn);
-  // }
-  // get geocolumn() {
-  //   return this._geocolumn;
-  // }
-  geocolumn:GeoColumnMapping= {GEOColumn:'',GEOJSON:''}
+  geocolumn: GeoColumnMapping= { GEOColumn: '', GEOJSON: '' };
   @Output() geocolumnChange = new EventEmitter<GeoColumnMapping>();
-  constructor(private fcs: FeaturecollectionService) {}
-  ngOnInit(): void {
 
-    //this one does
+  constructor(private fcs: FeaturecollectionService) {}
+
+  ngOnInit(): void {
+    // Subscribe to the feature collection layer observable
     this.fcs.FeatureCollectionLayerObservable.subscribe((i) => {
-// this.featureCollectionLayers =i
-//       this.featureCollectionLayers[this.featureCollectionIndex] = new FeatureCollectionLayer(i[this.featureCollectionIndex].features, new terms(), [], { GEOColumn: '', GEOJSON: '' },[]);
-this.featureCollectionLayers = [];
+      // Reset the feature collection layers array
+      this.featureCollectionLayers = [];
+
+      // Set the feature collection layers array to the new value
       this.featureCollectionLayers = i;
+
+      // Set the geocolumn to the new value
       this.geocolumn = this.featureCollectionLayers[this.featureCollectionIndex].geocolumn
     });
   }
-  geoJSONChanged(event:MatSelectChange){
-    // this.geocolumn = { GEOColumn:event.,GEOJSON:''}
+
+  // Event handler for the geoJSON select change event
+  geoJSONChanged(event: MatSelectChange) {
+    // Update the geocolumn with the new value
     this.featureCollectionLayers[this.featureCollectionIndex].geocolumn.GEOJSON = event.value
-    }
-    geoColumnChanged(event:MatSelectChange){
-  // this.geocolumn = { GEOColumn:event.,GEOJSON:''}
-  this.featureCollectionLayers[this.featureCollectionIndex].geocolumn.GEOColumn = event.value
+  }
+
+  // Event handler for the geoColumn select change event
+  geoColumnChanged(event: MatSelectChange) {
+    // Update the geocolumn with the new value
+    this.featureCollectionLayers[this.featureCollectionIndex].geocolumn.GEOColumn = event.value
   }
 }
 
+// Define the GeoColumnMapping interface
 export interface GeoColumnMapping {
   GEOJSON: string;
   GEOColumn: string;

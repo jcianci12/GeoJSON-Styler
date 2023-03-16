@@ -141,7 +141,7 @@ export class MapComponent implements OnInit {
                       case 'text': {
                         if (true) {
                           let lat = (s.ruletype as text).latoffset + geo.getBounds().getCenter().lat;
-                          let lng = Number.parseFloat((s.ruletype as text).lngoffset.toString()) + geo.getBounds().getCenter().lng;
+                          let lng = (s.ruletype as text).lngoffset + geo.getBounds().getCenter().lng;
 
                           let label = L.marker([lat, lng], {
                             icon: L.divIcon({
