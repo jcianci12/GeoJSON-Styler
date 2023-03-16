@@ -35,11 +35,16 @@ export class GeocolumnComponent implements OnInit {
 //       this.featureCollectionLayers[this.featureCollectionIndex] = new FeatureCollectionLayer(i[this.featureCollectionIndex].features, new terms(), [], { GEOColumn: '', GEOJSON: '' },[]);
 this.featureCollectionLayers = [];
       this.featureCollectionLayers = i;
+      this.geocolumn = this.featureCollectionLayers[this.featureCollectionIndex].geocolumn
     });
   }
-
-  geoSelectChanged(event:MatSelectChange){
+  geoJSONChanged(event:MatSelectChange){
+    // this.geocolumn = { GEOColumn:event.,GEOJSON:''}
+    this.featureCollectionLayers[this.featureCollectionIndex].geocolumn.GEOJSON = event.value
+    }
+    geoColumnChanged(event:MatSelectChange){
   // this.geocolumn = { GEOColumn:event.,GEOJSON:''}
+  this.featureCollectionLayers[this.featureCollectionIndex].geocolumn.GEOColumn = event.value
   }
 }
 
