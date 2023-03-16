@@ -40,6 +40,8 @@ export class AppComponent implements OnInit {
 
     this.fcs.FeatureCollectionLayerObservable.subscribe(i=>this.featureCollectionLayers = i)
     this.addLayer()
+
+
   }
 
 

@@ -1,3 +1,4 @@
+import { HttpClient } from '@angular/common/http';
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { MatSnackBar, MatSnackBarConfig } from '@angular/material/snack-bar';
 import { config, of } from 'rxjs';
@@ -10,12 +11,14 @@ import { terms } from 'src/app/suburbfilter/suburbfilter.component';
   selector: 'app-loadsavebutton',
   templateUrl: './loadsavebutton.component.html',
   styleUrls: ['./loadsavebutton.component.css'],
+  providers: [HttpClient]
+
 })
 export class LoadsavebuttonComponent implements OnInit {
 
   @Input() featureCollection: FeatureCollectionLayer[] = [];
   @Output() featureCollectionChange = new EventEmitter<FeatureCollectionLayer[]>();
-  constructor(private matsnack: MatSnackBar, private fcs: FeaturecollectionService) {}
+  constructor(private http:HttpClient, private matsnack: MatSnackBar, private fcs: FeaturecollectionService) {}
   private setting = {
     element: {
       dynamicDownload: null as unknown as HTMLElement,
@@ -23,6 +26,9 @@ export class LoadsavebuttonComponent implements OnInit {
   };
   ngOnInit(){
     this.fcs.FeatureCollectionLayerObservable.subscribe(i=>this.featureCollection = i)
+    this.http.get('assets/demomapstate.json').subscribe(data => {
+      this.fcs.FeatureCollectionLayerObservable.next(data as FeatureCollectionLayer[]);
+    });
   }
   fakeValidateUserData() {
     return of(this.featureCollection);
