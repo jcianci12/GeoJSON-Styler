@@ -22,25 +22,37 @@ export class MapComponent implements OnInit {
   @Output() map$: EventEmitter<Map> = new EventEmitter();
   @Output() zoom$: EventEmitter<number> = new EventEmitter();
   bounds: Bounds = new Bounds();
+  tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    opacity: 0.7,
+    maxZoom: 19,
+    detectRetina: true,
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+  });
+// add a button to the map to toggle the tile layer
   @Input() options: MapOptions = {
-    layers: [
-      tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        opacity: 0.7,
-        maxZoom: 19,
-        detectRetina: true,
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-      }),
+    layers: [this.tileLayer
     ],
     zoom: 1,
     center: latLng(0, 0),
     fullscreenControl: true,
     fullscreenControlOptions: {
       position: 'topleft',
-      title: 'Vollbild-Anzeige',
-      titleCancel: 'Vollbild-Anzeige verlassen',
+      title: 'Full screen',
+      titleCancel: 'Full screen cancel',
       forcePseudoFullscreen: true, // limit fullscreen to window of map
     },
   };
+
+  // to toggle the tile layer on and off, you can call the following function
+ toggleTileLayer() {
+  if (this.map?.hasLayer(this.tileLayer)) {
+    this.map.removeLayer(this.tileLayer);
+  } else {
+    this.map?.addLayer(this.tileLayer);
+  }
+}
+
+
   private _featureCollection!: FeatureCollectionLayer[];
   private featureGroup = new FeatureGroup();
   sub: any;
@@ -50,6 +62,7 @@ export class MapComponent implements OnInit {
   }
   public map: Map | undefined;
   public zoom: number | undefined;
+  //easybutton = L.easyButton('fa-map', this.toggleTileLayer).addTo(this.map);
 
   constructor(private fcs: FeaturecollectionService, private snackbar: MatSnackBar) { }
 
