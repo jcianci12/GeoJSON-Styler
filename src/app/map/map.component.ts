@@ -142,7 +142,7 @@ export class MapComponent implements OnInit {
     let styledata = new CSVtoJSONPipe().csvJSON(this._featureCollection[i].styledata as any);
     let styledatacolumnindex = styledata[0].indexOf(s.column);
     let value = stylerow[styledatacolumnindex];
-    var geo = L.marker([feature.geometry.coordinates[0],feature.geometry.coordinates[1]]);
+    var geo = L.marker([feature.coordinates[0],feature.coordinates[1]]);
     let markerHtmlStyles = `
   background-color: grey;
   width: 3rem;
