@@ -51,13 +51,14 @@ export class MapComponent implements OnInit {
   public map: Map | undefined;
   public zoom: number | undefined;
 
-  constructor(private fcs: FeaturecollectionService, private snackbar: MatSnackBar) {}
+  constructor(private fcs: FeaturecollectionService, private snackbar: MatSnackBar) { }
 
   ngOnInit() {
     this.sub = this.fcs.FeatureCollectionLayerObservable.subscribe((f) => {
       console.log('received data', f);
       this.updateFeatureCollection(f);
     });
+
   }
 
   ngOnDestroy() {
@@ -121,7 +122,7 @@ export class MapComponent implements OnInit {
 
                       }
                       if (feature.geometry.type == 'Point') {
-                        let geo = this.handlePoint(feature as unknown as geojson.Feature<geojson.Point>,s, stylerow, i, _fc);
+                        let geo = this.handlePoint(feature as unknown as geojson.Feature<geojson.Point>, s, stylerow, i, _fc);
                         let l = geo.addTo(this.featureGroup);
                         this.featureGroup.addLayer(l);
                       }
@@ -148,10 +149,10 @@ export class MapComponent implements OnInit {
     let styledata = new CSVtoJSONPipe().csvJSON(this._featureCollection[i].styledata as any);
     let styledatacolumnindex = styledata[0].indexOf(s.column);
     let value = stylerow[styledatacolumnindex];
-    var geo = L.marker([feature.geometry.coordinates[1],feature.geometry.coordinates[0]]);
-let text = ''
-let opacity = 1
-let colour = ''
+    var geo = L.marker([feature.geometry.coordinates[1], feature.geometry.coordinates[0]]);
+    let text = ''
+    let opacity = 1
+    let colour = ''
     switch (s.ruletype.rulename) {
       case 'opacity': {
         let a = s.ruletype as opacity;
@@ -172,19 +173,19 @@ let colour = ''
       }
       case 'text': {
         let a = s.ruletype as text;
-          text =  a.textvalue==''?value:a.textvalue
+        text = a.textvalue == '' ? value : a.textvalue
 
         break;
       }
     }
-    geo.setIcon(this.geticon(colour,opacity,text))
+    geo.setIcon(this.geticon(colour, opacity, text))
     return geo;
   }
-  geticon(colour:string,opacity:number,text:string):L.DivIcon{
+  geticon(colour: string, opacity: number, text: string): L.DivIcon {
     let markerHtmlStyles = `
-    background-color: `+(colour??'grey')+`;
+    background-color: `+ (colour ?? 'grey') + `;
     width: 1rem;
-    opacity: `+opacity+`;
+    opacity: `+ opacity + `;
     height: 1rem;
     display: block;
     left: -1.5rem;
@@ -193,14 +194,14 @@ let colour = ''
     border-radius: 1rem 1rem 0;
 
     border: 1px solid #FFFFFF`;
-      let icon = L.divIcon({
-        className: 'my-custom-pin',
-        iconAnchor: [0, 24],
-        tooltipAnchor: [-6, 0],
-        popupAnchor: [0, -36],
-        html: `<div><span style="${markerHtmlStyles}"/>`+text+`</div>`,
-      });
-      return icon
+    let icon = L.divIcon({
+      className: 'my-custom-pin',
+      iconAnchor: [0, 24],
+      tooltipAnchor: [-6, 0],
+      popupAnchor: [0, -36],
+      html: `<div><span style="${markerHtmlStyles}"/>` + text + `</div>`,
+    });
+    return icon
   }
 
   handlePolygon(s: stylerule, feature: geojson.Feature<geojson.Geometry, geojson.GeoJsonProperties>, stylerow: string[], i: number, _fc: FeatureCollectionLayer): L.GeoJSON<any> {
