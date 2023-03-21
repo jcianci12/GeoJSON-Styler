@@ -72,43 +72,9 @@
                   </div>
                 </div>
               </mat-expansion-panel>
-              <mat-expansion-panel>
-                <mat-expansion-panel-header>
-                  <mat-panel-title> GEOJson </mat-panel-title>
-                  <mat-panel-description> </mat-panel-description>
-                </mat-expansion-panel-header>
 
-                <app-geojsonselector [layerindex]="i"></app-geojsonselector>
 
-              </mat-expansion-panel>
-              <mat-expansion-panel>
-                <mat-expansion-panel-header>
-                  <mat-panel-title> Filter </mat-panel-title>
-                  <mat-panel-description> </mat-panel-description>
-                </mat-expansion-panel-header>
-                {{ featureCollection.terms | json }}
-                <app-suburbfilter
-                  [feature]="featureCollection | firstfeature"
-[layerIndex]="i"
-                ></app-suburbfilter>
-              </mat-expansion-panel>
-              <mat-expansion-panel>
-                <mat-expansion-panel-header>
-                  <mat-panel-title> List </mat-panel-title>
-                  <mat-panel-description>
-                    <!-- ({{
-                      (
-                        featureCollection
-                        | featurefilter: featureCollection.terms.triggerval
-                      )
-                    }}) -->
-                  </mat-panel-description>
-                </mat-expansion-panel-header>
-                <!-- {{featureCollection.terms|json}} -->
-                <app-suburblist
-                  [layerIndex]="i"
-                ></app-suburblist>
-              </mat-expansion-panel>
+
             </ng-container>
           </mat-expansion-panel>
         </mat-accordion>

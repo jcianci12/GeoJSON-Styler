@@ -1,3 +1,7 @@
+<app-suburbfilter
+                  [feature]="featureCollection | firstfeature"
+[layerIndex]="layerIndex"
+                ></app-suburbfilter>
 <div *ngIf="(featureCollection | featurefilter : 0).features.length > 50; else elsetemplate">
   <p>
     There are

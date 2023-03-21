@@ -13,12 +13,31 @@
         <app-jsonendpoint [endpointurl]="endpointurl" (dataChange)="addJSONData($event)" ></app-jsonendpoint>
 
       </mat-tab>
+
     </mat-tab-group>
+    <app-datatable [d]="d"></app-datatable>
+    <div class="row">
+      <div class="col">
+        <mat-expansion-panel>
+          <mat-expansion-panel-header>
+            <mat-panel-title> GEOJson </mat-panel-title>
+            <mat-panel-description> </mat-panel-description>
+          </mat-expansion-panel-header>
+
+          <app-geojsonselector [layerindex]="this.featurecollectionlayerindex"></app-geojsonselector>
+          <app-suburblist
+          [layerIndex]="featurecollectionlayerindex"
+        ></app-suburblist>
+        </mat-expansion-panel>
+        <!-- {{featurecollectionlayerindex}}
+        {{stylerules|json}} -->
+      </div>
+    </div>
   </div>
 </div>
 <br />
 <div class="row">
-  <div class="col">
+  <div class="col"  style="border-style: hidden hidden hidden dotted">
     <h1>Data layers</h1>
     <p>Choose the column to join on (Eg. The suburb column)</p>
     <app-geocolumn
@@ -47,5 +66,5 @@
     {{stylerules|json}} -->
   </div>
 </div>
-<app-datatable [d]="d"></app-datatable>
+
 

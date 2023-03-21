@@ -1,11 +1,7 @@
 <!-- {{stylerules|json}} -->
 <button mat-button (click)="addrule()"><mat-icon>add</mat-icon></button>
 <div class="row" *ngFor="let item of stylerules; let i = index">
-  <div class="col-1">
-    <button mat-button (click)="removeRule(i)">
-      <mat-icon>delete</mat-icon>
-    </button>
-  </div>
+
   <div class="col">
     <mat-form-field appearance="fill" style="width: 100%">
       <mat-label>Select the style type</mat-label>
@@ -25,6 +21,11 @@
         </mat-option>
       </mat-select>
     </mat-form-field>
+  </div>
+  <div class="col-1">
+    <button mat-button (click)="removeRule(i)">
+      <mat-icon>delete</mat-icon>
+    </button>
   </div>
   <app-styleproperties class="col" [ruletype]="item.ruletype" (ruletypeChange)="updateRule(i,item)"></app-styleproperties>
 
