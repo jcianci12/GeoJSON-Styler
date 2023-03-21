@@ -112,13 +112,14 @@ export class MapComponent implements OnInit {
 
                   if (propertytomatch && _suburb && propertytomatch.toLowerCase() == _suburb.toLowerCase()) {
                     stylerules.forEach((s) => {
+                      // console.log(typeof feature)
                       if (feature.geometry.type == 'MultiPolygon') {
                         let geo = this.handlePolygon(s, feature, stylerow, i, _fc);
                         let l = geo.addTo(this.featureGroup);
                         this.featureGroup.addLayer(l);
                       }
                       if (feature.geometry.type == 'Point') {
-                        let geo = this.handlePoint(feature as unknown as geojson.Point,s, stylerow, i, _fc);
+                        let geo = this.handlePoint(feature as unknown as geojson.Feature<geojson.Point>,s, stylerow, i, _fc);
                         let l = geo.addTo(this.featureGroup);
                         this.featureGroup.addLayer(l);
                       }
@@ -138,32 +139,20 @@ export class MapComponent implements OnInit {
     }
   }
 
-  handlePoint(feature: geojson.Point, s: stylerule, stylerow: string[], i: number, _fc: FeatureCollectionLayer): L.Marker {
+  handlePoint(feature: geojson.Feature<geojson.Point>, s: stylerule, stylerow: string[], i: number, _fc: FeatureCollectionLayer): L.Marker {
     let styledata = new CSVtoJSONPipe().csvJSON(this._featureCollection[i].styledata as any);
     let styledatacolumnindex = styledata[0].indexOf(s.column);
     let value = stylerow[styledatacolumnindex];
-    var geo = L.marker([feature.coordinates[0],feature.coordinates[1]]);
-    let markerHtmlStyles = `
-  background-color: grey;
-  width: 3rem;
-  height: 3rem;
-  display: block;
-  left: -1.5rem;
-  top: -1.5rem;
-  position: relative;
-  border-radius: 3rem 3rem 0;
-  transform: rotate(45deg);
-  border: 1px solid #FFFFFF`;
-    let icon = L.divIcon({
-      className: 'my-custom-pin',
-      iconAnchor: [0, 24],
-      tooltipAnchor: [-6, 0],
-      popupAnchor: [0, -36],
-      html: `<span style="${markerHtmlStyles}" />`,
-    });
+    var geo = L.marker([feature.geometry.coordinates[1],feature.geometry.coordinates[0]]);
+let text = ''
+let opacity = 1
+let colour = ''
     switch (s.ruletype.rulename) {
       case 'opacity': {
-        geo.setOpacity(Number.parseFloat(value));
+        let a = s.ruletype as opacity;
+
+        //geo.setOpacity(Number.parseFloat(value));
+        opacity = a.opacityvalue
         break;
       }
       case 'colour': {
@@ -171,16 +160,42 @@ export class MapComponent implements OnInit {
 
         //if the style has been set globally, use that value
         if (a.colour) {
-          value = a.colour;
+          colour = a.colour;
         }
 
         break;
       }
       case 'text': {
+        let a = s.ruletype as text;
+          text =  a.textvalue==''?value:a.textvalue
+
         break;
       }
     }
+    geo.setIcon(this.geticon(colour,opacity,text))
     return geo;
+  }
+  geticon(colour:string,opacity:number,text:string):L.DivIcon{
+    let markerHtmlStyles = `
+    background-color: `+(colour??'grey')+`;
+    width: 3rem;
+    opacity: `+opacity+`;
+    height: 3rem;
+    display: block;
+    left: -1.5rem;
+    top: -1.5rem;
+    position: relative;
+    border-radius: 3rem 3rem 0;
+
+    border: 1px solid #FFFFFF`;
+      let icon = L.divIcon({
+        className: 'my-custom-pin',
+        iconAnchor: [0, 24],
+        tooltipAnchor: [-6, 0],
+        popupAnchor: [0, -36],
+        html: `<div><span style="${markerHtmlStyles}"/>`+text+`</div>`,
+      });
+      return icon
   }
 
   handlePolygon(s: stylerule, feature: geojson.Feature<geojson.Geometry, geojson.GeoJsonProperties>, stylerow: string[], i: number, _fc: FeatureCollectionLayer): L.GeoJSON<any> {

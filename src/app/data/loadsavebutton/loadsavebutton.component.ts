@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { MatSnackBar, MatSnackBarConfig } from '@angular/material/snack-bar';
-import { config, of } from 'rxjs';
+import { config, distinctUntilChanged, of } from 'rxjs';
 import { FeatureCollectionLayer } from 'src/app/featureCollection';
 import { FeaturecollectionService } from 'src/app/featurecollection.service';
 import { JsontocsvPipe } from 'src/app/jsontocsv.pipe';
@@ -18,17 +18,20 @@ export class LoadsavebuttonComponent implements OnInit {
 
   @Input() featureCollection: FeatureCollectionLayer[] = [];
   @Output() featureCollectionChange = new EventEmitter<FeatureCollectionLayer[]>();
-  constructor(private http:HttpClient, private matsnack: MatSnackBar, private fcs: FeaturecollectionService) {}
+  constructor(private http: HttpClient, private matsnack: MatSnackBar, private fcs: FeaturecollectionService) { }
   private setting = {
     element: {
       dynamicDownload: null as unknown as HTMLElement,
     },
   };
-  ngOnInit(){
-    this.fcs.FeatureCollectionLayerObservable.subscribe(i=>this.featureCollection = i)
-    this.http.get('assets/demomapstate.json').subscribe(data => {
-      this.fcs.FeatureCollectionLayerObservable.next(data as FeatureCollectionLayer[]);
-    });
+  ngOnInit() {
+    this.fcs.FeatureCollectionLayerObservable.pipe(distinctUntilChanged()).subscribe(i => {
+      this.featureCollection = i
+      this.saveCookieState()
+    }
+    )
+    this.loadCookieState()
+
   }
   fakeValidateUserData() {
     return of(this.featureCollection);
@@ -36,11 +39,11 @@ export class LoadsavebuttonComponent implements OnInit {
   dynamicDownloadJson() {
     this.matsnack.open('Downloading map and style state', 'Okay', { duration: 2000 });
     this.fakeValidateUserData().subscribe((res: FeatureCollectionLayer[]) => {
-// res.forEach(l=>{
-//   l.styledata = new JsontocsvPipe().convertJsonToCsv(l.styledata)as unknown  as string [][]
-// })
+      // res.forEach(l=>{
+      //   l.styledata = new JsontocsvPipe().convertJsonToCsv(l.styledata)as unknown  as string [][]
+      // })
       this.dyanmicDownloadByHtmlTag({
-        fileName: 'mapstate '+new Date().toString()+'.json',
+        fileName: 'mapstate ' + new Date().toString() + '.json',
         text: JSON.stringify(res),
       });
     });
@@ -65,7 +68,7 @@ export class LoadsavebuttonComponent implements OnInit {
     fileReader.onload = () => {
       try {
         const jsonData = JSON.parse(fileReader.result as string);
-           this.fcs.FeatureCollectionLayerObservable.next(jsonData);
+        this.fcs.FeatureCollectionLayerObservable.next(jsonData);
 
         this.matsnack.open('Successfully loaded map state', 'Okay', { duration: 2000 });
 
@@ -78,5 +81,22 @@ export class LoadsavebuttonComponent implements OnInit {
       }
     };
     fileReader.readAsText(file, 'UTF-8');
+  }
+  saveCookieState() {
+    if (this.featureCollection[0]?.features.length) {
+      let data = JSON.stringify(this.featureCollection);
+      localStorage.setItem('myData', data);
+    }
+  }
+  loadCookieState() {
+    let data = localStorage.getItem('myData')
+    if (data) {
+      this.fcs.FeatureCollectionLayerObservable.next(JSON.parse(data));
+    }
+    // else {
+    //   this.http.get('assets/demomapstate.json').subscribe(data => {
+    //     this.fcs.FeatureCollectionLayerObservable.next(data as FeatureCollectionLayer[]);
+    //   });
+    // }
   }
 }

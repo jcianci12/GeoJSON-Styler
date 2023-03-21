@@ -6,4 +6,10 @@
   <div class="col">
     <input type="file" (change)="onFileSelected($event)" />
   </div>
+  <div class="col">
+    <button  (click)="loadCookieState()">Load Cookie</button>
+  </div>
+  <div class="col">
+    <button  (click)="saveCookieState()">Save Cookie</button>
+  </div>
 </div>

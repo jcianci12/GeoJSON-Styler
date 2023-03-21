@@ -39,7 +39,7 @@ export class StyleruleComponent implements OnInit {
     stylerule[]
   >();
   ngOnInit(): void {
-    this.addrule();
+    //this.addrule();
   }
 
   addrule() {
