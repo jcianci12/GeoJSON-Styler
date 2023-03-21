@@ -16,8 +16,8 @@ import {
   styleUrls: ['./stylerule.component.css'],
 })
 export class StyleruleComponent implements OnInit {
-  constructor(private fcs: FeaturecollectionService) {}
-  styleruleOptions: (string|undefined)[] = [new opacity(), new colour(), new text()].map(
+  constructor(private fcs: FeaturecollectionService) { }
+  styleruleOptions: (string | undefined)[] = [new opacity(), new colour(), new text()].map(
     (i) => i.rulename
   );
   @Input() tableheaders: Select[] = [];
@@ -46,11 +46,14 @@ export class StyleruleComponent implements OnInit {
     let _temp = this.stylerules;
     _temp.push({ column: 'demoint', ruletype: new text() });
     this.stylerules = _temp;
+    this.stylerulesChange.emit(this.stylerules)
   }
 
   removeRule(index: number) {
     this.stylerules.splice(index, 1);
     this.stylerules = this.stylerules;
+    this.stylerulesChange.emit(this.stylerules)
+
   }
   updateRule(index: number, stylerule: stylerule) {
     //get the matching class by the rule name

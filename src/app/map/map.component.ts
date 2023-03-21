@@ -106,6 +106,7 @@ export class MapComponent implements OnInit {
               if (styledata.length) {
                 let geocolumnindex = styledata[0]?.findIndex((col) => col.toLowerCase() == csvgeocolumn.toLowerCase());
                 let propertytomatch = feature.properties?.[geocolumn];
+
                 styledata.forEach((stylerow) => {
                   //use the geocolumn index
                   let _suburb = stylerow[geocolumnindex];
@@ -117,12 +118,14 @@ export class MapComponent implements OnInit {
                         let geo = this.handlePolygon(s, feature, stylerow, i, _fc);
                         let l = geo.addTo(this.featureGroup);
                         this.featureGroup.addLayer(l);
+
                       }
                       if (feature.geometry.type == 'Point') {
                         let geo = this.handlePoint(feature as unknown as geojson.Feature<geojson.Point>,s, stylerow, i, _fc);
                         let l = geo.addTo(this.featureGroup);
                         this.featureGroup.addLayer(l);
                       }
+
                     });
                   }
                 });
@@ -130,6 +133,8 @@ export class MapComponent implements OnInit {
             }
           });
           this.featureGroup.addTo(this.map!);
+
+          this.snackbar.open(this.featureGroup.getLayers().length + " features added.")
 
           let b = this.featureGroup.getBounds();
           if (this.featureGroup.getLayers().length > 0) {
@@ -178,14 +183,14 @@ let colour = ''
   geticon(colour:string,opacity:number,text:string):L.DivIcon{
     let markerHtmlStyles = `
     background-color: `+(colour??'grey')+`;
-    width: 3rem;
+    width: 1rem;
     opacity: `+opacity+`;
-    height: 3rem;
+    height: 1rem;
     display: block;
     left: -1.5rem;
     top: -1.5rem;
     position: relative;
-    border-radius: 3rem 3rem 0;
+    border-radius: 1rem 1rem 0;
 
     border: 1px solid #FFFFFF`;
       let icon = L.divIcon({

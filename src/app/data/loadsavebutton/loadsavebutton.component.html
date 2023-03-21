@@ -4,12 +4,13 @@
 
   </div>
   <div class="col">
-    <input type="file" (change)="onFileSelected($event)" />
+    <label for="file-upload">Load a map state:</label>
+    <input type="file" (change)="onFileSelected($event)"  />
   </div>
-  <div class="col">
+  <!-- <div class="col">
     <button  (click)="loadCookieState()">Load Cookie</button>
   </div>
   <div class="col">
     <button  (click)="saveCookieState()">Save Cookie</button>
-  </div>
+  </div> -->
 </div>

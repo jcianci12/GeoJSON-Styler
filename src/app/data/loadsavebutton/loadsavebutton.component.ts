@@ -25,7 +25,7 @@ export class LoadsavebuttonComponent implements OnInit {
     },
   };
   ngOnInit() {
-    this.fcs.FeatureCollectionLayerObservable.pipe(distinctUntilChanged()).subscribe(i => {
+    this.fcs.FeatureCollectionLayerObservable.pipe().subscribe(i => {
       this.featureCollection = i
       this.saveCookieState()
     }

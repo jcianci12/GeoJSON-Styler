@@ -25,18 +25,9 @@ export class DataComponent implements OnInit {
     return this._endpointurl;
   }
 
-  get stylerules() {
-    return this._stylerules;
-  }
-  @Input() feature!: number;
-  @Input() set stylerules(val: stylerule[]) {
-    this._stylerules = val;
-    //this.featureCollectionLayers[this.featurecollectionlayerindex].stylerules = this._stylerules
-    //this.d =  new JsontocsvPipe().convertJsonToCsv(val);
 
-    //this.updateData(this.d);
-  }
-  _stylerules: stylerule[] = [];
+  @Input() feature!: number;
+
 
   @Input() featurecollectionlayerindex!: number;
   @Input() featureCollectionLayers!: FeatureCollectionLayer[];
@@ -62,8 +53,7 @@ export class DataComponent implements OnInit {
   }
 
   updateStyleRules(val: stylerule[]) {
-    this.stylerules = [];
-    this.stylerules = val;
+    this.featureCollectionLayers[this.featurecollectionlayerindex].stylerules = val
     this.updateData();
   }
 
@@ -72,7 +62,7 @@ export class DataComponent implements OnInit {
       let _temp = this.featureCollectionLayers[this.featurecollectionlayerindex];
       //for some reason, in update data im trying to pass a string to this function
       this.d = _temp.styledata;
-      this.stylerules = _temp.stylerules;
+      _temp.stylerules = _temp.stylerules;
       this.featureCollectionLayers[this.featurecollectionlayerindex] = _temp;
       this.fcs.FeatureCollectionLayerObservable.next(this.featureCollectionLayers);
     }

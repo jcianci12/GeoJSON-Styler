@@ -38,7 +38,7 @@
   <div class="col">
     <app-stylerule
       (stylerulesChange)="updateStyleRules($event)"
-      [stylerules]="stylerules"
+      [stylerules]="featureCollectionLayers[this.featurecollectionlayerindex].stylerules"
       [tableheaders]="d | csvtojson | tableheaders"
       [featureCollectionIndex]="featurecollectionlayerindex"
     >
