@@ -28,7 +28,7 @@ export class MapComponent implements OnInit {
     detectRetina: true,
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
   });
-// add a button to the map to toggle the tile layer
+  // add a button to the map to toggle the tile layer
   @Input() options: MapOptions = {
     layers: [this.tileLayer
     ],
@@ -44,13 +44,13 @@ export class MapComponent implements OnInit {
   };
 
   // to toggle the tile layer on and off, you can call the following function
- toggleTileLayer() {
-  if (this.map?.hasLayer(this.tileLayer)) {
-    this.map.removeLayer(this.tileLayer);
-  } else {
-    this.map?.addLayer(this.tileLayer);
+  toggleTileLayer() {
+    if (this.map?.hasLayer(this.tileLayer)) {
+      this.map.removeLayer(this.tileLayer);
+    } else {
+      this.map?.addLayer(this.tileLayer);
+    }
   }
-}
 
 
   private _featureCollection!: FeatureCollectionLayer[];
@@ -72,6 +72,14 @@ export class MapComponent implements OnInit {
       this.updateFeatureCollection(f);
     });
 
+    let button = L.Control.extend({
+      onAdd: function () {
+
+      }
+    })
+    let control = new L.Control({ position: 'topright' });
+    //this.map?.addControl(new L.Control({position:'topright'}))
+    // myControl.addTo(map);
   }
 
   ngOnDestroy() {

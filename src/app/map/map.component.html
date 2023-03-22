@@ -1,5 +1,9 @@
-  <div class="map-container" leaflet
-     [leafletOptions]="options"
-     (leafletMapReady)="onMapReady($event)"
-     (leafletMapZoomEnd)="onMapZoomEnd($event)"
-    ></div>
+<div class="map-container" leaflet [leafletOptions]="options" (leafletMapReady)="onMapReady($event)"
+  (leafletMapZoomEnd)="onMapZoomEnd($event)">
+
+  <button class="refreshButton" title="Toggle back ground" (click)="toggleTileLayer()"><mat-icon> layers</mat-icon>
+
+  </button>
+
+
+</div>

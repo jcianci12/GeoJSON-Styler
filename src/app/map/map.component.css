@@ -4,3 +4,15 @@
   position: inherit;
 }
 
+.refreshButton {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  padding: 10px;
+  z-index: 10000;
+}
+
+.refreshButton:hover{
+    opacity: 0.8;
+    cursor: pointer;
+}
