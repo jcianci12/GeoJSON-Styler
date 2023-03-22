@@ -93,11 +93,38 @@ export class MapComponent implements OnInit {
     this.zoom = map.getZoom();
     this.zoom$.emit(this.zoom);
     this.updateFeatureCollection();
+    setTimeout(() => {
+          this.loadBounds()
+
+    }, 1000);
+
   }
 
   onMapZoomEnd(e: ZoomAnimEvent | any) {
-    this.zoom = e.target.getZoom();
-    this.zoom$.emit(this.zoom);
+    let bounds = this.map?.getBounds()
+    localStorage.setItem('bounds', JSON.stringify(bounds));
+  }
+  onMapMoveEnd(){
+    let bounds = this.map?.getBounds()
+    localStorage.setItem('bounds', JSON.stringify(bounds));
+  }
+
+  loadBounds() {
+    let savedBounds = localStorage.getItem('bounds') as string;
+    // When the page loads, check if there is a saved zoom level and set it on the map
+    if (savedBounds !== null) {
+      let parsed = (JSON.parse(savedBounds) as any)
+
+      let bounds = L.latLngBounds(parsed._northEast,parsed._southWest)
+
+      this.map?.flyToBounds(bounds);
+    }
+    else{
+      let b = this.featureGroup.getBounds();
+      if (this.featureGroup.getLayers().length > 0) {
+        this.map!.fitBounds(b);
+      }
+    }
   }
 
   updateFeatureCollection(featureCollection?: FeatureCollectionLayer[] | null) {
@@ -158,10 +185,7 @@ export class MapComponent implements OnInit {
 
           this.snackbar.open(this.featureGroup.getLayers().length + " features added.")
 
-          let b = this.featureGroup.getBounds();
-          if (this.featureGroup.getLayers().length > 0) {
-            this.map!.fitBounds(b);
-          }
+
         });
     }
   }
