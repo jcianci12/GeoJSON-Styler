@@ -93,10 +93,10 @@ export class LoadsavebuttonComponent implements OnInit {
     if (data) {
       this.fcs.FeatureCollectionLayerObservable.next(JSON.parse(data));
     }
-    // else {
-    //   this.http.get('assets/demomapstate.json').subscribe(data => {
-    //     this.fcs.FeatureCollectionLayerObservable.next(data as FeatureCollectionLayer[]);
-    //   });
-    // }
+    else {
+      this.http.get('assets/demomapstate.json').subscribe(data => {
+        this.fcs.FeatureCollectionLayerObservable.next(data as FeatureCollectionLayer[]);
+      });
+    }
   }
 }
