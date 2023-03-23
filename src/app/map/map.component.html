@@ -1,9 +1,15 @@
-<div class="map-container" leaflet [leafletOptions]="options" (leafletMapReady)="onMapReady($event)"
-  (leafletMapZoomEnd)="onMapZoomEnd($event)">
-
-  <button class="refreshButton" title="Toggle back ground" (click)="toggleTileLayer()"><mat-icon> layers</mat-icon>
-
-  </button>
+<!-- <mat-tab-group class="" dynamicHeight >
+  <mat-tab label="Map">
 
 
+
+  </mat-tab>
+  <mat-tab label="Data"> Data </mat-tab>
+</mat-tab-group> -->
+<div class="map-container" leaflet [leafletOptions]="options" (leafletMapReady)="onMapReady($event)" (leafletMapZoomEnd)="onMapZoomEnd($event)">
+  <button class="refreshButton" title="Toggle back ground" (click)="toggleTileLayer()"><mat-icon> layers</mat-icon> </button>
+  <!-- <div class="test">
+    a
+        </div> -->
 </div>
+<app-mapdata ></app-mapdata>
