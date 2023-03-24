@@ -2,12 +2,15 @@
   // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
   "version": "0.2.0",
   "configurations": [
+
     {
-      "name": "ng serve",
       "type": "msedge",
       "request": "launch",
+      "name": "Launch Edge (Frontend App)",
+      "url": "http://localhost:4200",
+      "webRoot": "${workspaceFolder}",
       "preLaunchTask": "npm: start",
-      "url": "http://localhost:4200/"
+
     },
     {
       "name": "ng test",

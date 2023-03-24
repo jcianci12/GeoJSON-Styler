@@ -30,8 +30,7 @@ export class MapComponent implements OnInit {
   });
   // add a button to the map to toggle the tile layer
   @Input() options: MapOptions = {
-    layers: [this.tileLayer
-    ],
+    layers: [this.tileLayer],
     zoom: 1,
     center: latLng(0, 0),
     fullscreenControl: true,
@@ -52,7 +51,6 @@ export class MapComponent implements OnInit {
     }
   }
 
-
   private _featureCollection!: FeatureCollectionLayer[];
   private featureGroup = new FeatureGroup();
   sub: any;
@@ -60,11 +58,14 @@ export class MapComponent implements OnInit {
   get FeatureCollection() {
     return this._featureCollection;
   }
+
   public map: Map | undefined;
+  public tempmap: point[] = [];
+
   public zoom: number | undefined;
   //easybutton = L.easyButton('fa-map', this.toggleTileLayer).addTo(this.map);
 
-  constructor(private fcs: FeaturecollectionService, private snackbar: MatSnackBar) { }
+  constructor(private fcs: FeaturecollectionService, private snackbar: MatSnackBar) {}
 
   ngOnInit() {
     this.sub = this.fcs.FeatureCollectionLayerObservable.subscribe((f) => {
@@ -73,10 +74,8 @@ export class MapComponent implements OnInit {
     });
 
     let button = L.Control.extend({
-      onAdd: function () {
-
-      }
-    })
+      onAdd: function () {},
+    });
     let control = new L.Control({ position: 'topright' });
     //this.map?.addControl(new L.Control({position:'topright'}))
     // myControl.addTo(map);
@@ -95,9 +94,9 @@ export class MapComponent implements OnInit {
     this.updateFeatureCollection();
   }
 
-  onMapZoomEnd(e: ZoomAnimEvent | any) {
-    this.zoom = e.target.getZoom();
-    this.zoom$.emit(this.zoom);
+  onMapZoomEnd() {
+    this.getxypoint(this.map)
+    this.zoom$.emit(this.map?.getZoom());
   }
 
   updateFeatureCollection(featureCollection?: FeatureCollectionLayer[] | null) {
@@ -140,14 +139,12 @@ export class MapComponent implements OnInit {
                         let geo = this.handlePolygon(s, feature, stylerow, i, _fc);
                         let l = geo.addTo(this.featureGroup);
                         this.featureGroup.addLayer(l);
-
                       }
                       if (feature.geometry.type == 'Point') {
                         let geo = this.handlePoint(feature as unknown as geojson.Feature<geojson.Point>, s, stylerow, i, _fc);
                         let l = geo.addTo(this.featureGroup);
                         this.featureGroup.addLayer(l);
                       }
-
                     });
                   }
                 });
@@ -156,7 +153,7 @@ export class MapComponent implements OnInit {
           });
           this.featureGroup.addTo(this.map!);
 
-          this.snackbar.open(this.featureGroup.getLayers().length + " features added.")
+          this.snackbar.open(this.featureGroup.getLayers().length + ' features added.');
 
           let b = this.featureGroup.getBounds();
           if (this.featureGroup.getLayers().length > 0) {
@@ -170,16 +167,17 @@ export class MapComponent implements OnInit {
     let styledata = new CSVtoJSONPipe().csvJSON(this._featureCollection[i].styledata as any);
     let styledatacolumnindex = styledata[0].indexOf(s.column);
     let value = stylerow[styledatacolumnindex];
-    var geo = L.marker([feature.geometry.coordinates[1], feature.geometry.coordinates[0]]);
-    let text = ''
-    let opacity = 1
-    let colour = ''
+    let latLng = new L.LatLng(feature.geometry.coordinates[1], feature.geometry.coordinates[0]);
+    var geo = L.marker(latLng);
+    let text = '';
+    let opacity = 1;
+    let colour = '';
     switch (s.ruletype.rulename) {
       case 'opacity': {
         let a = s.ruletype as opacity;
 
         //geo.setOpacity(Number.parseFloat(value));
-        opacity = a.opacityvalue
+        opacity = a.opacityvalue;
         break;
       }
       case 'colour': {
@@ -194,19 +192,50 @@ export class MapComponent implements OnInit {
       }
       case 'text': {
         let a = s.ruletype as text;
-        text = a.textvalue == '' ? value : a.textvalue
+        text = a.textvalue == '' ? value : a.textvalue;
 
         break;
       }
     }
-    geo.setIcon(this.geticon(colour, opacity, text))
+    geo.setIcon(this.geticon(colour, opacity, text));
     return geo;
   }
+  getxypoint(map: L.Map | undefined) {
+    this.tempmap = []
+    // Create an array to hold all the points
+
+    // Loop through all the layers on the map
+    map?.eachLayer((layer: L.Layer) => {
+      // Check if the layer is a marker, circle, or polygon
+      if (layer instanceof L.Marker || layer instanceof L.Circle || layer instanceof L.Polygon) {
+        //  console.log(layer)
+        let d = new point(1,1);
+        //layer._icon.innerText
+        d.id = (layer as any)?._icon.innerText;
+        const crs = L.CRS.EPSG3857;
+        // let latlng = crs.latLngToPoint((layer as L.Marker).getLatLng(),this.map?.getZoom()??1);
+        let latlng = (layer as L.Marker).getLatLng();
+
+        d.x = latlng.lat;
+        d.y = latlng.lng;
+        this.tempmap.push(d);
+
+      }
+    });
+
+    // The `points` array now contains all the points on the map
+  }
+
   geticon(colour: string, opacity: number, text: string): L.DivIcon {
-    let markerHtmlStyles = `
-    background-color: `+ (colour ?? 'grey') + `;
+    let markerHtmlStyles =
+      `
+    background-color: ` +
+      (colour ?? 'grey') +
+      `;
     width: 1rem;
-    opacity: `+ opacity + `;
+    opacity: ` +
+      opacity +
+      `;
     height: 1rem;
     display: block;
     left: -1.5rem;
@@ -222,7 +251,7 @@ export class MapComponent implements OnInit {
       popupAnchor: [0, -36],
       html: `<div><span style="${markerHtmlStyles}"/>` + text + `</div>`,
     });
-    return icon
+    return icon;
   }
 
   handlePolygon(s: stylerule, feature: geojson.Feature<geojson.Geometry, geojson.GeoJsonProperties>, stylerow: string[], i: number, _fc: FeatureCollectionLayer): L.GeoJSON<any> {
@@ -273,4 +302,7 @@ export class MapComponent implements OnInit {
     }
     return geo;
   }
+}
+export class point extends L.Point {
+  id: string | undefined;
 }

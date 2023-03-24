@@ -27,6 +27,8 @@ import { DatatableComponent } from './data/datatable/datatable.component';
 import { LoadsavebuttonComponent } from './data/loadsavebutton/loadsavebutton.component';
 import { GeojsonselectorComponent } from './data/geojsonselector/geojsonselector.component';
 import { JsontocsvPipe } from './jsontocsv.pipe';
+import { MapdataComponent } from './mapdata/mapdata.component';
+import { XypointsPipe } from './xypoints.pipe';
 
 @NgModule({
   declarations: [
@@ -49,7 +51,9 @@ import { JsontocsvPipe } from './jsontocsv.pipe';
     DatatableComponent,
     LoadsavebuttonComponent,
     GeojsonselectorComponent,
-    JsontocsvPipe
+    JsontocsvPipe,
+    MapdataComponent,
+    XypointsPipe
   ],
   imports: [
     BrowserModule,
