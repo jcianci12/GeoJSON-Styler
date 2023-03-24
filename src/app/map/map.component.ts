@@ -209,21 +209,29 @@ export class MapComponent implements OnInit {
       // Check if the layer is a marker, circle, or polygon
       if (layer instanceof L.Marker || layer instanceof L.Circle || layer instanceof L.Polygon) {
         //  console.log(layer)
-        let d = new point(1,1);
+        let d = new point([1,1]);
         //layer._icon.innerText
         d.id = (layer as any)?._icon.innerText;
         const crs = L.CRS.EPSG3857;
         // let latlng = crs.latLngToPoint((layer as L.Marker).getLatLng(),this.map?.getZoom()??1);
         let latlng = (layer as L.Marker).getLatLng();
 
-        d.x = latlng.lat;
-        d.y = latlng.lng;
+        d.setLatLng(latlng);
+        d.x = this.latLngToXY(latlng.lat,latlng.lng)[0]
+        d.y = this.latLngToXY(latlng.lat,latlng.lng)[1]
+
         this.tempmap.push(d);
 
       }
     });
 
     // The `points` array now contains all the points on the map
+  }
+   latLngToXY(lat:number, lng:number) {
+    var R = 6378137;
+    var x = R * lng * Math.PI / 180;
+    var y = R * Math.log(Math.tan((90 + lat) * Math.PI / 360));
+    return [x, y];
   }
 
   geticon(colour: string, opacity: number, text: string): L.DivIcon {
@@ -303,6 +311,8 @@ export class MapComponent implements OnInit {
     return geo;
   }
 }
-export class point extends L.Point {
+export class point extends L.Marker {
   id: string | undefined;
+  x:number |undefined
+  y:number |undefined
 }

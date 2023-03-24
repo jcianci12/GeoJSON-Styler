@@ -10,18 +10,29 @@ import { point } from '../map/map.component';
 })
 export class MapdataComponent implements OnInit {
   @Input() public points: point[] | undefined;
-  @Input() public map!:L.Map|undefined
-   constructor() {}
+  @Input() public map!: L.Map | undefined;
+  constructor() {}
 
   ngOnInit(): void {}
 
-  distance(point1: L.Point, point2: L.Point) {
+  distance(point1: LatLng, point2: LatLng): number {
     if (point1 && point2) {
       return point1.distanceTo(point2);
     } else {
       return 0;
     }
   }
+  xyDistance(point1:point,point2:point):number{
+    var dx = point1.x! - point2.x!;
+    var dy = point1.y! - point2.y!;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+
+
+  // latlngtoXY(latlng1: LatLng):number[] {
+  //   let d = this.latlngtoXY(latlng1)
+  //   return d
+  // }
 
 
 
