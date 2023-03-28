@@ -11,20 +11,21 @@ import { point } from '../map/map.component';
 export class MapdataComponent implements OnInit {
   @Input() public points: point[] | undefined;
   @Input() public map!: L.Map | undefined;
+  checked:boolean = true
   constructor() {}
 
   ngOnInit(): void {}
 
-  distance(point1: LatLng, point2: LatLng): number {
+  geoDistance(point1: point, point2: point): number {
     if (point1 && point2) {
-      return point1.distanceTo(point2);
+      return point1.getLatLng().distanceTo(point2.getLatLng());
     } else {
       return 0;
     }
   }
   xyDistance(point1:point,point2:point):number{
-    var dx = point1.x! - point2.x!;
-    var dy = point1.y! - point2.y!;
+    var dx = point1?.x! - point2?.x!;
+    var dy = point1?.y! - point2?.y!;
     return Math.sqrt(dx * dx + dy * dy);
   }
 

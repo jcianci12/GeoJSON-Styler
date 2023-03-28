@@ -1,3 +1,5 @@
+<mat-checkbox [(ngModel)]="checked">LatLng</mat-checkbox>
+
 <h1>Map Data</h1>
 <p>{{ points?.length }} rows</p>
 {{ minx }} {{ maxx }} {{ miny }} {{ maxy }}
@@ -5,13 +7,14 @@
   <thead>
     <tr>
       <th>ID</th>
-      <th>Lat</th>
-      <th>Lng</th>
+      <th *ngIf="checked">Lat</th>
+      <th *ngIf="checked">Lng</th>
       <th>X</th>
       <th>Y</th>
       <th>GeoDistance</th>
 
       <th>xyDistance</th>
+      <th>diff</th>
 
     </tr>
   </thead>
@@ -19,12 +22,13 @@
     <tr *ngFor="let obj of points; index as i">
       <td>{{ obj.id }}</td>
 
-      <td>{{ obj.getLatLng().lat }}</td>
-      <td>{{ obj.getLatLng().lng }}</td>
+      <td *ngIf="checked">{{ obj.getLatLng().lat }}</td>
+      <td *ngIf="checked">{{ obj.getLatLng().lng }}</td>
       <td>{{ obj.x! -minx }}</td>
       <td>{{ obj.y! - miny }}</td>
-      <td>{{ distance(obj.getLatLng(), points![i + 1].getLatLng()) }}</td>
+      <td>{{ geoDistance(obj, points![i + 1]) }}</td>
       <td>{{ xyDistance(obj, points![i + 1]) }}</td>
+      <td>{{((geoDistance(obj, points![i + 1]) - xyDistance(obj, points![i + 1])) / xyDistance(obj, points![i + 1])) * 100}}</td>
     </tr>
   </tbody>
 </table>
