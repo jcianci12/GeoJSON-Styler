@@ -93,6 +93,7 @@ export type rulename = 'opacity' | 'colour' | 'text';
 
 export class baseStyle {
   rulename: string | undefined;
+  dynamic:boolean|undefined;
 }
 export class opacity extends baseStyle {
   constructor() {
@@ -105,8 +106,10 @@ export class opacity extends baseStyle {
 export class colour extends baseStyle {
   constructor() {
     super();
+    this.dynamic = false;
     this.colour = 'grey';
     this.rulename = 'colour';
+
   }
   colour: string;
 }

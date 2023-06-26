@@ -16,8 +16,7 @@ export class StylepropertiesComponent implements OnInit {
     return this._ruletype;
   }
 
-  @Output() ruletypeChange: EventEmitter<ruletype> =
-    new EventEmitter<ruletype>();
+  @Output() ruletypeChange: EventEmitter<ruletype> = new EventEmitter<ruletype>();
 
   constructor() {}
 
@@ -25,19 +24,23 @@ export class StylepropertiesComponent implements OnInit {
 
   //we need a way to assign a variable to a dynamic type
   setProperty(event: any, property: string) {
-    //does the prop exist on the object?
-    if (this.ruletype.hasOwnProperty(property)) {
-      //check if its a number and handle accordingly
-      if (typeof event.target.value =='string') {
-        (this.ruletype as any)[property] = event.target.value;
-      }
-      else{
-        (this.ruletype as any)[property] = parseFloat(event.target.value);
-
-      }
-
-      console.log(this.ruletype);
+    if (event.checked != undefined) {
+      (this.ruletype as any)[property] = event.checked;
       this.ruletypeChange.emit(this.ruletype);
+    } else {
+      //does the prop exist on the object?
+      if (this.ruletype.hasOwnProperty(property)) {
+        //check if its a number and handle accordingly
+        if (typeof event.target.value == 'string') {
+          (this.ruletype as any)[property] = event.target.value;
+        }
+        if (typeof event.target.value == 'number') {
+          (this.ruletype as any)[property] = parseFloat(event.target.value);
+        }
+
+        console.log(this.ruletype);
+        this.ruletypeChange.emit(this.ruletype);
+      }
     }
   }
   getProperty(property: string): string {
@@ -51,6 +54,7 @@ export class StylepropertiesComponent implements OnInit {
   }
   gettype(property: string) {
     if (this.ruletype.hasOwnProperty(property)) {
+      // console.log(typeof (this.ruletype as any)[property])
       return typeof (this.ruletype as any)[property];
     } else {
       return '';
