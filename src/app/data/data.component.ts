@@ -121,7 +121,7 @@ export class text extends baseStyle {
     this.rulename = 'text';
     this.latoffset = 0;
     this.lngoffset = 0;
-    this.cssstyle = 'colour:black';
+    this.cssstyle = 'colour:grey';
   }
   textvalue: string;
   latoffset: number;
