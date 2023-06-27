@@ -30,8 +30,7 @@ export class MapComponent implements OnInit {
   });
   // add a button to the map to toggle the tile layer
   @Input() options: MapOptions = {
-    layers: [this.tileLayer
-    ],
+    layers: [this.tileLayer],
     zoom: 1,
     center: latLng(0, 0),
     fullscreenControl: true,
@@ -52,7 +51,6 @@ export class MapComponent implements OnInit {
     }
   }
 
-
   private _featureCollection!: FeatureCollectionLayer[];
   private featureGroup = new FeatureGroup();
   sub: any;
@@ -64,7 +62,7 @@ export class MapComponent implements OnInit {
   public zoom: number | undefined;
   //easybutton = L.easyButton('fa-map', this.toggleTileLayer).addTo(this.map);
 
-  constructor(private fcs: FeaturecollectionService, private snackbar: MatSnackBar) { }
+  constructor(private fcs: FeaturecollectionService, private snackbar: MatSnackBar) {}
 
   ngOnInit() {
     this.sub = this.fcs.FeatureCollectionLayerObservable.subscribe((f) => {
@@ -73,10 +71,8 @@ export class MapComponent implements OnInit {
     });
 
     let button = L.Control.extend({
-      onAdd: function () {
-
-      }
-    })
+      onAdd: function () {},
+    });
     let control = new L.Control({ position: 'topright' });
     //this.map?.addControl(new L.Control({position:'topright'}))
     // myControl.addTo(map);
@@ -94,18 +90,16 @@ export class MapComponent implements OnInit {
     this.zoom$.emit(this.zoom);
     this.updateFeatureCollection();
     setTimeout(() => {
-          this.loadBounds()
-
+      this.loadBounds();
     }, 1000);
-
   }
 
   onMapZoomEnd(e: ZoomAnimEvent | any) {
-    let bounds = this.map?.getBounds()
+    let bounds = this.map?.getBounds();
     localStorage.setItem('bounds', JSON.stringify(bounds));
   }
-  onMapMoveEnd(){
-    let bounds = this.map?.getBounds()
+  onMapMoveEnd() {
+    let bounds = this.map?.getBounds();
     localStorage.setItem('bounds', JSON.stringify(bounds));
   }
 
@@ -113,13 +107,12 @@ export class MapComponent implements OnInit {
     let savedBounds = localStorage.getItem('bounds') as string;
     // When the page loads, check if there is a saved zoom level and set it on the map
     if (savedBounds !== null) {
-      let parsed = (JSON.parse(savedBounds) as any)
+      let parsed = JSON.parse(savedBounds) as any;
 
-      let bounds = L.latLngBounds(parsed._northEast,parsed._southWest)
+      let bounds = L.latLngBounds(parsed._northEast, parsed._southWest);
 
       this.map?.flyToBounds(bounds);
-    }
-    else{
+    } else {
       let b = this.featureGroup.getBounds();
       if (this.featureGroup.getLayers().length > 0) {
         this.map!.fitBounds(b);
@@ -161,20 +154,19 @@ export class MapComponent implements OnInit {
                   let _suburb = stylerow[geocolumnindex];
 
                   if (propertytomatch && _suburb && propertytomatch.toLowerCase() == _suburb.toLowerCase()) {
+                    if (feature.geometry.type == 'MultiPolygon') {
+                      let geo = this.handlePolygon(stylerules, feature, stylerow, i, _fc);
+                      let l = geo.addTo(this.featureGroup);
+                      this.featureGroup.addLayer(l);
+                    }
                     stylerules.forEach((s) => {
                       // console.log(typeof feature)
-                      if (feature.geometry.type == 'MultiPolygon') {
-                        let geo = this.handlePolygon(s, feature, stylerow, i, _fc);
-                        let l = geo.addTo(this.featureGroup);
-                        this.featureGroup.addLayer(l);
 
-                      }
                       if (feature.geometry.type == 'Point') {
                         let geo = this.handlePoint(feature as unknown as geojson.Feature<geojson.Point>, s, stylerow, i, _fc);
                         let l = geo.addTo(this.featureGroup);
                         this.featureGroup.addLayer(l);
                       }
-
                     });
                   }
                 });
@@ -183,9 +175,7 @@ export class MapComponent implements OnInit {
           });
           this.featureGroup.addTo(this.map!);
 
-          this.snackbar.open(this.featureGroup.getLayers().length + " features added.")
-
-
+          this.snackbar.open(this.featureGroup.getLayers().length + ' features added.');
         });
     }
   }
@@ -195,15 +185,15 @@ export class MapComponent implements OnInit {
     let styledatacolumnindex = styledata[0].indexOf(s.column);
     let value = stylerow[styledatacolumnindex];
     var geo = L.marker([feature.geometry.coordinates[1], feature.geometry.coordinates[0]]);
-    let text = ''
-    let opacity = 1
-    let colour = ''
+    let text = '';
+    let opacity = 1;
+    let colour = '';
     switch (s.ruletype.rulename) {
       case 'opacity': {
         let a = s.ruletype as opacity;
 
         //geo.setOpacity(Number.parseFloat(value));
-        opacity = a.opacityvalue
+        opacity = a.opacityvalue;
         break;
       }
       case 'colour': {
@@ -218,19 +208,22 @@ export class MapComponent implements OnInit {
       }
       case 'text': {
         let a = s.ruletype as text;
-        text = a.textvalue == '' ? value : a.textvalue
+        text = a.textvalue == '' ? value : a.textvalue;
 
         break;
       }
     }
-    geo.setIcon(this.geticon(colour, opacity, text))
+    geo.setIcon(this.geticon(colour, opacity, text));
     return geo;
   }
   geticon(colour: string, opacity: number, text: string): L.DivIcon {
-    let markerHtmlStyles = `
-    background-color: `+ (colour ?? 'grey') + `;
+    let markerHtmlStyles =
+      `
+
     width: 1rem;
-    opacity: `+ opacity + `;
+    opacity: ` +
+      opacity +
+      `;
     height: 1rem;
     display: block;
     left: -1.5rem;
@@ -246,55 +239,60 @@ export class MapComponent implements OnInit {
       popupAnchor: [0, -36],
       html: `<div><span style="${markerHtmlStyles}"/>` + text + `</div>`,
     });
-    return icon
+    return icon;
   }
 
-  handlePolygon(s: stylerule, feature: geojson.Feature<geojson.Geometry, geojson.GeoJsonProperties>, stylerow: string[], i: number, _fc: FeatureCollectionLayer): L.GeoJSON<any> {
+  handlePolygon(stylerules: stylerule[], feature: geojson.Feature<geojson.Geometry, geojson.GeoJsonProperties>, stylerow: string[], i: number, _fc: FeatureCollectionLayer): L.GeoJSON<any> {
     let geo = geoJSON(feature);
     let styledata = new CSVtoJSONPipe().csvJSON(this._featureCollection[i].styledata as any);
-    let styledatacolumnindex = styledata[0].indexOf(s.column);
-    let value = stylerow[styledatacolumnindex];
+    let PathOptions: L.PathOptions = { fill: false, stroke: false };
+    stylerules.forEach((s) => {
+      let styledatacolumnindex = styledata[0].indexOf(s.column);
+      let value = stylerow[styledatacolumnindex];
 
-    switch (s.ruletype.rulename) {
-      case 'opacity': {
-        geo.setStyle({
-          fillOpacity: Number.parseFloat(value),
-        });
-        break;
-      }
-      case 'colour': {
-        let a = s.ruletype as colour;
-
-        //if the style has been set globally, use that value
-        if (a.colour) {
-          value = a.colour;
+      //starting style
+      switch (s.ruletype.rulename) {
+        case 'opacity': {
+          PathOptions.fillOpacity = Number.parseFloat(value);
+          break;
         }
-
-        geo.setStyle({
-          fillColor: value,
-          color: value,
-        });
-        break;
-      }
-      case 'text': {
-        if (true) {
-          let lat = (s.ruletype as text).latoffset + geo.getBounds().getCenter().lat;
-          let lng = (s.ruletype as text).lngoffset + geo.getBounds().getCenter().lng;
-
-          let label = L.marker([lat, lng], {
-            icon: L.divIcon({
-              className: 'text-labels', // Set class for CSS styling
-              html: '<div style="' + (s.ruletype as text).cssstyle + '">' + value + '</div>',
-            }),
-            zIndexOffset: 1000, // Make appear above other map features
-          });
-          //apply the offset
-
-          label.addTo(geo);
+        case 'colour': {
+          let a = s.ruletype as colour;
+          //if the style has been set globally, use that value
+          if (a.dynamic == false) {
+            // value = a.colour.toLowerCase()
+            PathOptions.fillColor = a.colour.toLowerCase();
+            PathOptions.color = a.colour.toLowerCase();
+          } else {
+            PathOptions.fillColor = value.toLowerCase();
+            PathOptions.color = value.toLowerCase();
+          }
+          PathOptions.stroke = true;
+          PathOptions.fill = true;
+          break;
         }
-        break;
+        case 'text': {
+          if (true) {
+            let lat = (s.ruletype as text).latoffset + geo.getBounds().getCenter().lat;
+            let lng = (s.ruletype as text).lngoffset + geo.getBounds().getCenter().lng;
+
+            let label = L.marker([lat, lng], {
+              icon: L.divIcon({
+                className: 'text-labels', // Set class for CSS styling
+                html: '<div style="' + (s.ruletype as text).cssstyle + '">' + value + '</div>',
+              }),
+              zIndexOffset: 1000, // Make appear above other map features
+            });
+            //apply the offset
+
+            label.addTo(geo);
+          }
+          break;
+        }
       }
-    }
+      geo.setStyle(PathOptions);
+    });
+
     return geo;
   }
 }
