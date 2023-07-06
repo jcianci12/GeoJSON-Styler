@@ -269,7 +269,6 @@ export class MapComponent implements OnInit {
           }
           PathOptions.stroke = true;
           PathOptions.fill = true;
-
           break;
         }
         case 'text': {
