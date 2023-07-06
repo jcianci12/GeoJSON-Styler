@@ -1,70 +1,69 @@
 <div class="row">
-  <div class="col" style="border-style: hidden hidden hidden dotted">
-    <p>You can choose a CSV upload or JSON from a data endpoint.</p>
-    <mat-tab-group>
-      <mat-tab label="CSV">
-        <p>Choose the csv formatted data you would like to use.</p>
-        <app-fileupload
-          [fileextension]="'csv'"
-          (fileadded)="addData($event)"
-        ></app-fileupload>
-      </mat-tab>
-      <mat-tab label="JSON">
-        <app-jsonendpoint [endpointurl]="endpointurl" (dataChange)="addJSONData($event)" ></app-jsonendpoint>
+  <div class="col">
+    <mat-expansion-panel>
+      <mat-expansion-panel-header>
+        <mat-panel-title> GEOJson </mat-panel-title>
+        <mat-panel-description> </mat-panel-description>
+      </mat-expansion-panel-header>
 
-      </mat-tab>
-
-    </mat-tab-group>
-    <app-datatable [d]="d"></app-datatable>
-    <div class="row">
-      <div class="col">
-        <mat-expansion-panel>
-          <mat-expansion-panel-header>
-            <mat-panel-title> GEOJson </mat-panel-title>
-            <mat-panel-description> </mat-panel-description>
-          </mat-expansion-panel-header>
-
-          <app-geojsonselector [layerindex]="this.featurecollectionlayerindex"></app-geojsonselector>
-          <app-suburblist
-          [layerIndex]="featurecollectionlayerindex"
-        ></app-suburblist>
-        </mat-expansion-panel>
-        <!-- {{featurecollectionlayerindex}}
-        {{stylerules|json}} -->
-      </div>
-    </div>
+      <app-geojsonselector [layerindex]="this.featurecollectionlayerindex"></app-geojsonselector>
+      <br />
+       <app-suburblist [layerIndex]="featurecollectionlayerindex"></app-suburblist>    </mat-expansion-panel>
+    <!-- {{featurecollectionlayerindex}}
+    {{stylerules|json}} -->
   </div>
-</div>
-<br />
-<div class="row">
-  <div class="col"  style="border-style: hidden hidden hidden dotted">
-    <h1>Data layers</h1>
-    <p>Choose the column to join on (Eg. The suburb column)</p>
-    <app-geocolumn
-    [featureCollectionIndex]="featurecollectionlayerindex"
-
-      [tableheaders]="d | csvtojson | tableheaders"
-    ></app-geocolumn>
-
-  </div>
-</div>
-<!-- {{ d | jsontocsv | json }}
-    {{d|json}} -->
-<div class="row">
-  <div class="col"></div>
 </div>
 <div class="row">
   <div class="col">
-    <app-stylerule
-      (stylerulesChange)="updateStyleRules($event)"
-      [stylerules]="featureCollectionLayers[this.featurecollectionlayerindex].stylerules"
-      [tableheaders]="d | csvtojson | tableheaders"
-      [featureCollectionIndex]="featurecollectionlayerindex"
-    >
-    </app-stylerule>
+    <mat-expansion-panel>
+      <mat-expansion-panel-header>
+        <mat-panel-title> Styling Data</mat-panel-title>
+        <mat-panel-description> </mat-panel-description>
+      </mat-expansion-panel-header>
+
+      <div class="row">
+        <div class="col" style="border-style: hidden hidden hidden dotted">
+          <p>You can choose a CSV upload or JSON from a data endpoint.</p>
+          <mat-tab-group>
+            <mat-tab label="CSV">
+              <p>Choose the csv formatted data you would like to use.</p>
+              <app-fileupload [fileextension]="'csv'" (fileadded)="addData($event)"></app-fileupload>
+            </mat-tab>
+            <mat-tab label="JSON">
+              <app-jsonendpoint [endpointurl]="endpointurl" (dataChange)="addJSONData($event)"></app-jsonendpoint>
+
+            </mat-tab>
+
+          </mat-tab-group>
+          <app-datatable [d]="d"></app-datatable>
+
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col" style="border-style: hidden hidden hidden dotted">
+          <h1>Data layers</h1>
+          <p>Choose the column to join on (Eg. The suburb column)</p>
+          <app-geocolumn [featureCollectionIndex]="featurecollectionlayerindex"
+            [tableheaders]="d | csvtojson | tableheaders"></app-geocolumn>
+
+        </div>
+      </div>
+      <div class="row">
+        <div class="col">
+          <app-stylerule (stylerulesChange)="updateStyleRules($event)"
+            [stylerules]="featureCollectionLayers[this.featurecollectionlayerindex].stylerules"
+            [tableheaders]="d | csvtojson | tableheaders" [featureCollectionIndex]="featurecollectionlayerindex">
+          </app-stylerule>
+          <!-- {{featurecollectionlayerindex}}
+          {{stylerules|json}} -->
+        </div>
+      </div>
+    </mat-expansion-panel>
     <!-- {{featurecollectionlayerindex}}
     {{stylerules|json}} -->
   </div>
 </div>
 
-
+<!-- {{ d | jsontocsv | json }}
+    {{d|json}} -->
