@@ -16,6 +16,10 @@ import { terms } from 'src/app/suburbfilter/suburbfilter.component';
 })
 export class LoadsavebuttonComponent implements OnInit {
 
+  selectedFile: any = null;
+
+  
+
   @Input() featureCollection: FeatureCollectionLayer[] = [];
   @Output() featureCollectionChange = new EventEmitter<FeatureCollectionLayer[]>();
   constructor(private http: HttpClient, private matsnack: MatSnackBar, private fcs: FeaturecollectionService) { }
@@ -24,6 +28,7 @@ export class LoadsavebuttonComponent implements OnInit {
       dynamicDownload: null as unknown as HTMLElement,
     },
   };
+  
   ngOnInit() {
     this.fcs.FeatureCollectionLayerObservable.pipe().subscribe(i => {
       this.featureCollection = i

@@ -1,16 +1,30 @@
-<div class="row">
-  <div class="col">
-<button  (click)="dynamicDownloadJson()">Save map state</button>
+<!-- <mat-list>
+  <mat-list-item>
+    <button mat-button (click)="dynamicDownloadJson()">Save map state</button>
+  </mat-list-item>
+  <mat-divider></mat-divider>
+  
+  <mat-list-item>
+    <button type="button" mat-raised-button (click)="fileInput.click()">Load Map State</button>
+    <input hidden (change)="onFileSelected($event)" #fileInput type="file">
+    <span class="file-name">{{selectedFile?.name}}</span>
 
-  </div>
-  <div class="col">
-    <label for="file-upload">Load a map state:</label>
-    <input type="file" (change)="onFileSelected($event)"  />
-  </div>
-  <!-- <div class="col">
+
+  </mat-list-item>
+</mat-list> -->
+
+    <button mat-button (click)="dynamicDownloadJson()">Save map state</button>
+  <mat-divider></mat-divider>
+    <button type="button" mat-button (click)="fileInput.click()">Load Map State</button>
+    <input hidden (change)="onFileSelected($event)" #fileInput type="file">
+    <span class="file-name">{{selectedFile?.name}}</span>
+
+
+
+
+<!-- <div class="col">
     <button  (click)="loadCookieState()">Load Cookie</button>
   </div>
   <div class="col">
     <button  (click)="saveCookieState()">Save Cookie</button>
   </div> -->
-</div>

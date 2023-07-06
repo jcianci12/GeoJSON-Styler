@@ -1,57 +1,53 @@
+<p>
+  <mat-toolbar>
+    <button mat-icon-button class="example-icon" aria-label="Example icon-button with menu icon">
+      <mat-icon>menu</mat-icon>
+    </button>
+    <span>
+      <h1>GeoJSON Styler</h1>
+    </span>
+    <span class="example-spacer"></span>
+    <button mat-button [matMenuTriggerFor]="menu">Load/Save Map State</button>
+    <mat-menu #menu="matMenu">
+      <app-loadsavebutton [(featureCollection)]="featureCollectionLayers"></app-loadsavebutton>
+
+    </mat-menu>
+    <button mat-button color="primary" (click)="addLayer()">Add layer</button>
+
+    
+  </mat-toolbar>
+</p>
+
 <div>
   <div class="container-fluid" style="min-height: 100vh">
     <div class="row">
       <div class="col">
-        <h1>GeoJSON Styler</h1>
       </div>
     </div>
     <div class="row">
       <div class="col-6">
-        <div class="row"  style="border-style: hidden hidden hidden dotted;">
-          <div class="col">
-
-            <p>Add a layer to get started</p>
-            <!-- <app-fileupload
-              [fileextension]="'json'"
-              (fileadded)="addLayer($event)"
-            ></app-fileupload> -->
-            <button (click)="addLayer()">Add layer</button>
-          </div>
-        </div>
-        <br>
+        
         <mat-accordion>
           <mat-expansion-panel [expanded]="expanded | async">
             <mat-expansion-panel-header>
               <mat-panel-title>
                 Geographical Layers ({{
-                  featureCollectionLayers.length
-                }})</mat-panel-title
-              >
+                featureCollectionLayers.length
+                }})</mat-panel-title>
               <mat-panel-description> </mat-panel-description>
             </mat-expansion-panel-header>
 
-            <ng-container
-              *ngFor="
+            <ng-container *ngFor="
                 let featureCollection of featureCollectionLayers;
                 let i = index
-              "
-            >
+              ">
               <div class="row">
                 <div class="col">
-                  <mat-checkbox
-                    class="example-margin"
-                    [checked]="featureCollection.active"
-                    (change)="updateActive($event,i)"
-                    >Active</mat-checkbox
-                  >
+                  <mat-checkbox class="example-margin" [checked]="featureCollection.active"
+                    (change)="updateActive($event,i)">Active</mat-checkbox>
                 </div>
                 <div class="col float-right">
-                  <button
-                    class=""
-                    mat-button
-                    color="primary"
-                    aria-label="Example icon button with a menu icon"
-                  >
+                  <button class="" mat-button color="primary" aria-label="Example icon button with a menu icon">
                     <mat-icon (click)="removeLayer(i)">delete</mat-icon>
                   </button>
                 </div>
@@ -64,10 +60,8 @@
 
                 <div class="row">
                   <div class="col">
-                    <app-data
-                      [featurecollectionlayerindex]="i"
-                      [featureCollectionLayers]="featureCollectionLayers"
-                    ></app-data>
+                    <app-data [featurecollectionlayerindex]="i"
+                      [featureCollectionLayers]="featureCollectionLayers"></app-data>
                     <!-- styledata:{{featureCollection.styledata|json}} -->
                   </div>
                 </div>
@@ -83,14 +77,9 @@
       </div>
 
       <div class="col-6" style="min-height: 80vh;max-height: 800px;">
-        <app-loadsavebutton [(featureCollection)]="featureCollectionLayers"></app-loadsavebutton>
         <div class="map-container">
           <div class="map-frame">
-            <app-map
-              (map$)="receiveMap($event)"
-              (zoom$)="receiveZoom($event)"
-              id="main-map"
-            ></app-map>
+            <app-map (map$)="receiveMap($event)" (zoom$)="receiveZoom($event)" id="main-map"></app-map>
           </div>
         </div>
       </div>
