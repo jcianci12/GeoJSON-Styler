@@ -6,6 +6,7 @@ import { FeatureCollectionLayer } from 'src/app/featureCollection';
 import { FeaturecollectionService } from 'src/app/featurecollection.service';
 import { JsontocsvPipe } from 'src/app/jsontocsv.pipe';
 import { terms } from 'src/app/suburbfilter/suburbfilter.component';
+import { openDB } from 'idb';
 
 @Component({
   selector: 'app-loadsavebutton',
@@ -87,32 +88,39 @@ export class LoadsavebuttonComponent implements OnInit {
     };
     fileReader.readAsText(file, 'UTF-8');
   }
-  saveCookieState() {
+  async saveCookieState() {
     if (this.featureCollection[0]?.features.length) {
       let data = JSON.stringify(this.featureCollection);
-      // Check the size of the data in bytes
-      let dataSize = new TextEncoder().encode(data).length;
-      // Set a maximum size limit for the data (e.g. 5MB)
-      let maxSize = 5 * 1024 * 1024;
-      if (dataSize <= maxSize) {
-        // Only save the data if its size is within the limit
-        localStorage.setItem('myData', data);
-      } else {
-        // Handle the case where the data is too big
-        this.matsnack.open('Data is too big to be saved in local storage')
-      }
+      // Open an IndexedDB database
+      let db = await openDB('myDatabase', 1, {
+        upgrade(db) {
+          // Create an object store to store the data
+          db.createObjectStore('myData');
+        }
+      });
+      // Save the data in the IndexedDB database
+      await db.put('myData', data, 'key');
     }
   }
 
-  loadCookieState() {
-    let data = localStorage.getItem('myData')
+
+  async loadCookieState() {
+    // Open an IndexedDB database
+    let db = await openDB('myDatabase', 1, {
+      upgrade(db) {
+        // Create an object store to store the data
+        db.createObjectStore('myData');
+      }
+    });
+    // Get the data from the IndexedDB database
+    let data = await db.get('myData', 'key');
     if (data) {
       this.fcs.FeatureCollectionLayerObservable.next(JSON.parse(data));
-    }
-    else {
+    } else {
       this.http.get('assets/demomapstate.json').subscribe(data => {
         this.fcs.FeatureCollectionLayerObservable.next(data as FeatureCollectionLayer[]);
       });
     }
   }
+
 }
