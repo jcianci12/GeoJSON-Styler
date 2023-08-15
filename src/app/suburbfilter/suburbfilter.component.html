@@ -3,7 +3,7 @@
   <div *ngFor="let item of feature?.properties|keyvalue" class="col">
   <mat-form-field class="example-full-width" appearance="fill">
     <mat-label>{{item.key}}</mat-label>
-    <input matInput placeholder={{item.value}} [value]="getTermValue(item.key)" (keyup)="change(item.key,$event)">
+    <input matInput placeholder={{item.value}} [value]="getTermValue(item.key)" (keyup)="triggerChange(item.key,$event)">
   </mat-form-field>
 </div>
 

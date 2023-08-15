@@ -18,7 +18,7 @@ export class LoadsavebuttonComponent implements OnInit {
 
   selectedFile: any = null;
 
-  
+
 
   @Input() featureCollection: FeatureCollectionLayer[] = [];
   @Output() featureCollectionChange = new EventEmitter<FeatureCollectionLayer[]>();
@@ -28,7 +28,7 @@ export class LoadsavebuttonComponent implements OnInit {
       dynamicDownload: null as unknown as HTMLElement,
     },
   };
-  
+
   ngOnInit() {
     this.fcs.FeatureCollectionLayerObservable.pipe().subscribe(i => {
       this.featureCollection = i
@@ -90,9 +90,20 @@ export class LoadsavebuttonComponent implements OnInit {
   saveCookieState() {
     if (this.featureCollection[0]?.features.length) {
       let data = JSON.stringify(this.featureCollection);
-      localStorage.setItem('myData', data);
+      // Check the size of the data in bytes
+      let dataSize = new TextEncoder().encode(data).length;
+      // Set a maximum size limit for the data (e.g. 5MB)
+      let maxSize = 5 * 1024 * 1024;
+      if (dataSize <= maxSize) {
+        // Only save the data if its size is within the limit
+        localStorage.setItem('myData', data);
+      } else {
+        // Handle the case where the data is too big
+        this.matsnack.open('Data is too big to be saved in local storage')
+      }
     }
   }
+
   loadCookieState() {
     let data = localStorage.getItem('myData')
     if (data) {

@@ -153,8 +153,13 @@ export class MapComponent implements OnInit {
                   //use the geocolumn index
                   let _suburb = stylerow[geocolumnindex];
 
-                  if (propertytomatch && _suburb && propertytomatch.toLowerCase() == _suburb.toLowerCase()) {
+                  if (propertytomatch?.toLowerCase() == _suburb?.toLowerCase()) {
                     if (feature.geometry.type == 'MultiPolygon') {
+                      let geo = this.handlePolygon(stylerules, feature, stylerow, i, _fc);
+                      let l = geo.addTo(this.featureGroup);
+                      this.featureGroup.addLayer(l);
+                    }
+                    if (feature.geometry.type == 'Polygon') {
                       let geo = this.handlePolygon(stylerules, feature, stylerow, i, _fc);
                       let l = geo.addTo(this.featureGroup);
                       this.featureGroup.addLayer(l);
@@ -277,6 +282,8 @@ export class MapComponent implements OnInit {
             let lng = (s.ruletype as text).lngoffset + geo.getBounds().getCenter().lng;
 
             let label = L.marker([lat, lng], {
+              draggable:true,
+              autoPan:true,
               icon: L.divIcon({
                 className: 'text-labels', // Set class for CSS styling
                 html: '<div style="' + (s.ruletype as text).cssstyle + '">' + value + '</div>',
