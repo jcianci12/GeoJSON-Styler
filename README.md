@@ -1,6 +1,6 @@
-Have you ever wanted to add styling to GeoJSON easily?
+Have you ever wanted to style map polygons based on some arbitrary data? eg: population by suburb, and colour and opacity from the count?
 
-This application allows the user to add layers of GeoJSON to a map and style them using a CSV
+This application allows you to choose your geojson polygons (such as suburbs) and some styling data (like text, colour, opacity) and render it on a map.
 
 You can test out this angular application here:
 
