@@ -18,6 +18,8 @@ export class FileuploadComponent implements OnInit {
   ngOnInit(): void {}
 
   handleFileInput(event: Event) {
+    const fileInput = event.target as HTMLInputElement;
+
     let file: File | null | undefined = (
       event.target as HTMLInputElement
     ).files?.item(0);
@@ -29,6 +31,10 @@ export class FileuploadComponent implements OnInit {
       this.fileadded.emit(this.fileList);
 
       this.snack.open('Added');
+
+      // Clear the input value to force change event on the same file
+      fileInput.value = '';
+
       //this.fileadded.emit(this.fileList)
     } else {
       this.snack.open('There was an issue with the file. Not added.');
