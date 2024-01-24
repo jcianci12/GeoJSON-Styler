@@ -72,6 +72,7 @@ export class DataComponent implements OnInit {
     filereader.onload = (e) => {
       //this works setting the value from the csv file data.
       this.d = filereader.result;
+      this.d = this.d.replace(/"/g,"")
       this.featureCollectionLayers[this.featurecollectionlayerindex].styledata = this.d;
       this.updateData();
     };
