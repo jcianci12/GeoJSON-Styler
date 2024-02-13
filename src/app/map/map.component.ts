@@ -206,7 +206,7 @@ export class MapComponent implements OnInit {
 
         //if the style has been set globally, use that value
         if (a.colour) {
-          colour = a.colour;
+          colour = value;
         }
 
         break;
@@ -235,8 +235,8 @@ export class MapComponent implements OnInit {
     top: -1.5rem;
     position: relative;
     border-radius: 1rem 1rem 0;
+    border: 1px solid `+colour +``;
 
-    border: 1px solid #FFFFFF`;
     let icon = L.divIcon({
       className: 'my-custom-pin',
       iconAnchor: [0, 24],
