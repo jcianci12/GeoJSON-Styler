@@ -2,6 +2,8 @@
     <label for="file">Choose File</label>
     <input type="file"
            id="file"
+           onclick="this.value = null"
+
            #fileinput
            (change)="handleFileInput($event)">
 </div>
