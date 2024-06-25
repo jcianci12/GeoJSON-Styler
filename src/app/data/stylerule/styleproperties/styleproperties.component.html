@@ -7,7 +7,6 @@
       <input matInput [type]="gettype(item)" [value]="getProperty(item)" (change)="setProperty($event, item)" />
     </mat-form-field>
     <ng-container *ngIf="gettype(item) == 'boolean'">
-      <mat-label>{{ item }} bool</mat-label>
       <mat-checkbox class="example-margin" [checked]="getProperty(item)"  (change)="setProperty($event, item)">
         {{ item }}
       </mat-checkbox>
