@@ -15,6 +15,12 @@
       "request": "launch",
       "preLaunchTask": "npm: test",
       "url": "http://localhost:9876/debug.html"
+    },
+    {
+      "type": "msedge",
+      "name": "localhost:4200",
+      "request": "launch",
+      "url": "localhost:4200"
     }
   ]
 }
