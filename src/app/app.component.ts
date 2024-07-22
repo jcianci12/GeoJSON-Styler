@@ -1,14 +1,11 @@
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import * as geojson from 'geojson';
-import { Observable } from 'rxjs';
-import { geoJson, Map } from 'leaflet';
-import { terms } from './suburbfilter/suburbfilter.component';
+import { Map } from 'leaflet';
 import { FeatureCollectionLayer } from './featureCollection';
 import { stylerule } from './data/data.component';
 import { FeaturecollectionService } from './featurecollection.service';
 import { MatCheckboxChange } from '@angular/material/checkbox';
-import { GeoColumnMapping } from './data/geocolumn/geocolumn.component';
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
