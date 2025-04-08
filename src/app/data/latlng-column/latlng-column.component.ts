@@ -102,27 +102,27 @@ export class LatLngColumnComponent {
     }
 
     const headers = csvData[0];
-    const latColumn = this.selectedLatColumn;
-    const lngColumn = this.selectedLngColumn;
+    // Find the indices of the selected columns
+    const latIndex = headers.indexOf(this.selectedLatColumn);
+    const lngIndex = headers.indexOf(this.selectedLngColumn);
+
+    if (latIndex === -1 || lngIndex === -1) {
+      this.snackBar.open('Could not find selected columns in data', 'OK', { duration: 3000 });
+      return;
+    }
 
     const features: geojson.Feature<geojson.Point>[] = csvData.slice(1)
       .map((row: string[]) => {
-        // Create a map of header to value for easier access
-        const rowData = headers.reduce((acc, header, index) => {
-          acc[header] = row[index];
-          return acc;
-        }, {} as { [key: string]: string });
-
-        const lat = parseFloat(rowData[latColumn]);
-        const lng = parseFloat(rowData[lngColumn]);
+        const lat = parseFloat(row[latIndex]);
+        const lng = parseFloat(row[lngIndex]);
 
         if (isNaN(lat) || isNaN(lng)) return null;
 
-        // Create properties object excluding lat/lng columns
+        // Create properties object with all columns except lat/lng
         const properties: { [key: string]: any } = {};
-        Object.entries(rowData).forEach(([header, value]) => {
-          if (header !== latColumn && header !== lngColumn) {
-            properties[header] = value;
+        headers.forEach((header, index) => {
+          if (index !== latIndex && index !== lngIndex) {
+            properties[header] = row[index];
           }
         });
 
@@ -138,5 +138,17 @@ export class LatLngColumnComponent {
       .filter((feature): feature is geojson.Feature<geojson.Point> => feature !== null);
 
     this.testPoints.emit(features);
+    
+    // Show success message with feature count
+    const totalRows = csvData.length - 1; // Subtract 1 for header row
+    const validFeatures = features.length;
+    const invalidFeatures = totalRows - validFeatures;
+    
+    let message = `Added ${validFeatures} features to the map`;
+    if (invalidFeatures > 0) {
+      message += ` (${invalidFeatures} rows skipped due to invalid coordinates)`;
+    }
+    
+    this.snackBar.open(message, 'OK', { duration: 5000 });
   }
 } 

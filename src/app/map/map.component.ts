@@ -1,11 +1,11 @@
-import { style } from '@angular/animations';
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, OnDestroy } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import * as geojson from 'geojson';
 import * as L from 'leaflet';
 import { Bounds, FeatureGroup, geoJSON, latLng, Layer, LayerGroup as LeafletLayerGroup, Map, MapOptions, tileLayer, ZoomAnimEvent } from 'leaflet';
 import 'leaflet.fullscreen';
 import { CSVtoJSONPipe } from '../csvtojsonpipe';
+import { Subscription } from 'rxjs';
 
 import { colour, opacity, stylerule, text } from '../data/data.component';
 import { FeatureCollectionLayer } from '../featureCollection';
@@ -13,10 +13,21 @@ import { FeaturecollectionService } from '../featurecollection.service';
 import { FeaturefilterPipe } from '../featurefilter.pipe';
 import { terms } from '../featurefilter/featurefilter.component';
 import { MapStateService, LayerInfo } from '../services/map-state.service';
+import { FeatureCollectionLayerService } from '../services/feature-collection-layer.service';
 
 interface FeatureGroupInfo {
   id: string;
   group: L.FeatureGroup;
+}
+
+class MapPoint extends L.Marker {
+  id: string = '';
+  x: number = 0;
+  y: number = 0;
+
+  constructor(latlng: L.LatLngExpression, options?: L.MarkerOptions) {
+    super(latlng, options);
+  }
 }
 
 @Component({
@@ -24,9 +35,10 @@ interface FeatureGroupInfo {
   templateUrl: './map.component.html',
   styleUrls: ['./map.component.css'],
 })
-export class MapComponent implements OnInit {
+export class MapComponent implements OnInit, OnDestroy {
   @Output() map$: EventEmitter<Map> = new EventEmitter();
   @Output() zoom$: EventEmitter<number> = new EventEmitter();
+  
   bounds: Bounds = new Bounds();
   tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     opacity: 0.7,
@@ -34,7 +46,7 @@ export class MapComponent implements OnInit {
     detectRetina: true,
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
   });
-  // add a button to the map to toggle the tile layer
+
   @Input() options: MapOptions = {
     layers: [this.tileLayer],
     zoom: 1,
@@ -44,49 +56,49 @@ export class MapComponent implements OnInit {
       position: 'topleft',
       title: 'Full screen',
       titleCancel: 'Full screen cancel',
-      forcePseudoFullscreen: true, // limit fullscreen to window of map
+      forcePseudoFullscreen: true,
     },
   };
 
-  // to toggle the tile layer on and off, you can call the following function
-  toggleTileLayer() {
-    if (this.map?.hasLayer(this.tileLayer)) {
-      this.map.removeLayer(this.tileLayer);
-    } else {
-      this.map?.addLayer(this.tileLayer);
-    }
-  }
-
   private _featureCollection!: FeatureCollectionLayer[];
   private featureGroups: FeatureGroupInfo[] = [];
-  sub: any;
-
-  get FeatureCollection() {
-    return this._featureCollection;
-  }
-
+  private subscriptions: Subscription[] = [];
   public map: Map | undefined;
-  public tempmap: point[] = [];
-
+  public tempmap: MapPoint[] = [];
   public zoom: number | undefined;
-  //easybutton = L.easyButton('fa-map', this.toggleTileLayer).addTo(this.map);
+  public currentFeatureCollection: geojson.FeatureCollection | null = null;
 
   constructor(
     private fcs: FeaturecollectionService,
     private snackbar: MatSnackBar,
-    private mapState: MapStateService
+    private mapState: MapStateService,
+    private featureCollectionLayerService: FeatureCollectionLayerService
   ) {}
 
   ngOnInit() {
-    this.sub = this.fcs.FeatureCollectionLayerObservable.subscribe((f) => {
-      console.log('received data', f);
-      this.updateFeatureCollection(f);
-    });
+    this.subscriptions.push(
+      this.fcs.FeatureCollectionLayerObservable.subscribe((f) => {
+        console.log('received data', f);
+        this.updateFeatureCollection(f);
+      })
+    );
 
-    // Subscribe to layer visibility changes
-    this.mapState.layers$.subscribe(layers => {
-      this.updateLayerVisibility(layers);
-    });
+    this.subscriptions.push(
+      this.mapState.layerVisibility$.subscribe((visibility: LayerInfo[]) => {
+        this.updateLayerVisibility(visibility);
+      })
+    );
+
+    this.subscriptions.push(
+      this.featureCollectionLayerService.FeatureCollectionLayerObservable.subscribe((featureCollectionLayer: FeatureCollectionLayer | null) => {
+        if (featureCollectionLayer) {
+          this.currentFeatureCollection = featureCollectionLayer.featureCollection;
+        }
+      })
+    );
+
+    this.initializeMap();
+    this.setupSubscriptions();
 
     let button = L.Control.extend({
       onAdd: function () {}
@@ -108,6 +120,7 @@ export class MapComponent implements OnInit {
   ngOnDestroy() {
     this.map?.clearAllEventListeners;
     this.map?.remove();
+    this.subscriptions.forEach(sub => sub.unsubscribe());
   }
 
   onMapReady(map: Map) {
@@ -126,6 +139,7 @@ export class MapComponent implements OnInit {
     let bounds = this.map?.getBounds();
     localStorage.setItem('bounds', JSON.stringify(bounds));
   }
+
   onMapMoveEnd() {
     let bounds = this.map?.getBounds();
     localStorage.setItem('bounds', JSON.stringify(bounds));
@@ -168,9 +182,8 @@ export class MapComponent implements OnInit {
   }
 
   updateFeatureCollection(featureCollection?: FeatureCollectionLayer[] | null) {
-    if (featureCollection) {
-      this._featureCollection = featureCollection;
-    }
+    if (!featureCollection) return;
+    this._featureCollection = featureCollection;
     if (this.map) {
       // Clear existing feature groups
       this.featureGroups.forEach(group => {
@@ -285,7 +298,7 @@ export class MapComponent implements OnInit {
     geo.setIcon(this.geticon(colour, opacity, text));
     
     // Add point to map state
-    let p = new point([feature.geometry.coordinates[1], feature.geometry.coordinates[0]]);
+    let p = new MapPoint([feature.geometry.coordinates[1], feature.geometry.coordinates[0]]);
     p.id = text || 'Point ' + (this.mapState.points.length + 1);
     p.x = this.latLngToXY(feature.geometry.coordinates[1], feature.geometry.coordinates[0])[0];
     p.y = this.latLngToXY(feature.geometry.coordinates[1], feature.geometry.coordinates[0])[1];
@@ -302,7 +315,7 @@ export class MapComponent implements OnInit {
       // Check if the layer is a marker, circle, or polygon
       if (layer instanceof L.Marker || layer instanceof L.Circle || layer instanceof L.Polygon) {
         //  console.log(layer)
-        let d = new point([1,1]);
+        let d = new MapPoint([1,1]);
         //layer._icon.innerText
         d.id = (layer as any)?._icon.innerText;
         const crs = L.CRS.EPSG3857;
@@ -382,9 +395,33 @@ export class MapComponent implements OnInit {
     });
     return geo;
   }
-}
-export class point extends L.Marker {
-  id: string | undefined;
-  x:number |undefined
-  y:number |undefined
+
+  private setupSubscriptions() {
+    this.subscriptions.push(
+      this.featureCollectionLayerService.FeatureCollectionLayerObservable.subscribe(
+        (featureCollectionLayer: FeatureCollectionLayer | null) => {
+          if (featureCollectionLayer) {
+            this.currentFeatureCollection = featureCollectionLayer.featureCollection;
+            this.updateMapWithFeatureCollection(featureCollectionLayer);
+          }
+        }
+      )
+    );
+
+    this.subscriptions.push(
+      this.mapState.layerVisibility$.subscribe(visibility => {
+        this.updateLayerVisibility(visibility);
+      })
+    );
+  }
+
+  private initializeMap() {
+    // ... existing map initialization code ...
+  }
+
+  private updateMapWithFeatureCollection(featureCollectionLayer: FeatureCollectionLayer | null) {
+    if (!featureCollectionLayer) return;
+    this.currentFeatureCollection = featureCollectionLayer.featureCollection;
+    // Implementation here
+  }
 }

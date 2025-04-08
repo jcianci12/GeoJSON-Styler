@@ -24,6 +24,7 @@ export class MapStateService {
   map$ = this.mapSubject.asObservable();
   featureGroup$ = this.featureGroupSubject.asObservable();
   layers$ = this.layersSubject.asObservable();
+  layerVisibility$ = this.layersSubject.asObservable();
 
   // Getters
   get points(): point[] {
@@ -57,7 +58,9 @@ export class MapStateService {
 
   addLayer(layer: LayerInfo): void {
     const currentLayers = this.layers;
-    this.layersSubject.next([...currentLayers, layer]);
+    if (!currentLayers.find(l => l.id === layer.id)) {
+      this.layersSubject.next([...currentLayers, layer]);
+    }
   }
 
   removeLayer(layerId: string): void {
@@ -122,5 +125,13 @@ export class MapStateService {
     if (this.featureGroup) {
       this.featureGroup.clearLayers();
     }
+  }
+
+  updateLayerVisibility(id: string, visible: boolean) {
+    const currentLayers = this.layers;
+    const updatedLayers = currentLayers.map(layer => 
+      layer.id === id ? { ...layer, visible } : layer
+    );
+    this.layersSubject.next(updatedLayers);
   }
 } 
