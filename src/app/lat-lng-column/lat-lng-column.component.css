@@ -1,0 +1,10 @@
+.lat-lng-column {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem;
+}
+
+mat-form-field {
+  width: 100%;
+} 

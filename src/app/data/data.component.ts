@@ -30,6 +30,8 @@ export class DataComponent implements OnInit {
   @Input() feature!: number;
   @Input() featurecollectionlayerindex!: number;
   @Input() featureCollectionLayers!: FeatureCollectionLayer[];
+  @Input() csvData: string = '';
+  @Input() headers: string[] = [];
 
   constructor(private fcs: FeaturecollectionService, private api: GeoDataEndpointClient) {}
 
@@ -71,7 +73,8 @@ export class DataComponent implements OnInit {
     this.updateData();
   }
 
-  onLatLngColumnsSelected(mapping: LatLngColumnMapping) {
+  onLatLngColumnsSelected(event: Event) {
+    const mapping = (event as CustomEvent<LatLngColumnMapping>).detail;
     if (!this.d) return;
 
     const csvData = new CSVtoJSONPipe().csvJSON(this.d);
@@ -112,10 +115,9 @@ export class DataComponent implements OnInit {
     this.fcs.FeatureCollectionLayerObservable.next(this.featureCollectionLayers);
   }
 
-  onTestPointsAdded(points: geojson.Feature<geojson.Point>[]) {
-    // Update the feature collection with the test points
-    this.featureCollectionLayers[this.featurecollectionlayerindex].features = points;
-    this.fcs.FeatureCollectionLayerObservable.next(this.featureCollectionLayers);
+  onTestPointsAdded(event: Event) {
+    const features = (event as CustomEvent<geojson.Feature<geojson.Point, geojson.GeoJsonProperties>[]>).detail;
+    // Handle the features
   }
 }
 

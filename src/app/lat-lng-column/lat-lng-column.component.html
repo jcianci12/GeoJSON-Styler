@@ -1,0 +1,19 @@
+<div class="lat-lng-column">
+  <mat-form-field>
+    <mat-label>Latitude Column</mat-label>
+    <mat-select [(ngModel)]="latColumn" (selectionChange)="onColumnChange()">
+      <mat-option *ngFor="let header of headers" [value]="header">
+        {{header}}
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+
+  <mat-form-field>
+    <mat-label>Longitude Column</mat-label>
+    <mat-select [(ngModel)]="lngColumn" (selectionChange)="onColumnChange()">
+      <mat-option *ngFor="let header of headers" [value]="header">
+        {{header}}
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+</div> 

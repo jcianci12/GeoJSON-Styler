@@ -60,50 +60,120 @@ export class MapComponent implements OnInit, OnDestroy {
     },
   };
 
-  private _featureCollection!: FeatureCollectionLayer[];
-  private featureGroups: FeatureGroupInfo[] = [];
   private subscriptions: Subscription[] = [];
   public map: Map | undefined;
-  public tempmap: MapPoint[] = [];
   public zoom: number | undefined;
   public currentFeatureCollection: geojson.FeatureCollection | null = null;
+  private tempmap: MapPoint[] = [];
+  private _featureCollection: FeatureCollectionLayer[] = [];
 
   constructor(
-    private fcs: FeaturecollectionService,
     private snackbar: MatSnackBar,
-    private mapState: MapStateService,
-    private featureCollectionLayerService: FeatureCollectionLayerService
+    private mapState: MapStateService
   ) {}
 
   ngOnInit() {
     this.subscriptions.push(
-      this.fcs.FeatureCollectionLayerObservable.subscribe((f) => {
-        console.log('received data', f);
-        this.updateFeatureCollection(f);
+      this.mapState.layers$.subscribe(layers => {
+        this.updateLayers(layers);
       })
     );
 
     this.subscriptions.push(
-      this.mapState.layerVisibility$.subscribe((visibility: LayerInfo[]) => {
-        this.updateLayerVisibility(visibility);
-      })
-    );
-
-    this.subscriptions.push(
-      this.featureCollectionLayerService.FeatureCollectionLayerObservable.subscribe((featureCollectionLayer: FeatureCollectionLayer | null) => {
-        if (featureCollectionLayer) {
-          this.currentFeatureCollection = featureCollectionLayer.featureCollection;
-        }
+      this.mapState.layerVisibility$.subscribe(layers => {
+        this.updateLayerVisibility(layers);
       })
     );
 
     this.initializeMap();
-    this.setupSubscriptions();
+  }
 
-    let button = L.Control.extend({
-      onAdd: function () {}
+  private updateLayers(layers: LayerInfo[]) {
+    if (!this.map) return;
+
+    // Clear existing feature groups
+    this.mapState.clearFeatureGroup();
+
+    layers.forEach(layer => {
+      if (!layer.visible) return;
+
+      const featureGroup = new FeatureGroup();
+      
+      // Handle point features
+      if (layer.type === 'csv') {
+        layer.features.forEach(feature => {
+          if (feature.geometry.type === 'Point' && Array.isArray(feature.geometry.coordinates)) {
+            const marker = L.marker([
+              feature.geometry.coordinates[1],
+              feature.geometry.coordinates[0]
+            ]);
+            
+            if (feature.properties) {
+              const popupContent = Object.entries(feature.properties)
+                .map(([key, value]) => `${key}: ${value}`)
+                .join('<br>');
+              marker.bindPopup(popupContent);
+            }
+            
+            featureGroup.addLayer(marker);
+          }
+        });
+      } else {
+        // Handle polygon features
+        layer.features.forEach(feature => {
+          if (feature.geometry.type === 'Polygon' || feature.geometry.type === 'MultiPolygon') {
+            const geo = L.geoJSON(feature);
+            featureGroup.addLayer(geo);
+          }
+        });
+      }
+
+      this.mapState.addLayerToFeatureGroup(featureGroup);
     });
-    let control = new L.Control({ position: 'topright' });
+
+    // Update feature count
+    const totalFeatures = layers.reduce((sum, layer) => sum + layer.features.length, 0);
+    this.currentFeatureCollection = {
+      type: 'FeatureCollection',
+      features: layers.flatMap(layer => layer.features)
+    };
+
+    this.snackbar.open(`Updated ${totalFeatures} features`, 'OK', { duration: 3000 });
+  }
+
+  private updateLayerVisibility(layers: LayerInfo[]) {
+    if (!this.map) return;
+
+    layers.forEach(layer => {
+      const featureGroup = this.mapState.featureGroup;
+      if (featureGroup && this.map) {
+        if (layer.visible) {
+          this.map.addLayer(featureGroup);
+        } else {
+          this.map.removeLayer(featureGroup);
+        }
+      }
+    });
+  }
+
+  private fitBounds() {
+    if (!this.map) return;
+
+    const visibleLayers = this.mapState.layers.filter(l => l.visible);
+    if (visibleLayers.length === 0) return;
+
+    const firstVisibleLayer = visibleLayers[0];
+    if (firstVisibleLayer.features.length > 0) {
+      const bounds = L.latLngBounds(
+        firstVisibleLayer.features
+          .filter(f => f.geometry.type === 'Point' && 'coordinates' in f.geometry)
+          .map(f => {
+            const point = f.geometry as geojson.Point;
+            return [point.coordinates[1], point.coordinates[0]] as L.LatLngTuple;
+          })
+      );
+      this.map.fitBounds(bounds);
+    }
   }
 
   ngAfterViewInit() {
@@ -147,193 +217,50 @@ export class MapComponent implements OnInit, OnDestroy {
 
   loadBounds() {
     let savedBounds = localStorage.getItem('bounds') as string;
-    // When the page loads, check if there is a saved zoom level and set it on the map
     if (savedBounds !== null) {
       let parsed = JSON.parse(savedBounds) as any;
       let bounds = L.latLngBounds(parsed._northEast, parsed._southWest);
       this.map?.flyToBounds(bounds);
     } else {
-      // Get bounds from the first visible feature group
-      const firstVisibleGroup = this.featureGroups.find(group => {
-        const layerInfo = this.mapState.layers.find(l => l.id === group.id);
-        return layerInfo?.visible;
-      });
-
-      if (firstVisibleGroup && firstVisibleGroup.group.getLayers().length > 0) {
-        const bounds = firstVisibleGroup.group.getBounds();
-        this.map?.fitBounds(bounds);
-      }
-    }
-  }
-
-  updateLayerVisibility(layers: LayerInfo[]) {
-    if (!this.map) return;
-
-    layers.forEach(layer => {
-      const featureGroup = this.featureGroups.find(g => g.id === layer.id);
-      if (featureGroup) {
-        if (layer.visible) {
-          this.map?.addLayer(featureGroup.group);
-        } else {
-          this.map?.removeLayer(featureGroup.group);
+      const firstVisibleGroup = this.mapState.layers.find(l => l.visible);
+      if (firstVisibleGroup && firstVisibleGroup.features.length > 0) {
+        const bounds = firstVisibleGroup.features
+          .filter(f => f.geometry.type === 'Point' && 'coordinates' in f.geometry)
+          .map(f => {
+            const point = f.geometry as geojson.Point;
+            return L.latLng(point.coordinates[1], point.coordinates[0]);
+          });
+        if (bounds.length > 0) {
+          this.map?.fitBounds(L.latLngBounds(bounds));
         }
       }
-    });
+    }
   }
 
   updateFeatureCollection(featureCollection?: FeatureCollectionLayer[] | null) {
     if (!featureCollection) return;
-    this._featureCollection = featureCollection;
-    if (this.map) {
-      // Clear existing feature groups
-      this.featureGroups.forEach(group => {
-        this.map?.removeLayer(group.group);
-      });
-      this.featureGroups = [];
-
-      this._featureCollection?.forEach((f, i) => {
-        if (!f.active) return;
-
-        const featureGroup = new FeatureGroup();
-        const layerId = `layer-${i}`;
-        this.featureGroups.push({ id: layerId, group: featureGroup });
-
-        // Add layer info to state
-        this.mapState.addLayer({
-          id: layerId,
-          name: `Layer ${i + 1}`,
-          type: f.features.length > 0 && f.features[0].geometry.type === 'Point' ? 'csv' : 'geojson',
-          visible: true
-        });
-
-        // Handle direct point features (from CSV)
-        if (f.features.length > 0 && f.features[0].geometry.type === 'Point') {
-          f.features.forEach(feature => {
-            if (feature.geometry.type === 'Point') {
-              const pointFeature = feature as geojson.Feature<geojson.Point>;
-              const marker = this.handlePoint(pointFeature, f.stylerules[0], [], i, f);
-              featureGroup.addLayer(marker);
-            }
-          });
-        } else {
-          // Handle polygon features with styling data
-          let ffp = new FeaturefilterPipe().transform(f, this._featureCollection[i].terms?.triggerval);
-          let styledata = new CSVtoJSONPipe().csvJSON(this._featureCollection[i].styledata as any);
-          let stylerules = this._featureCollection[i].stylerules;
-          ffp.features.forEach((feature) => {
-            let _fc = this._featureCollection[i];
-            let geocolumn = _fc.geocolumn?.GEOJSON.toString();
-            let csvgeocolumn = _fc.geocolumn?.GEOColumn.toString();
-
-            if (geocolumn) {
-              if (styledata.length) {
-                let geocolumnindex = styledata[0]?.findIndex((col) => col.toLowerCase() == csvgeocolumn.toLowerCase());
-                let propertytomatch = feature.properties?.[geocolumn];
-
-                styledata.forEach((stylerow) => {
-                  let _suburb = stylerow[geocolumnindex];
-
-                  if (propertytomatch?.toLowerCase() == _suburb?.toLowerCase()) {
-                    if (feature.geometry.type == 'MultiPolygon' || feature.geometry.type == 'Polygon') {
-                      let geo = this.handlePolygon(stylerules, feature, stylerow, i, _fc);
-                      featureGroup.addLayer(geo);
-                    }
-                  }
-                });
-              }
-            }
-          });
-        }
-
-        featureGroup.addTo(this.map!);
-      });
-
-      this.snackbar.open('Layers updated successfully');
-    }
+    this.currentFeatureCollection = {
+      type: 'FeatureCollection',
+      features: featureCollection.flatMap(layer => layer.features)
+    };
   }
 
-  handlePoint(feature: geojson.Feature<geojson.Point>, s: stylerule, stylerow: string[], i: number, _fc: FeatureCollectionLayer): L.Marker {
-    let styledata = new CSVtoJSONPipe().csvJSON(this._featureCollection[i].styledata as any);
-    let styledatacolumnindex = styledata[0]?.indexOf(s.column);
-    let value = stylerow[styledatacolumnindex];
-    
-    // Create marker at the point's coordinates
-    var geo = L.marker([feature.geometry.coordinates[1], feature.geometry.coordinates[0]]);
-    
-    let text = '';
-    let opacity = 1;
-    let colour = 'blue'; // Default color for points
-
-    // Apply styling rules if available
-    if (s) {
-      switch (s.ruletype.rulename) {
-        case 'opacity': {
-          let a = s.ruletype as opacity;
-          opacity = a.opacityvalue;
-          break;
-        }
-        case 'colour': {
-          let a = s.ruletype as colour;
-          if (a.colour) {
-            colour = value || a.colour;
-          }
-          break;
-        }
-        case 'text': {
-          let a = s.ruletype as text;
-          text = a.textvalue || value || '';
-          break;
-        }
-      }
-    }
-
-    // Add properties as popup content
-    if (feature.properties) {
-      const popupContent = Object.entries(feature.properties)
-        .map(([key, value]) => `${key}: ${value}`)
-        .join('<br>');
-      geo.bindPopup(popupContent);
-    }
-
-    geo.setIcon(this.geticon(colour, opacity, text));
-    
-    // Add point to map state
-    let p = new MapPoint([feature.geometry.coordinates[1], feature.geometry.coordinates[0]]);
-    p.id = text || 'Point ' + (this.mapState.points.length + 1);
-    p.x = this.latLngToXY(feature.geometry.coordinates[1], feature.geometry.coordinates[0])[0];
-    p.y = this.latLngToXY(feature.geometry.coordinates[1], feature.geometry.coordinates[0])[1];
-    this.mapState.addPoint(p);
-    
-    return geo;
-  }
   getxypoint(map: L.Map | undefined) {
-    this.tempmap = []
-    // Create an array to hold all the points
-
-    // Loop through all the layers on the map
+    this.tempmap = [];
     map?.eachLayer((layer: L.Layer) => {
-      // Check if the layer is a marker, circle, or polygon
       if (layer instanceof L.Marker || layer instanceof L.Circle || layer instanceof L.Polygon) {
-        //  console.log(layer)
         let d = new MapPoint([1,1]);
-        //layer._icon.innerText
-        d.id = (layer as any)?._icon.innerText;
-        const crs = L.CRS.EPSG3857;
-        // let latlng = crs.latLngToPoint((layer as L.Marker).getLatLng(),this.map?.getZoom()??1);
+        d.id = (layer as any)?._icon?.innerText || '';
         let latlng = (layer as L.Marker).getLatLng();
-
         d.setLatLng(latlng);
-        d.x = this.latLngToXY(latlng.lat,latlng.lng)[0]
-        d.y = this.latLngToXY(latlng.lat,latlng.lng)[1]
-
+        d.x = this.latLngToXY(latlng.lat, latlng.lng)[0];
+        d.y = this.latLngToXY(latlng.lat, latlng.lng)[1];
         this.tempmap.push(d);
-
       }
     });
-
-    // The `points` array now contains all the points on the map
   }
-   latLngToXY(lat:number, lng:number) {
+  
+  latLngToXY(lat:number, lng:number) {
     var R = 6378137;
     var x = R * lng * Math.PI / 180;
     var y = R * Math.log(Math.tan((90 + lat) * Math.PI / 360));
@@ -366,12 +293,17 @@ export class MapComponent implements OnInit, OnDestroy {
   }
 
   handlePolygon(stylerules: stylerule[], feature: geojson.Feature<geojson.Geometry, geojson.GeoJsonProperties>, stylerow: string[], i: number, _fc: FeatureCollectionLayer): L.GeoJSON<any> {
+    if (!this._featureCollection[i]?.styledata) {
+      return L.geoJSON(feature);
+    }
+    
     let styledata = new CSVtoJSONPipe().csvJSON(this._featureCollection[i].styledata as any);
     let styledatacolumnindex = styledata[0].indexOf(stylerules[0].column);
     let value = stylerow[styledatacolumnindex];
     let geo = L.geoJSON(feature);
     let opacity = 1;
     let colour = '';
+    
     stylerules.forEach((s) => {
       switch (s.ruletype.rulename) {
         case 'opacity': {
@@ -388,6 +320,7 @@ export class MapComponent implements OnInit, OnDestroy {
         }
       }
     });
+    
     geo.setStyle({
       fillOpacity: opacity,
       fillColor: colour,
@@ -396,32 +329,7 @@ export class MapComponent implements OnInit, OnDestroy {
     return geo;
   }
 
-  private setupSubscriptions() {
-    this.subscriptions.push(
-      this.featureCollectionLayerService.FeatureCollectionLayerObservable.subscribe(
-        (featureCollectionLayer: FeatureCollectionLayer | null) => {
-          if (featureCollectionLayer) {
-            this.currentFeatureCollection = featureCollectionLayer.featureCollection;
-            this.updateMapWithFeatureCollection(featureCollectionLayer);
-          }
-        }
-      )
-    );
-
-    this.subscriptions.push(
-      this.mapState.layerVisibility$.subscribe(visibility => {
-        this.updateLayerVisibility(visibility);
-      })
-    );
-  }
-
   private initializeMap() {
     // ... existing map initialization code ...
-  }
-
-  private updateMapWithFeatureCollection(featureCollectionLayer: FeatureCollectionLayer | null) {
-    if (!featureCollectionLayer) return;
-    this.currentFeatureCollection = featureCollectionLayer.featureCollection;
-    // Implementation here
   }
 }

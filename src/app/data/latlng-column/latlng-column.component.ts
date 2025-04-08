@@ -7,6 +7,7 @@ import { TableheadersPipe } from '../../tableheaders.pipe';
 import { CSVtoJSONPipe } from '../../csvtojsonpipe';
 import { LatLngColumnMapping } from './latlng-column-mapping';
 import { FileHandlerService } from '../../services/file-handler.service';
+import { MapStateService } from '../../services/map-state.service';
 
 @Component({
   selector: 'app-latlng-column',
@@ -25,14 +26,14 @@ export class LatLngColumnComponent {
   csvData: string = '';
   
   @Output() columnMappingChange = new EventEmitter<LatLngColumnMapping>();
-  @Output() testPoints = new EventEmitter<geojson.Feature<geojson.Point>[]>();
   
   private csvToJson = new CSVtoJSONPipe();
   private tableHeaders = new TableheadersPipe();
 
   constructor(
     private snackBar: MatSnackBar,
-    private fileHandler: FileHandlerService
+    private fileHandler: FileHandlerService,
+    private mapState: MapStateService
   ) {}
 
   togglePreview() {
@@ -137,18 +138,25 @@ export class LatLngColumnComponent {
       })
       .filter((feature): feature is geojson.Feature<geojson.Point> => feature !== null);
 
-    this.testPoints.emit(features);
+    // Initialize the layer if it doesn't exist
+    const layerId = `layer-${this.featurecollectionlayerindex}`;
+    const layer = this.mapState.layers.find(l => l.id === layerId);
+    if (!layer) {
+      this.mapState.addLayer({
+        id: layerId,
+        name: `CSV Layer ${this.featurecollectionlayerindex}`,
+        type: 'csv',
+        visible: true,
+        features: []
+      });
+    }
+
+    // Update the layer features
+    this.mapState.updateLayerFeatures(layerId, features);
     
     // Show success message with feature count
-    const totalRows = csvData.length - 1; // Subtract 1 for header row
-    const validFeatures = features.length;
-    const invalidFeatures = totalRows - validFeatures;
-    
-    let message = `Added ${validFeatures} features to the map`;
-    if (invalidFeatures > 0) {
-      message += ` (${invalidFeatures} rows skipped due to invalid coordinates)`;
-    }
-    
-    this.snackBar.open(message, 'OK', { duration: 5000 });
+    const totalRows = csvData.length - 1;
+    const validRows = features.length;
+    this.snackBar.open(`Added ${validRows} points out of ${totalRows} rows`, 'OK', { duration: 3000 });
   }
 } 

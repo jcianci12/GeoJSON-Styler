@@ -7,6 +7,9 @@ import { stylerule } from './data/data.component';
 import { FeaturecollectionService } from './featurecollection.service';
 import { MatCheckboxChange } from '@angular/material/checkbox';
 import { LatLngColumnMapping } from './data/latlng-column/latlng-column-mapping';
+import { CSVtoJSONPipe } from './csvtojsonpipe';
+import { TableheadersPipe } from './tableheaders.pipe';
+import { Select } from './tableheaders.pipe';
 
 @Component({
   selector: 'app-root',
@@ -32,6 +35,9 @@ export class AppComponent implements OnInit {
       resolve(true);
     }, 1000);
   });
+
+  csvData: string = '';
+  headers: Select[] = [];
 
   constructor(private http: HttpClient, private fcs: FeaturecollectionService) {
     this.addlistener();
@@ -113,12 +119,20 @@ export class AppComponent implements OnInit {
     }
   }
 
-  onTestPointsAdded(index: number, points: geojson.Feature<geojson.Point>[]) {
-    const layer = this.featureCollectionLayers[index];
-    if (layer.layerType === 'csv') {
-      layer.features = points;
-      this.fcs.FeatureCollectionLayerObservable.next(this.featureCollectionLayers);
-    }
+  onFileAdded(files: FileList) {
+    const file = files[0];
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const csvData = reader.result as string;
+      this.csvData = csvData;
+      const csvRows = new CSVtoJSONPipe().csvJSON(csvData);
+      this.headers = new TableheadersPipe().transform([csvRows[0]]);
+    };
+    reader.readAsText(file);
+  }
+
+  onTestPointsAdded(features: geojson.Feature<geojson.Point, geojson.GeoJsonProperties>[]) {
+    // Handle the features
   }
 
   public map: Map | undefined;

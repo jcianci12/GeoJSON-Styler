@@ -2,7 +2,8 @@ import { Component, Input, OnInit, OnChanges, SimpleChanges } from '@angular/cor
 import * as L from 'leaflet';
 import { LatLng, Layer } from 'leaflet';
 import { point } from '../data/data.component';
-import { MapStateService, LayerInfo } from '../services/map-state.service';
+import { MapStateService, LayerInfo, Point } from '../services/map-state.service';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-mapdata',
@@ -12,14 +13,17 @@ import { MapStateService, LayerInfo } from '../services/map-state.service';
 export class MapdataComponent implements OnInit, OnChanges {
   @Input() map: L.Map | undefined;
   checked: boolean = true;
-  points$ = this.mapState.points$;
+  points$: Observable<Point[]>;
+  mapState: MapStateService;
 
-  constructor(public mapState: MapStateService) {}
+  constructor(mapState: MapStateService) {
+    this.mapState = mapState;
+    this.points$ = this.mapState.points$;
+  }
 
-  ngOnInit() {
-    // Subscribe to points changes
-    this.mapState.points$.subscribe(points => {
-      points.forEach((p, i) => {
+  ngOnInit(): void {
+    this.points$.subscribe((points: Point[]) => {
+      points.forEach((p: Point, i: number) => {
         p.id = p.id || 'Point ' + (i + 1);
       });
     });
@@ -53,27 +57,23 @@ export class MapdataComponent implements OnInit, OnChanges {
   //   return d
   // }
 
-  get maxx() {
-    return this.mapState.points.reduce((max: number, p: point) => {
-      return p.x && p.x > max ? p.x : max;
-    }, Number.NEGATIVE_INFINITY);
+  get minx(): number {
+    return this.mapState.points.reduce((min: number, p: Point) => 
+      Math.min(min, p.x), Infinity);
   }
 
-  get minx() {
-    return this.mapState.points.reduce((min: number, p: point) => {
-      return p.x && p.x < min ? p.x : min;
-    }, Number.POSITIVE_INFINITY);
+  get maxx(): number {
+    return this.mapState.points.reduce((max: number, p: Point) => 
+      Math.max(max, p.x), -Infinity);
   }
 
-  get maxy() {
-    return this.mapState.points.reduce((max: number, p: point) => {
-      return p.y && p.y > max ? p.y : max;
-    }, Number.NEGATIVE_INFINITY);
+  get miny(): number {
+    return this.mapState.points.reduce((min: number, p: Point) => 
+      Math.min(min, p.y), Infinity);
   }
 
-  get miny() {
-    return this.mapState.points.reduce((min: number, p: point) => {
-      return p.y && p.y < min ? p.y : min;
-    }, Number.POSITIVE_INFINITY);
+  get maxy(): number {
+    return this.mapState.points.reduce((max: number, p: Point) => 
+      Math.max(max, p.y), -Infinity);
   }
 }

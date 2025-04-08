@@ -69,12 +69,15 @@
                         [featurecollectionlayerindex]="i"
                         [featureCollectionLayers]="featureCollectionLayers">
                       </app-data>
-                      <app-latlng-column *ngSwitchCase="'csv'"
-                        [featurecollectionlayerindex]="i"
-                        [featureCollectionLayers]="featureCollectionLayers"
-                        (columnMappingChange)="onLatLngColumnsSelected(i, $event)"
-                        (testPoints)="onTestPointsAdded(i, $event)">
-                      </app-latlng-column>
+                      <div *ngSwitchCase="'csv'">
+                        <app-latlng-column
+                          [csvData]="csvData"
+                          [headers]="headers"
+                          [featurecollectionlayerindex]="i"
+                          [featureCollectionLayers]="featureCollectionLayers"
+                          (testPoints)="onTestPointsAdded($any($event).detail)">
+                        </app-latlng-column>
+                      </div>
                     </ng-container>
                   </div>
                 </div>

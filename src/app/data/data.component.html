@@ -31,10 +31,8 @@
               
               <!-- Add lat/lng column selector when CSV data is loaded -->
               <div *ngIf="d">
-                <app-latlng-column 
-                  [headers]="d | csvtojson | tableheaders"
-                  (columnMappingChange)="onLatLngColumnsSelected($event)"
-                  (testPoints)="onTestPointsAdded($event)">
+                <app-latlng-column [csvData]="d" (latLngColumnsSelected)="onLatLngColumnsSelected($event)"
+                                   (testPoints)="onTestPointsAdded($event)">
                 </app-latlng-column>
               </div>
             </mat-tab>
