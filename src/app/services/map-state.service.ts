@@ -3,6 +3,13 @@ import { BehaviorSubject, Observable } from 'rxjs';
 import { point } from '../data/data.component';
 import * as L from 'leaflet';
 
+export interface LayerInfo {
+  id: string;
+  name: string;
+  type: 'geojson' | 'csv';
+  visible: boolean;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -10,11 +17,13 @@ export class MapStateService {
   private pointsSubject = new BehaviorSubject<point[]>([]);
   private mapSubject = new BehaviorSubject<L.Map | null>(null);
   private featureGroupSubject = new BehaviorSubject<L.FeatureGroup | null>(null);
+  private layersSubject = new BehaviorSubject<LayerInfo[]>([]);
 
   // Observable streams
   points$ = this.pointsSubject.asObservable();
   map$ = this.mapSubject.asObservable();
   featureGroup$ = this.featureGroupSubject.asObservable();
+  layers$ = this.layersSubject.asObservable();
 
   // Getters
   get points(): point[] {
@@ -29,6 +38,10 @@ export class MapStateService {
     return this.featureGroupSubject.value;
   }
 
+  get layers(): LayerInfo[] {
+    return this.layersSubject.value;
+  }
+
   // Setters
   setPoints(points: point[]): void {
     this.pointsSubject.next(points);
@@ -40,6 +53,24 @@ export class MapStateService {
 
   setFeatureGroup(featureGroup: L.FeatureGroup): void {
     this.featureGroupSubject.next(featureGroup);
+  }
+
+  addLayer(layer: LayerInfo): void {
+    const currentLayers = this.layers;
+    this.layersSubject.next([...currentLayers, layer]);
+  }
+
+  removeLayer(layerId: string): void {
+    const currentLayers = this.layers;
+    this.layersSubject.next(currentLayers.filter(layer => layer.id !== layerId));
+  }
+
+  toggleLayerVisibility(layerId: string): void {
+    const currentLayers = this.layers;
+    const updatedLayers = currentLayers.map(layer => 
+      layer.id === layerId ? { ...layer, visible: !layer.visible } : layer
+    );
+    this.layersSubject.next(updatedLayers);
   }
 
   // Point management methods

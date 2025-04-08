@@ -1,5 +1,16 @@
 <mat-checkbox [(ngModel)]="checked">LatLng</mat-checkbox>
 
+<div class="layers-control">
+  <h3>Layers</h3>
+  <div *ngFor="let layer of mapState.layers$ | async" class="layer-item">
+    <mat-slide-toggle 
+      [(ngModel)]="layer.visible"
+      (change)="onLayerVisibilityChange(layer.id)">
+      {{ layer.name }} ({{ layer.type }})
+    </mat-slide-toggle>
+  </div>
+</div>
+
 <h1>Map Data</h1>
 <p>{{ (mapState.points$ | async)?.length }} rows</p>
 {{ minx }} {{ maxx }} {{ miny }} {{ maxy }}

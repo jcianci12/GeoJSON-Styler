@@ -2,7 +2,7 @@ import { Component, Input, OnInit, OnChanges, SimpleChanges } from '@angular/cor
 import * as L from 'leaflet';
 import { LatLng, Layer } from 'leaflet';
 import { point } from '../data/data.component';
-import { MapStateService } from '../services/map-state.service';
+import { MapStateService, LayerInfo } from '../services/map-state.service';
 
 @Component({
   selector: 'app-mapdata',
@@ -29,6 +29,10 @@ export class MapdataComponent implements OnInit, OnChanges {
     if (changes['map'] && this.map) {
       this.mapState.setMap(this.map);
     }
+  }
+
+  onLayerVisibilityChange(layerId: string) {
+    this.mapState.toggleLayerVisibility(layerId);
   }
 
   geoDistance(point1: point, point2: point): number {
