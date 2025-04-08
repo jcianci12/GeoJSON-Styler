@@ -6,6 +6,8 @@ import { FeatureCollectionLayer, LayerType } from './featureCollection';
 import { stylerule } from './data/data.component';
 import { FeaturecollectionService } from './featurecollection.service';
 import { MatCheckboxChange } from '@angular/material/checkbox';
+import { LatLngColumnMapping } from './data/latlng-column/latlng-column-mapping';
+
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
@@ -14,7 +16,9 @@ import { MatCheckboxChange } from '@angular/material/checkbox';
 })
 export class AppComponent implements OnInit {
   title = 'GeoJson-Styler';
-  public featureCollectionLayers: FeatureCollectionLayer[] = [];
+  featureCollectionLayers: FeatureCollectionLayer[] = [];
+  style: stylerule[] = [];
+  reader = new FileReader();
   _triggerval: number = 0;
   get triggerval() {
     return this._triggerval;
@@ -29,28 +33,96 @@ export class AppComponent implements OnInit {
     }, 1000);
   });
 
-  public reader: FileReader = new FileReader();
-  constructor(private http: HttpClient,private fcs:FeaturecollectionService) {}
+  constructor(private http: HttpClient, private fcs: FeaturecollectionService) {
+    this.addlistener();
+  }
 
   ngOnInit(): void {
-    this.addlistener()
-
-    this.fcs.FeatureCollectionLayerObservable.subscribe(i=>this.featureCollectionLayers = i)
-    this.addLayer()
-
-
+    this.fcs.FeatureCollectionLayerObservable.subscribe((i) => {
+      this.featureCollectionLayers = i;
+    });
   }
 
-
-  removeLayer(l: number) {
-
-    this.featureCollectionLayers.splice(l, 1);
-    this.fcs.FeatureCollectionLayerObservable.next(this.featureCollectionLayers)
+  updateActive(event: any, index: number) {
+    this.featureCollectionLayers[index].active = event.checked;
+    this.fcs.FeatureCollectionLayerObservable.next(this.featureCollectionLayers);
   }
 
+  onLayerTypeChange(index: number) {
+    const layer = this.featureCollectionLayers[index];
+    if (layer.layerType === 'csv') {
+      // Initialize CSV-specific properties
+      layer.styledata = [];
+      layer.features = [];
+      layer.stylerules = [];
+    }
+    this.fcs.FeatureCollectionLayerObservable.next(this.featureCollectionLayers);
+  }
+
+  removeLayer(index: number) {
+    this.featureCollectionLayers.splice(index, 1);
+    this.fcs.FeatureCollectionLayerObservable.next(this.featureCollectionLayers);
+  }
+
+  addLayer() {
+    let l = new FeatureCollectionLayer(
+      [],
+      {
+        terms: [],
+        triggerval: 0,
+      },
+      this.style,
+      { GEOColumn: "qld_loca_2", GEOJSON: "suburb" },
+      []
+    );
+
+    this.featureCollectionLayers.push(l);
+    this.fcs.FeatureCollectionLayerObservable.next(this.featureCollectionLayers);
+  }
+
+  addlistener() {
+    this.reader.onloadend = () => {
+      let fc = JSON.parse(
+        this.reader.result as string
+      ) as geojson.FeatureCollection;
+      let l = new FeatureCollectionLayer(
+        fc.features,
+        {
+          terms: [],
+          triggerval: 0,
+        },
+        this.style,
+        { GEOColumn: "qld_loca_2", GEOJSON: "suburb" },
+        []
+      );
+
+      this.featureCollectionLayers.push(l);
+      this.fcs.FeatureCollectionLayerObservable.next(this.featureCollectionLayers);
+    };
+  }
+
+  onLatLngColumnsSelected(index: number, mapping: LatLngColumnMapping) {
+    const layer = this.featureCollectionLayers[index];
+    if (layer.layerType === 'csv') {
+      // Update the layer with the new column mapping
+      layer.geocolumn = {
+        GEOColumn: mapping.lngColumn,
+        GEOJSON: mapping.latColumn
+      };
+      this.fcs.FeatureCollectionLayerObservable.next(this.featureCollectionLayers);
+    }
+  }
+
+  onTestPointsAdded(index: number, points: geojson.Feature<geojson.Point>[]) {
+    const layer = this.featureCollectionLayers[index];
+    if (layer.layerType === 'csv') {
+      layer.features = points;
+      this.fcs.FeatureCollectionLayerObservable.next(this.featureCollectionLayers);
+    }
+  }
 
   public map: Map | undefined;
-  private zoom: number | undefined;
+  public zoom: number = 0;
 
   receiveMap(map: Map) {
     this.map = map;
@@ -58,52 +130,5 @@ export class AppComponent implements OnInit {
 
   receiveZoom(zoom: number) {
     this.zoom = zoom;
-  }
-
-  updateActive(val:MatCheckboxChange,index:number){
-    this.featureCollectionLayers[index].active = val.checked
-    this.fcs.FeatureCollectionLayerObservable.next(this.featureCollectionLayers)
-  }
-
-  onLayerTypeChange(index: number) {
-    // The ngModel binding will handle updating the layerType
-    this.fcs.FeatureCollectionLayerObservable.next(this.featureCollectionLayers);
-  }
-
-addlistener(){
-  this.reader.onloadend = () => {
-    let fc = JSON.parse(
-      this.reader.result as string
-    ) as geojson.FeatureCollection;
-    let l = new FeatureCollectionLayer(
-      fc.features,
-      {
-        terms: [],
-        triggerval: 0,
-      },
-      this.style,{GEOColumn:"qld_loca_2",GEOJSON:"suburb"},[]
-    );
-
-    this.featureCollectionLayers.push(l);
-  };
-}
-addLayer(){
-
-    let l = new FeatureCollectionLayer(
-      [],
-      {
-        terms: [],
-        triggerval: 0,
-      },
-      this.style,{GEOColumn:"qld_loca_2",GEOJSON:"suburb"},[]
-    );
-
-    this.featureCollectionLayers.push(l);
-    console.log(this.featureCollectionLayers[0].stylerules);
-
-}
-
-  get style():stylerule[]{
-    return [ ]
   }
 }

@@ -5,11 +5,8 @@ import * as geojson from 'geojson';
 import { FeatureCollectionLayer } from '../../featureCollection';
 import { TableheadersPipe } from '../../tableheaders.pipe';
 import { CSVtoJSONPipe } from '../../csvtojsonpipe';
-
-export interface LatLngColumnMapping {
-  latColumn: string;
-  lngColumn: string;
-}
+import { LatLngColumnMapping } from './latlng-column-mapping';
+import { FileHandlerService } from '../../services/file-handler.service';
 
 @Component({
   selector: 'app-latlng-column',
@@ -20,125 +17,124 @@ export class LatLngColumnComponent {
   @Input() headers: Select[] = [];
   @Input() featurecollectionlayerindex!: number;
   @Input() featureCollectionLayers!: FeatureCollectionLayer[];
-  @Output() columnMappingChange = new EventEmitter<LatLngColumnMapping>();
-  @Output() testPoints = new EventEmitter<geojson.Feature<geojson.Point>[]>();
-
+  
   selectedLatColumn: string = '';
   selectedLngColumn: string = '';
+  rowCount: number = 0;
+  showPreview: boolean = false;
+  csvData: string = '';
+  
+  @Output() columnMappingChange = new EventEmitter<LatLngColumnMapping>();
+  @Output() testPoints = new EventEmitter<geojson.Feature<geojson.Point>[]>();
+  
+  private csvToJson = new CSVtoJSONPipe();
+  private tableHeaders = new TableheadersPipe();
 
   constructor(
     private snackBar: MatSnackBar,
-    private tableHeaders: TableheadersPipe,
-    private csvToJson: CSVtoJSONPipe
+    private fileHandler: FileHandlerService
   ) {}
 
-  ngOnInit() {
-    this.autoDetectColumns();
+  togglePreview() {
+    this.showPreview = !this.showPreview;
   }
 
   onFileAdded(files: FileList) {
     const file = files[0];
-    const reader = new FileReader();
     
-    reader.onload = (e) => {
-      const csvData = e.target?.result as string;
-      const jsonData = this.csvToJson.csvJSON(csvData);
-      
-      if (jsonData && jsonData.length > 0) {
-        // Convert the JSON data to the expected format (array of string arrays)
-        const csvRows = [
-          Object.keys(jsonData[0]), // Headers as first row
-          ...jsonData.map(row => Object.values(row) as string[]) // Data rows
-        ];
+    this.fileHandler.processCSVFile(file)
+      .then(result => {
+        this.csvData = result.csvData;
+        this.headers = result.headers;
+        this.rowCount = result.rowCount;
         
         // Update the feature collection layer with the CSV data
-        this.featureCollectionLayers[this.featurecollectionlayerindex].styledata = csvRows;
-        
-        // Extract and set headers from the first row
-        const headers = csvRows[0].map(header => ({
-          value: header,
-          viewValue: header
-        }));
-        this.headers = headers;
+        this.featureCollectionLayers = this.fileHandler.updateFeatureCollectionLayer(
+          this.featureCollectionLayers,
+          this.featurecollectionlayerindex,
+          result.csvRows
+        );
         
         // Auto-detect lat/lng columns
         this.autoDetectColumns();
-      }
-    };
-    
-    reader.readAsText(file);
+      })
+      .catch(error => {
+        this.snackBar.open('Error processing CSV file: ' + error.message, 'OK', { duration: 3000 });
+      });
   }
 
-  autoDetectColumns() {
-    // Auto-detect lat/lng columns based on common column names
+  private autoDetectColumns() {
     const latPatterns = ['lat', 'latitude', 'y'];
     const lngPatterns = ['lng', 'long', 'longitude', 'lon', 'x'];
-
-    for (const header of this.headers) {
-      const lowerHeader = header.value.toLowerCase();
-      
-      if (latPatterns.some(pattern => lowerHeader.includes(pattern)) && !this.selectedLatColumn) {
-        this.selectedLatColumn = header.value;
-      }
-      
-      if (lngPatterns.some(pattern => lowerHeader.includes(pattern)) && !this.selectedLngColumn) {
-        this.selectedLngColumn = header.value;
-      }
-    }
-
+    
+    this.selectedLatColumn = this.headers.find(h => 
+      latPatterns.some(pattern => h.value.toLowerCase().includes(pattern))
+    )?.value || '';
+    
+    this.selectedLngColumn = this.headers.find(h => 
+      lngPatterns.some(pattern => h.value.toLowerCase().includes(pattern))
+    )?.value || '';
+    
     if (this.selectedLatColumn && this.selectedLngColumn) {
-      this.emitMapping();
+      this.onColumnChange();
     }
   }
 
   onColumnChange() {
     if (this.selectedLatColumn && this.selectedLngColumn) {
-      this.emitMapping();
+      this.columnMappingChange.emit({
+        latColumn: this.selectedLatColumn,
+        lngColumn: this.selectedLngColumn
+      });
     }
   }
 
-  private emitMapping() {
-    this.columnMappingChange.emit({
-      latColumn: this.selectedLatColumn,
-      lngColumn: this.selectedLngColumn
-    });
-  }
-
   addTestPoints() {
-    const testPoints: geojson.Feature<geojson.Point>[] = [
-      {
-        type: 'Feature',
-        geometry: {
-          type: 'Point',
-          coordinates: [153.1466136, -27.6830342]
-        },
-        properties: {
-          name: 'Test Point 1'
-        }
-      },
-      {
-        type: 'Feature',
-        geometry: {
-          type: 'Point',
-          coordinates: [153.0514866, -27.658187]
-        },
-        properties: {
-          name: 'Test Point 2'
-        }
-      },
-      {
-        type: 'Feature',
-        geometry: {
-          type: 'Point',
-          coordinates: [153.0857745, -27.4815401]
-        },
-        properties: {
-          name: 'Test Point 3'
-        }
-      }
-    ];
+    if (!this.selectedLatColumn || !this.selectedLngColumn) {
+      this.snackBar.open('Please select both latitude and longitude columns', 'OK', { duration: 3000 });
+      return;
+    }
 
-    this.testPoints.emit(testPoints);
-    this.snackBar.open('Test points added', 'OK', { duration: 2000 });
+    const csvData = this.featureCollectionLayers[this.featurecollectionlayerindex].styledata;
+    if (!csvData || csvData.length < 2) {
+      this.snackBar.open('No CSV data available', 'OK', { duration: 3000 });
+      return;
+    }
+
+    const headers = csvData[0];
+    const latIndex = headers.indexOf(this.selectedLatColumn);
+    const lngIndex = headers.indexOf(this.selectedLngColumn);
+
+    if (latIndex === -1 || lngIndex === -1) {
+      this.snackBar.open('Selected columns not found in data', 'OK', { duration: 3000 });
+      return;
+    }
+
+    const features: geojson.Feature<geojson.Point>[] = csvData.slice(1)
+      .map((row: string[]) => {
+        const lat = parseFloat(row[latIndex]);
+        const lng = parseFloat(row[lngIndex]);
+
+        if (isNaN(lat) || isNaN(lng)) return null;
+
+        const properties: { [key: string]: any } = {};
+        headers.forEach((header: string, index: number) => {
+          if (index !== latIndex && index !== lngIndex) {
+            properties[header] = row[index];
+          }
+        });
+
+        return {
+          type: 'Feature',
+          geometry: {
+            type: 'Point',
+            coordinates: [lng, lat]
+          },
+          properties
+        } as geojson.Feature<geojson.Point>;
+      })
+      .filter((feature): feature is geojson.Feature<geojson.Point> => feature !== null);
+
+    this.testPoints.emit(features);
   }
 } 

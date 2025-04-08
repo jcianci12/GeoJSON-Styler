@@ -16,4 +16,49 @@
   margin-top: 16px;
   display: flex;
   justify-content: center;
+}
+
+.upload-container {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.row-count {
+  display: flex;
+  align-items: center;
+}
+
+.row-count button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.preview-container {
+  margin: 1rem 0;
+  max-height: 300px;
+  overflow: auto;
+}
+
+.preview-table {
+  width: 100%;
+  border: 1px solid #e0e0e0;
+}
+
+.preview-table th {
+  background-color: #f5f5f5;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.preview-table td, .preview-table th {
+  padding: 8px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.preview-table tr:hover {
+  background-color: #f5f5f5;
 } 

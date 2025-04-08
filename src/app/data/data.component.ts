@@ -7,7 +7,7 @@ import { CSVtoJSONPipe } from '../csvtojsonpipe';
 import { GeocolumnComponent, GeoColumnMapping } from './geocolumn/geocolumn.component';
 import { JsontocsvPipe } from '../jsontocsv.pipe';
 import { distinctUntilChanged } from 'rxjs';
-import { LatLngColumnMapping } from './latlng-column/latlng-column.component';
+import { LatLngColumnMapping } from './latlng-column/latlng-column-mapping';
 import * as geojson from 'geojson';
 import * as L from 'leaflet';
 

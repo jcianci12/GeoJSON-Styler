@@ -71,7 +71,9 @@
                       </app-data>
                       <app-latlng-column *ngSwitchCase="'csv'"
                         [featurecollectionlayerindex]="i"
-                        [featureCollectionLayers]="featureCollectionLayers">
+                        [featureCollectionLayers]="featureCollectionLayers"
+                        (columnMappingChange)="onLatLngColumnsSelected(i, $event)"
+                        (testPoints)="onTestPointsAdded(i, $event)">
                       </app-latlng-column>
                     </ng-container>
                   </div>

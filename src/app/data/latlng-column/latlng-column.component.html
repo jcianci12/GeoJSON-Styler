@@ -1,10 +1,22 @@
 <div class="column-selector">
   <div class="csv-upload">
     <h3>Upload CSV Data</h3>
-    <app-fileupload 
-      [fileextension]="'csv'"
-      (fileadded)="onFileAdded($event)">
-    </app-fileupload>
+    <div class="upload-container">
+      <app-fileupload 
+        [fileextension]="'csv'"
+        (fileadded)="onFileAdded($event)">
+      </app-fileupload>
+      <div class="row-count" *ngIf="rowCount > 0">
+        <button mat-button (click)="togglePreview()">
+          {{rowCount}} rows
+          <mat-icon>{{showPreview ? 'expand_less' : 'expand_more'}}</mat-icon>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="preview-container" *ngIf="showPreview">
+    <app-datatable [d]="csvData"></app-datatable>
   </div>
 
   <h3>Select Latitude and Longitude Columns</h3>
