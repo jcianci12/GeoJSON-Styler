@@ -6,6 +6,7 @@ You can test out this angular application here:
 
 https://jcianci12.github.io/GeoJSON-Styler/
 
+For a detailed explanation of the application's architecture and components, see [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ![plot](https://www.tekonline.com.au/wp-content/uploads/2022/10/image.png)
 
