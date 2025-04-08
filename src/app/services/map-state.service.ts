@@ -29,7 +29,6 @@ export class MapStateService {
   private layersSubject = new BehaviorSubject<LayerInfo[]>([]);
   private layerVisibilitySubject = new BehaviorSubject<LayerInfo[]>([]);
   private pointsSubject = new BehaviorSubject<Point[]>([]);
-  private _points: Point[] = [];
 
   // Observable streams
   map$ = this.mapSubject.asObservable();
@@ -52,7 +51,7 @@ export class MapStateService {
   }
 
   get points(): Point[] {
-    return this._points;
+    return this.pointsSubject.value;
   }
 
   // Setters
@@ -64,56 +63,64 @@ export class MapStateService {
     this.featureGroupSubject.next(featureGroup);
   }
 
-  addLayer(layer: LayerInfo): void {
+  // Layer management
+  private updateLayers(updater: (layers: LayerInfo[]) => LayerInfo[]): void {
     const currentLayers = this.layers;
-    if (!currentLayers.find(l => l.id === layer.id)) {
-      this.layersSubject.next([...currentLayers, layer]);
-    }
+    const updatedLayers = updater(currentLayers);
+    this.layersSubject.next(updatedLayers);
+  }
+
+  addLayer(layer: LayerInfo): void {
+    this.updateLayers(layers => {
+      if (!layers.find(l => l.id === layer.id)) {
+        return [...layers, layer];
+      }
+      return layers;
+    });
   }
 
   removeLayer(layerId: string): void {
-    const currentLayers = this.layers;
-    this.layersSubject.next(currentLayers.filter(layer => layer.id !== layerId));
+    this.updateLayers(layers => layers.filter(layer => layer.id !== layerId));
   }
 
   updateLayerFeatures(layerId: string, features: geojson.Feature[]): void {
-    const currentLayers = this.layers;
-    const updatedLayers = currentLayers.map(layer => 
-      layer.id === layerId ? { ...layer, features } : layer
+    this.updateLayers(layers => 
+      layers.map(layer => 
+        layer.id === layerId ? { ...layer, features } : layer
+      )
     );
-    this.layersSubject.next(updatedLayers);
   }
 
   toggleLayerVisibility(layerId: string): void {
-    const currentLayers = this.layers;
-    const updatedLayers = currentLayers.map(layer => 
-      layer.id === layerId ? { ...layer, visible: !layer.visible } : layer
+    this.updateLayers(layers => 
+      layers.map(layer => 
+        layer.id === layerId ? { ...layer, visible: !layer.visible } : layer
+      )
     );
-    this.layersSubject.next(updatedLayers);
-    this.layerVisibilitySubject.next(updatedLayers);
+    this.layerVisibilitySubject.next(this.layers);
   }
 
   // Feature group management
-  addLayerToFeatureGroup(layer: L.Layer): void {
+  private withFeatureGroup(action: (group: L.FeatureGroup) => void): void {
     if (this.featureGroup) {
-      this.featureGroup.addLayer(layer);
+      action(this.featureGroup);
     }
+  }
+
+  addLayerToFeatureGroup(layer: L.Layer): void {
+    this.withFeatureGroup(group => group.addLayer(layer));
   }
 
   removeLayerFromFeatureGroup(layer: L.Layer): void {
-    if (this.featureGroup) {
-      this.featureGroup.removeLayer(layer);
-    }
+    this.withFeatureGroup(group => group.removeLayer(layer));
   }
 
   clearFeatureGroup(): void {
-    if (this.featureGroup) {
-      this.featureGroup.clearLayers();
-    }
+    this.withFeatureGroup(group => group.clearLayers());
   }
 
+  // Points management
   updatePoints(points: Point[]): void {
-    this._points = points;
     this.pointsSubject.next(points);
   }
 } 

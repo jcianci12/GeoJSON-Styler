@@ -10,6 +10,7 @@ import { distinctUntilChanged } from 'rxjs';
 import { LatLngColumnMapping } from './latlng-column/latlng-column-mapping';
 import * as geojson from 'geojson';
 import * as L from 'leaflet';
+import { MapStateService } from '../services/map-state.service';
 
 @Component({
   selector: 'app-data',
@@ -33,7 +34,11 @@ export class DataComponent implements OnInit {
   @Input() csvData: string = '';
   @Input() headers: string[] = [];
 
-  constructor(private fcs: FeaturecollectionService, private api: GeoDataEndpointClient) {}
+  constructor(
+    private fcs: FeaturecollectionService, 
+    private api: GeoDataEndpointClient,
+    private mapState: MapStateService
+  ) {}
 
   ngOnInit(): void {
     this.fcs.FeatureCollectionLayerObservable.pipe(distinctUntilChanged()).subscribe((i) => {
@@ -113,6 +118,22 @@ export class DataComponent implements OnInit {
     // Update the feature collection with the new points
     this.featureCollectionLayers[this.featurecollectionlayerindex].features = features;
     this.fcs.FeatureCollectionLayerObservable.next(this.featureCollectionLayers);
+
+    // Initialize the layer if it doesn't exist
+    const layerId = `layer-${this.featurecollectionlayerindex}`;
+    const layer = this.mapState.layers.find(l => l.id === layerId);
+    if (!layer) {
+      this.mapState.addLayer({
+        id: layerId,
+        name: `CSV Layer ${this.featurecollectionlayerindex}`,
+        type: 'csv',
+        visible: true,
+        features: []
+      });
+    }
+
+    // Update the layer features
+    this.mapState.updateLayerFeatures(layerId, features);
   }
 
   onTestPointsAdded(event: Event) {

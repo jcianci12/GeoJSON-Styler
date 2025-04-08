@@ -83,10 +83,73 @@ export class LatLngColumnComponent {
 
   onColumnChange() {
     if (this.selectedLatColumn && this.selectedLngColumn) {
+      // Emit the column mapping change
       this.columnMappingChange.emit({
         latColumn: this.selectedLatColumn,
         lngColumn: this.selectedLngColumn
       });
+
+      // Create and update features
+      const csvData = this.featureCollectionLayers[this.featurecollectionlayerindex].styledata;
+      if (!csvData || csvData.length < 2) {
+        this.snackBar.open('No CSV data available', 'OK', { duration: 3000 });
+        return;
+      }
+
+      const headers = csvData[0];
+      const latIndex = headers.indexOf(this.selectedLatColumn);
+      const lngIndex = headers.indexOf(this.selectedLngColumn);
+
+      if (latIndex === -1 || lngIndex === -1) {
+        this.snackBar.open('Could not find selected columns in data', 'OK', { duration: 3000 });
+        return;
+      }
+
+      const features: geojson.Feature<geojson.Point>[] = csvData.slice(1)
+        .map((row: string[]) => {
+          const lat = parseFloat(row[latIndex]);
+          const lng = parseFloat(row[lngIndex]);
+
+          if (isNaN(lat) || isNaN(lng)) return null;
+
+          const properties: { [key: string]: any } = {};
+          headers.forEach((header, index) => {
+            if (index !== latIndex && index !== lngIndex) {
+              properties[header] = row[index];
+            }
+          });
+
+          return {
+            type: 'Feature',
+            geometry: {
+              type: 'Point',
+              coordinates: [lng, lat]
+            },
+            properties
+          } as geojson.Feature<geojson.Point>;
+        })
+        .filter((feature): feature is geojson.Feature<geojson.Point> => feature !== null);
+
+      // Initialize the layer if it doesn't exist
+      const layerId = `layer-${this.featurecollectionlayerindex}`;
+      const layer = this.mapState.layers.find(l => l.id === layerId);
+      if (!layer) {
+        this.mapState.addLayer({
+          id: layerId,
+          name: `CSV Layer ${this.featurecollectionlayerindex}`,
+          type: 'csv',
+          visible: true,
+          features: []
+        });
+      }
+
+      // Update the layer features
+      this.mapState.updateLayerFeatures(layerId, features);
+      
+      // Show success message with feature count
+      const totalRows = csvData.length - 1;
+      const validRows = features.length;
+      this.snackBar.open(`Added ${validRows} points out of ${totalRows} rows`, 'OK', { duration: 3000 });
     }
   }
 

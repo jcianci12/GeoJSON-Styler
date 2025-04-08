@@ -91,14 +91,12 @@ export class MapComponent implements OnInit, OnDestroy {
   private updateLayers(layers: LayerInfo[]) {
     if (!this.map) return;
 
-    // Clear existing feature groups
-    this.mapState.clearFeatureGroup();
-
+    // Create a new feature group
+    const featureGroup = new FeatureGroup();
+    
     layers.forEach(layer => {
       if (!layer.visible) return;
 
-      const featureGroup = new FeatureGroup();
-      
       // Handle point features
       if (layer.type === 'csv') {
         layer.features.forEach(feature => {
@@ -127,9 +125,17 @@ export class MapComponent implements OnInit, OnDestroy {
           }
         });
       }
-
-      this.mapState.addLayerToFeatureGroup(featureGroup);
     });
+
+    // Remove existing feature group from map if it exists
+    const existingFeatureGroup = this.mapState.featureGroup;
+    if (existingFeatureGroup) {
+      this.map.removeLayer(existingFeatureGroup);
+    }
+
+    // Add new feature group to map and update state
+    this.map.addLayer(featureGroup);
+    this.mapState.setFeatureGroup(featureGroup);
 
     // Update feature count
     const totalFeatures = layers.reduce((sum, layer) => sum + layer.features.length, 0);
@@ -137,6 +143,9 @@ export class MapComponent implements OnInit, OnDestroy {
       type: 'FeatureCollection',
       features: layers.flatMap(layer => layer.features)
     };
+
+    // Fit bounds to show all features
+    this.fitBounds();
 
     this.snackbar.open(`Updated ${totalFeatures} features`, 'OK', { duration: 3000 });
   }
