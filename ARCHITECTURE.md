@@ -61,6 +61,36 @@ GeoJSON-Styler is an Angular application that allows users to style and visualiz
 
 ## Services
 
+### Map State Service (`map-state.service`)
+- Central state management for map-related data using RxJS BehaviorSubjects
+- Manages multiple aspects of the map state:
+  1. **Points Management**
+     - Tracks individual point features
+     - Handles point addition, removal, and updates
+     - Maintains point coordinates and properties
+  
+  2. **Layer Management**
+     - Maintains layer visibility state
+     - Tracks layer types (GeoJSON or CSV)
+     - Handles layer addition and removal
+     - Controls layer visibility toggling
+  
+  3. **Map Instance Management**
+     - Maintains reference to Leaflet map instance
+     - Handles map bounds updates
+     - Manages map zoom levels
+  
+  4. **Feature Group Management**
+     - Controls Leaflet FeatureGroup instances
+     - Handles layer addition/removal from feature groups
+     - Manages feature group clearing and updates
+
+- Provides Observable streams for reactive updates:
+  - `points$`: Stream of point feature updates
+  - `layers$`: Stream of layer state changes
+  - `map$`: Stream of map instance updates
+  - `featureGroup$`: Stream of feature group changes
+
 ### Feature Collection Service (`featurecollection.service`)
 - Manages the collection of geographic features
 - Provides observable data streams
@@ -78,6 +108,7 @@ interface FeatureCollectionLayer {
   stylerules: StyleRule[];
   styledata: string[][];
   geocolumn: GeoColumnMapping;
+  layerType: 'geojson' | 'csv';
 }
 ```
 
