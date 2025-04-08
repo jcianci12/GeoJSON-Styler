@@ -280,25 +280,22 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   getxypoint(map: L.Map | undefined) {
-    this.tempmap = [];
     const points: Point[] = [];
     
     map?.eachLayer((layer: L.Layer) => {
       if (layer instanceof L.Marker || layer instanceof L.Circle || layer instanceof L.Polygon) {
-        let d = new MapPoint([1,1]);
-        d.id = (layer as any)?._icon?.innerText || '';
         let latlng = (layer as L.Marker).getLatLng();
-        d.setLatLng(latlng);
-        d.x = this.latLngToXY(latlng.lat, latlng.lng)[0];
-        d.y = this.latLngToXY(latlng.lat, latlng.lng)[1];
-        this.tempmap.push(d);
+        
+        // Format X and Y coordinates as numbers with 6 decimal places
+        const [x, y] = this.latLngToXY(latlng.lat, latlng.lng);
+        const formattedX = Number(x.toFixed(6));
+        const formattedY = Number(y.toFixed(6));
         
         points.push({
-          id: d.id,
           lat: latlng.lat,
           lng: latlng.lng,
-          x: d.x,
-          y: d.y
+          x: formattedX,
+          y: formattedY
         });
       }
     });
@@ -307,7 +304,7 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
   }
   
   latLngToXY(lat:number, lng:number) {
-    var R = 6378137;
+    var R = 6378137; // Earth's radius in meters
     var x = R * lng * Math.PI / 180;
     var y = R * Math.log(Math.tan((90 + lat) * Math.PI / 360));
     return [x, y];

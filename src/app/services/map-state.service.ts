@@ -13,11 +13,10 @@ export interface LayerInfo {
 }
 
 export interface Point {
-  id: string;
-  x: number;
-  y: number;
   lat: number;
   lng: number;
+  x: number;
+  y: number;
 }
 
 @Injectable({

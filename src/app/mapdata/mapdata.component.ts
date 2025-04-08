@@ -15,6 +15,7 @@ export class MapdataComponent implements OnInit, OnChanges {
   checked: boolean = true;
   points$: Observable<Point[]>;
   mapState: MapStateService;
+  points: Point[] = [];
 
   constructor(mapState: MapStateService) {
     this.mapState = mapState;
@@ -23,9 +24,7 @@ export class MapdataComponent implements OnInit, OnChanges {
 
   ngOnInit(): void {
     this.points$.subscribe((points: Point[]) => {
-      points.forEach((p: Point, i: number) => {
-        p.id = p.id || 'Point ' + (i + 1);
-      });
+      this.points = points;
     });
   }
 
