@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output, OnDestroy } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, OnDestroy, NgZone, ChangeDetectorRef, AfterViewInit } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import * as geojson from 'geojson';
 import * as L from 'leaflet';
@@ -12,7 +12,7 @@ import { FeatureCollectionLayer } from '../featureCollection';
 import { FeaturecollectionService } from '../featurecollection.service';
 import { FeaturefilterPipe } from '../featurefilter.pipe';
 import { terms } from '../featurefilter/featurefilter.component';
-import { MapStateService, LayerInfo } from '../services/map-state.service';
+import { MapStateService, LayerInfo, Point } from '../services/map-state.service';
 import { FeatureCollectionLayerService } from '../services/feature-collection-layer.service';
 
 interface FeatureGroupInfo {
@@ -35,7 +35,7 @@ class MapPoint extends L.Marker {
   templateUrl: './map.component.html',
   styleUrls: ['./map.component.css'],
 })
-export class MapComponent implements OnInit, OnDestroy {
+export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
   @Output() map$: EventEmitter<Map> = new EventEmitter();
   @Output() zoom$: EventEmitter<number> = new EventEmitter();
   
@@ -69,7 +69,9 @@ export class MapComponent implements OnInit, OnDestroy {
 
   constructor(
     private snackbar: MatSnackBar,
-    private mapState: MapStateService
+    private mapState: MapStateService,
+    private ngZone: NgZone,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
@@ -84,8 +86,40 @@ export class MapComponent implements OnInit, OnDestroy {
         this.updateLayerVisibility(layers);
       })
     );
+  }
 
+  ngAfterViewInit() {
     this.initializeMap();
+  }
+
+  private initializeMap() {
+    if (this.map) {
+      return; // Map already initialized
+    }
+    
+    this.ngZone.runOutsideAngular(() => {
+      this.initMap();
+    });
+  }
+
+  initMap() {
+    this.map = L.map('map', this.options);
+    
+    // Initialize fullscreen control
+    if (this.options.fullscreenControl) {
+      const fullscreenControl = L.control.fullscreen(this.options.fullscreenControlOptions);
+      fullscreenControl.addTo(this.map);
+    }
+    
+    this.map.on('zoomend', (e: L.LeafletEvent) => this.onMapZoomEnd(e));
+    this.map.on('moveend', () => this.onMapMoveEnd());
+    
+    this.ngZone.run(() => {
+      if (this.map) {
+        this.onMapReady(this.map);
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   private updateLayers(layers: LayerInfo[]) {
@@ -185,17 +219,6 @@ export class MapComponent implements OnInit, OnDestroy {
     }
   }
 
-  ngAfterViewInit() {
-    this.initMap();
-  }
-
-  initMap() {
-    this.map = L.map('map', this.options);
-    this.map.on('zoomend', (e: L.LeafletEvent) => this.onMapZoomEnd(e));
-    this.map.on('moveend', () => this.onMapMoveEnd());
-    this.onMapReady(this.map);
-  }
-
   ngOnDestroy() {
     this.map?.clearAllEventListeners;
     this.map?.remove();
@@ -206,6 +229,7 @@ export class MapComponent implements OnInit, OnDestroy {
     this.map = map;
     this.map$.emit(map);
     this.mapState.setMap(map);
+    this.getxypoint(map);
     this.zoom = map.getZoom();
     this.zoom$.emit(this.zoom);
     this.updateFeatureCollection();
@@ -220,8 +244,9 @@ export class MapComponent implements OnInit, OnDestroy {
   }
 
   onMapMoveEnd() {
-    let bounds = this.map?.getBounds();
-    localStorage.setItem('bounds', JSON.stringify(bounds));
+    if (this.map) {
+      this.getxypoint(this.map);
+    }
   }
 
   loadBounds() {
@@ -256,6 +281,8 @@ export class MapComponent implements OnInit, OnDestroy {
 
   getxypoint(map: L.Map | undefined) {
     this.tempmap = [];
+    const points: Point[] = [];
+    
     map?.eachLayer((layer: L.Layer) => {
       if (layer instanceof L.Marker || layer instanceof L.Circle || layer instanceof L.Polygon) {
         let d = new MapPoint([1,1]);
@@ -265,8 +292,18 @@ export class MapComponent implements OnInit, OnDestroy {
         d.x = this.latLngToXY(latlng.lat, latlng.lng)[0];
         d.y = this.latLngToXY(latlng.lat, latlng.lng)[1];
         this.tempmap.push(d);
+        
+        points.push({
+          id: d.id,
+          lat: latlng.lat,
+          lng: latlng.lng,
+          x: d.x,
+          y: d.y
+        });
       }
     });
+    
+    this.mapState.updatePoints(points);
   }
   
   latLngToXY(lat:number, lng:number) {
@@ -336,9 +373,5 @@ export class MapComponent implements OnInit, OnDestroy {
       color: colour,
     });
     return geo;
-  }
-
-  private initializeMap() {
-    // ... existing map initialization code ...
   }
 }

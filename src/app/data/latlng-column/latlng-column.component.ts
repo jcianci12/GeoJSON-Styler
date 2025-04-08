@@ -146,6 +146,24 @@ export class LatLngColumnComponent {
       // Update the layer features
       this.mapState.updateLayerFeatures(layerId, features);
       
+      // Convert features to points and update the points in map state
+      const points = features.map((feature, index) => {
+        const lat = feature.geometry.coordinates[1];
+        const lng = feature.geometry.coordinates[0];
+        const R = 6378137;
+        const x = R * lng * Math.PI / 180;
+        const y = R * Math.log(Math.tan((90 + lat) * Math.PI / 360));
+        
+        return {
+          id: `Point ${index + 1}`,
+          lat,
+          lng,
+          x,
+          y
+        };
+      });
+      this.mapState.updatePoints(points);
+      
       // Show success message with feature count
       const totalRows = csvData.length - 1;
       const validRows = features.length;
@@ -216,6 +234,24 @@ export class LatLngColumnComponent {
 
     // Update the layer features
     this.mapState.updateLayerFeatures(layerId, features);
+    
+    // Convert features to points and update the points in map state
+    const points = features.map((feature, index) => {
+      const lat = feature.geometry.coordinates[1];
+      const lng = feature.geometry.coordinates[0];
+      const R = 6378137;
+      const x = R * lng * Math.PI / 180;
+      const y = R * Math.log(Math.tan((90 + lat) * Math.PI / 360));
+      
+      return {
+        id: `Point ${index + 1}`,
+        lat,
+        lng,
+        x,
+        y
+      };
+    });
+    this.mapState.updatePoints(points);
     
     // Show success message with feature count
     const totalRows = csvData.length - 1;

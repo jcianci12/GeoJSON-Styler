@@ -11,7 +11,6 @@ export class JsonendpointComponent implements OnInit {
   private _endpointurl: string = '';
   @Input() set endpointurl(val: string) {
     this._endpointurl = val;
-    this.getData()
   }
   get endpointurl() {
     return this._endpointurl;
@@ -21,23 +20,6 @@ export class JsonendpointComponent implements OnInit {
   constructor(private api: GeoDataEndpointClient, private http: HttpClient) {}
 
   ngOnInit(): void {}
-
-  getData() {
-    return this.http.get<[][]>(this.endpointurl).subscribe((d) => {
-      console.log(d);
-      let t =       this.ConvertToCSV(d,Object.keys(d[0]))
-
-      this.dataChange.emit(t)
-
-
-    },e=>{
-      this.http.get('./assets/demodata.csv').subscribe(i=>{
-        this.dataChange.emit(i as string)
-
-      });
-
-    });
-  }
 
   ConvertToCSV(objArray:Object[], headerList:string[]) {
     let array = typeof objArray != 'object' ? JSON.parse(objArray) : objArray;
@@ -58,5 +40,4 @@ export class JsonendpointComponent implements OnInit {
     }
     return str;
    }
-
 }

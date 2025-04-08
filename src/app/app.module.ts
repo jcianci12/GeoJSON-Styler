@@ -31,6 +31,7 @@ import { MapdataComponent } from './mapdata/mapdata.component';
 import { XypointsPipe } from './xypoints.pipe';
 import { LatLngColumnComponent } from './data/latlng-column/latlng-column.component';
 import { FeatureCollectionLayerService } from './services/feature-collection-layer.service';
+import { CoordinatesPipe } from './pipes/coordinates.pipe';
 
 @NgModule({
   declarations: [
@@ -56,7 +57,8 @@ import { FeatureCollectionLayerService } from './services/feature-collection-lay
     JsontocsvPipe,
     MapdataComponent,
     XypointsPipe,
-    LatLngColumnComponent
+    LatLngColumnComponent,
+    CoordinatesPipe
   ],
   imports: [
     BrowserModule,

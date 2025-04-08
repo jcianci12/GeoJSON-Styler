@@ -20,13 +20,6 @@ import { MapStateService } from '../services/map-state.service';
 })
 export class DataComponent implements OnInit {
   d: string | any = 'qld_loca_2,opacity,colour\r\nBeenleigh,0.5,blue\r\nSunnybank,0.7,red\r\n';
-  private _endpointurl: string = 'http://localhost:54933/GetSuburbRegistrantCountsForRound?runnumber=11';
-  set endpointurl(val: string) {
-    this._endpointurl = val;
-  }
-  get endpointurl() {
-    return this._endpointurl;
-  }
 
   @Input() feature!: number;
   @Input() featurecollectionlayerindex!: number;
@@ -71,11 +64,6 @@ export class DataComponent implements OnInit {
       this.updateData();
     };
     filereader.readAsText(data[0]);
-  }
-
-  addJSONData(data: string) {
-    this.d = data;
-    this.updateData();
   }
 
   onLatLngColumnsSelected(event: Event) {

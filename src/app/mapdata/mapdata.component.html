@@ -33,6 +33,7 @@
             <td>{{ point.id }}</td>
             <td>{{ point.lat }}</td>
             <td>{{ point.lng }}</td>
+            <td>{{ { lat: point.lat, lng: point.lng } | coordinates:map }}</td>
             <td>{{ point.x }}</td>
             <td>{{ point.y }}</td>
           </tr>

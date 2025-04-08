@@ -4,16 +4,18 @@ import { Pipe, PipeTransform } from '@angular/core';
   name: 'tableheaders',
 })
 export class TableheadersPipe implements PipeTransform {
-  transform(value: string[][]): Select[] {
-    let r:Select[] = []
-    if (value[0]) {
-     let r = value[0].map((m, index) => {return <Select> {value:m, viewValue:`[${index}] ${m}`}});
-     return r
+  transform(value: string[][] | undefined | null): Select[] {
+    if (!value || !Array.isArray(value) || value.length === 0) {
+      return [];
     }
 
-    return r;
+    return value[0].map((m, index) => ({
+      value: m,
+      viewValue: `[${index}] ${m}`
+    }));
   }
 }
+
 export interface Select {
   value: string;
   viewValue: string;

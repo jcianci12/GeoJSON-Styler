@@ -31,12 +31,24 @@ export class MapdataComponent implements OnInit, OnChanges {
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes['map'] && this.map) {
-      this.mapState.setMap(this.map);
+      this.getxypoint(this.map);
     }
   }
 
   onLayerVisibilityChange(layerId: string) {
     this.mapState.toggleLayerVisibility(layerId);
+  }
+
+  getxypoint(map: L.Map | undefined) {
+    if (!map) return;
+    
+    const points = this.mapState.points.map(p => ({
+      ...p,
+      x: 0,
+      y: 0
+    }));
+    
+    this.mapState.updatePoints(points);
   }
 
   geoDistance(point1: point, point2: point): number {

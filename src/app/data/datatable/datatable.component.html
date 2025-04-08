@@ -1,14 +1,13 @@
-
 <mat-accordion>
   <mat-expansion-panel [expanded]="false">
     <mat-expansion-panel-header>
       <mat-panel-title>
-        Preview Data ({{(d|csvtojson).length}} rows)
+        Preview Data ({{ dataLength }} rows)
       </mat-panel-title>
       <mat-panel-description>
       </mat-panel-description>
     </mat-expansion-panel-header>
-    <table class="table">
+    <table class="table" *ngIf="d">
       <tbody>
         <tr *ngFor="let item of d | csvtojson">
           <td *ngFor="let item of item">{{ item }}</td>
@@ -16,5 +15,4 @@
       </tbody>
     </table>
   </mat-expansion-panel>
-
 </mat-accordion>
