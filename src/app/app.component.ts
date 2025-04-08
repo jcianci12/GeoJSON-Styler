@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import * as geojson from 'geojson';
 import { Map } from 'leaflet';
-import { FeatureCollectionLayer } from './featureCollection';
+import { FeatureCollectionLayer, LayerType } from './featureCollection';
 import { stylerule } from './data/data.component';
 import { FeaturecollectionService } from './featurecollection.service';
 import { MatCheckboxChange } from '@angular/material/checkbox';
@@ -63,6 +63,11 @@ export class AppComponent implements OnInit {
   updateActive(val:MatCheckboxChange,index:number){
     this.featureCollectionLayers[index].active = val.checked
     this.fcs.FeatureCollectionLayerObservable.next(this.featureCollectionLayers)
+  }
+
+  onLayerTypeChange(index: number) {
+    // The ngModel binding will handle updating the layerType
+    this.fcs.FeatureCollectionLayerObservable.next(this.featureCollectionLayers);
   }
 
 addlistener(){

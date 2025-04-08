@@ -1,4 +1,12 @@
 <div class="column-selector">
+  <div class="csv-upload">
+    <h3>Upload CSV Data</h3>
+    <app-fileupload 
+      [fileextension]="'csv'"
+      (fileadded)="onFileAdded($event)">
+    </app-fileupload>
+  </div>
+
   <h3>Select Latitude and Longitude Columns</h3>
   
   <div class="column-selection">

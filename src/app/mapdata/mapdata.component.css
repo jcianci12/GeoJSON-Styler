@@ -1,0 +1,32 @@
+.layer-controls {
+  margin-bottom: 1rem;
+  padding: 0.5rem;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+}
+
+.layer-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.layer-item {
+  display: inline-block;
+  margin-right: 1rem;
+}
+
+.mat-slide-toggle {
+  margin-left: 0.5rem;
+}
+
+.table {
+  width: 100%;
+  margin-top: 1rem;
+}
+
+.table th, .table td {
+  padding: 0.5rem;
+  text-align: left;
+}

@@ -11,21 +11,30 @@ import { terms } from './suburbfilter/suburbfilter.component';
 
 //the purpose of this class is so we dont need to work with the feature collection and the search terms in parrallel, we can set both here
 
+export type LayerType = 'geojson' | 'csv';
+
+export interface geocolumn {
+  GEOColumn: string;
+  GEOJSON: string;
+}
+
 export class FeatureCollectionLayer implements GeoJSON.FeatureCollection {
   constructor(features: Feature<Geometry, GeoJsonProperties>[], terms: terms,stylerules:stylerule[],geo:GeoColumnMapping,styledata:string[][]) {
     (this.features = features), (this.type = 'FeatureCollection');
     this.terms = terms;
-    this.active = true
-    this.stylerules = stylerules
-    this.styledata = styledata
-    this.geocolumn = geo
+    this.active = true;
+    this.stylerules = stylerules;
+    this.styledata = styledata;
+    this.geocolumn = geo;
+    this.layerType = 'csv';
   }
-  active:boolean
+  active:boolean;
   type: 'FeatureCollection';
   features: Feature<Geometry, GeoJsonProperties>[];
   bbox?: BBox | undefined;
   terms: terms;
-  stylerules:stylerule[]
-  styledata:string[][]
-  geocolumn:GeoColumnMapping
+  stylerules:stylerule[];
+  styledata:string[][];
+  geocolumn:GeoColumnMapping;
+  layerType: LayerType;
 }

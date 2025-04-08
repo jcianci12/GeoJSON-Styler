@@ -43,6 +43,12 @@
                 <div class="col">
                   <mat-checkbox class="example-margin" [checked]="featureCollection.active"
                     (change)="updateActive($event,i)">Active</mat-checkbox>
+                  <mat-radio-group class="mx-2"
+                    [(ngModel)]="featureCollection.layerType"
+                    (change)="onLayerTypeChange(i)">
+                    <mat-radio-button value="geojson">GeoJSON</mat-radio-button>
+                    <mat-radio-button class="ms-2" value="csv">CSV Points</mat-radio-button>
+                  </mat-radio-group>
                 </div>
                 <div class="col float-right">
                   <button class="" mat-button color="primary" aria-label="Example icon button with a menu icon">
@@ -58,9 +64,16 @@
 
                 <div class="row">
                   <div class="col">
-                    <app-data [featurecollectionlayerindex]="i"
-                      [featureCollectionLayers]="featureCollectionLayers"></app-data>
-                    <!-- styledata:{{featureCollection.styledata|json}} -->
+                    <ng-container [ngSwitch]="featureCollection.layerType">
+                      <app-data *ngSwitchCase="'geojson'" 
+                        [featurecollectionlayerindex]="i"
+                        [featureCollectionLayers]="featureCollectionLayers">
+                      </app-data>
+                      <app-latlng-column *ngSwitchCase="'csv'"
+                        [featurecollectionlayerindex]="i"
+                        [featureCollectionLayers]="featureCollectionLayers">
+                      </app-latlng-column>
+                    </ng-container>
                   </div>
                 </div>
               </mat-expansion-panel>

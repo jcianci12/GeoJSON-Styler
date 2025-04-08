@@ -1,13 +1,13 @@
-<mat-checkbox [(ngModel)]="checked">LatLng</mat-checkbox>
-
-<div class="layers-control">
-  <h3>Layers</h3>
-  <div *ngFor="let layer of mapState.layers$ | async" class="layer-item">
-    <mat-slide-toggle 
-      [(ngModel)]="layer.visible"
-      (change)="onLayerVisibilityChange(layer.id)">
-      {{ layer.name }} ({{ layer.type }})
-    </mat-slide-toggle>
+<div class="layer-controls">
+  <div class="layer-header">
+    <mat-checkbox [(ngModel)]="checked">LatLng</mat-checkbox>
+    <div *ngFor="let layer of mapState.layers$ | async" class="layer-item">
+      <mat-slide-toggle 
+        [(ngModel)]="layer.visible"
+        (change)="onLayerVisibilityChange(layer.id)">
+        {{ layer.name }} ({{ layer.type }})
+      </mat-slide-toggle>
+    </div>
   </div>
 </div>
 

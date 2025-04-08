@@ -73,9 +73,8 @@ import { MatPaginatorModule } from '@angular/material/paginator';
         MatSortModule,
         MatPaginatorModule,
         MatMenuModule,
-        MatCheckboxModule,MatExpansionModule
-
-
+        MatCheckboxModule,
+        MatExpansionModule
     ],
     exports: [
         MatButtonModule,
@@ -95,7 +94,11 @@ import { MatPaginatorModule } from '@angular/material/paginator';
         MatTableModule,
         MatPaginatorModule,
         MatMenuModule,
-        MatCheckboxModule,MatExpansionModule,MatTabsModule
+        MatCheckboxModule,
+        MatExpansionModule,
+        MatTabsModule,
+        MatButtonToggleModule,
+        MatSlideToggleModule
     ],
     providers: [
         MatDatepickerModule,
