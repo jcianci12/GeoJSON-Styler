@@ -8,3 +8,5 @@ https://jcianci12.github.io/GeoJSON-Styler/
 
 
 ![plot](https://www.tekonline.com.au/wp-content/uploads/2022/10/image.png)
+
+This app is written in angular. Run npm i do install deps and then ng serve to serve the app on port 4200 :)
