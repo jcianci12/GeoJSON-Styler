@@ -28,6 +28,15 @@
             <mat-tab label="CSV">
               <p>Choose the csv formatted data you would like to use.</p>
               <app-fileupload [fileextension]="'csv'" (fileadded)="addData($event)"></app-fileupload>
+              
+              <!-- Add lat/lng column selector when CSV data is loaded -->
+              <div *ngIf="d">
+                <app-latlng-column 
+                  [headers]="d | csvtojson | tableheaders"
+                  (columnMappingChange)="onLatLngColumnsSelected($event)"
+                  (testPoints)="onTestPointsAdded($event)">
+                </app-latlng-column>
+              </div>
             </mat-tab>
             <mat-tab label="JSON">
               <app-jsonendpoint [endpointurl]="endpointurl" (dataChange)="addJSONData($event)"></app-jsonendpoint>

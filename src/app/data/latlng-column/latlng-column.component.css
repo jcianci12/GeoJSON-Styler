@@ -1,0 +1,19 @@
+.column-selector {
+  padding: 16px;
+}
+
+.column-selection {
+  display: flex;
+  gap: 16px;
+  margin-top: 8px;
+}
+
+.column-selection mat-form-field {
+  flex: 1;
+}
+
+.test-button {
+  margin-top: 16px;
+  display: flex;
+  justify-content: center;
+} 

@@ -1,34 +1,32 @@
 <mat-checkbox [(ngModel)]="checked">LatLng</mat-checkbox>
 
 <h1>Map Data</h1>
-<p>{{ points?.length }} rows</p>
+<p>{{ (mapState.points$ | async)?.length }} rows</p>
 {{ minx }} {{ maxx }} {{ miny }} {{ maxy }}
-<table class="table">
-  <thead>
-    <tr>
-      <th>ID</th>
-      <th *ngIf="checked">Lat</th>
-      <th *ngIf="checked">Lng</th>
-      <th>X</th>
-      <th>Y</th>
-      <th>GeoDistance</th>
-
-      <th>xyDistance</th>
-      <th>diff</th>
-
-    </tr>
-  </thead>
-  <tbody>
-    <tr *ngFor="let obj of points; index as i">
-      <td>{{ obj.id }}</td>
-
-      <td *ngIf="checked">{{ obj.getLatLng().lat }}</td>
-      <td *ngIf="checked">{{ obj.getLatLng().lng }}</td>
-      <td>{{ obj.x! -minx }}</td>
-      <td>{{ obj.y! - miny }}</td>
-      <td>{{ geoDistance(obj, points![i + 1]) }}</td>
-      <td>{{ xyDistance(obj, points![i + 1]) }}</td>
-      <td>{{((geoDistance(obj, points![i + 1]) - xyDistance(obj, points![i + 1])) / xyDistance(obj, points![i + 1])) * 100}}</td>
-    </tr>
-  </tbody>
-</table>
+<div class="container">
+  <div class="row">
+    <div class="col">
+      <h3>Points</h3>
+      <table class="table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Lat</th>
+            <th>Lng</th>
+            <th>X</th>
+            <th>Y</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let point of mapState.points$ | async">
+            <td>{{ point.id }}</td>
+            <td>{{ point.getLatLng().lat }}</td>
+            <td>{{ point.getLatLng().lng }}</td>
+            <td>{{ point.x }}</td>
+            <td>{{ point.y }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

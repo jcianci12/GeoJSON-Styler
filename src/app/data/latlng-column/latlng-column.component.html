@@ -1,0 +1,29 @@
+<div class="column-selector">
+  <h3>Select Latitude and Longitude Columns</h3>
+  
+  <div class="column-selection">
+    <mat-form-field appearance="fill">
+      <mat-label>Latitude Column</mat-label>
+      <mat-select [(value)]="selectedLatColumn" (selectionChange)="onColumnChange()">
+        <mat-option *ngFor="let header of headers" [value]="header.value">
+          {{header.viewValue}}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="fill">
+      <mat-label>Longitude Column</mat-label>
+      <mat-select [(value)]="selectedLngColumn" (selectionChange)="onColumnChange()">
+        <mat-option *ngFor="let header of headers" [value]="header.value">
+          {{header.viewValue}}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
+
+  <div class="test-button">
+    <button mat-raised-button color="primary" (click)="addTestPoints()">
+      Add Test Points
+    </button>
+  </div>
+</div> 

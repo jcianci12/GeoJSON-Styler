@@ -29,6 +29,7 @@ import { GeojsonselectorComponent } from './data/geojsonselector/geojsonselector
 import { JsontocsvPipe } from './jsontocsv.pipe';
 import { MapdataComponent } from './mapdata/mapdata.component';
 import { XypointsPipe } from './xypoints.pipe';
+import { LatLngColumnComponent } from './data/latlng-column/latlng-column.component';
 
 @NgModule({
   declarations: [
@@ -53,13 +54,18 @@ import { XypointsPipe } from './xypoints.pipe';
     GeojsonselectorComponent,
     JsontocsvPipe,
     MapdataComponent,
-    XypointsPipe
+    XypointsPipe,
+    LatLngColumnComponent
   ],
   imports: [
     BrowserModule,
     AppRoutingModule,
     BrowserAnimationsModule,
-    AngularMaterialModule,HttpClientModule,LeafletModule,FormsModule
+    AngularMaterialModule,
+    HttpClientModule,
+    LeafletModule,
+    FormsModule,
+    ReactiveFormsModule
   ],
   providers: [],
   bootstrap: [AppComponent]

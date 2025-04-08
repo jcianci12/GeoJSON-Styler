@@ -1,11 +1,7 @@
-<div class="map-container" leaflet [leafletOptions]="options" (leafletMapReady)="onMapReady($event)"
-  (leafletMapZoomEnd)="onMapZoomEnd($event)" (leafletMapMoveEnd)="onMapMoveEnd()">
-
-  <button class="refreshButton" title="Toggle back ground" (click)="toggleTileLayer()"><mat-icon> layers</mat-icon>
-
-  </button>
-
-
+<div class="map-container">
+  <div class="map-frame">
+    <div id="map"></div>
+  </div>
 </div>
-<app-mapdata [points]="tempmap" [map]="map" ></app-mapdata>
+<app-mapdata [map]="map"></app-mapdata>
 <!-- {{tempmap|json}} -->
