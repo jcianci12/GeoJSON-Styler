@@ -7,7 +7,7 @@ export class TableheadersPipe implements PipeTransform {
   transform(value: string[][]): Select[] {
     let r:Select[] = []
     if (value[0]) {
-     let r = value[0].map(m=>{return <Select> {value:m,viewValue:m}});
+     let r = value[0].map((m, index) => {return <Select> {value:m, viewValue:`[${index}] ${m}`}});
      return r
     }
 

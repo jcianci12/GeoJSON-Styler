@@ -25,15 +25,9 @@ export class FileHandlerService {
       reader.onload = (e) => {
         try {
           const csvData = e.target?.result as string;
-          const jsonData = this.csvToJson.csvJSON(csvData);
+          const csvRows = this.csvToJson.csvJSON(csvData);
           
-          if (jsonData && jsonData.length > 0) {
-            // Convert the JSON data to the expected format (array of string arrays)
-            const csvRows = [
-              Object.keys(jsonData[0]), // Headers as first row
-              ...jsonData.map(row => Object.values(row) as string[]) // Data rows
-            ];
-            
+          if (csvRows && csvRows.length > 0) {
             // Process headers using TableheadersPipe
             const headers = this.tableHeaders.transform([csvRows[0]]);
             

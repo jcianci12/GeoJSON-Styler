@@ -14,14 +14,20 @@ export class CSVtoJSONPipe implements PipeTransform {
 
     if (csv.length) {
       const lines = csv.split('\r\n');
+      
+      // Get headers from first line
+      const headers = lines[0].split(',').map(header => header.trim());
+      result.push(headers);
 
-      // loop through each line of the CSV string
-      for (let i = 0; i < lines.length; i++) {
-        const currentLine = lines[i].split(',');
-        result.push(currentLine);
+      // Process data rows
+      for (let i = 1; i < lines.length; i++) {
+        if (lines[i].trim()) { // Skip empty lines
+          const currentLine = lines[i].split(',').map(cell => cell.trim());
+          result.push(currentLine);
+        }
       }
     }
 
-    return result; // return the JSON object array
+    return result;
   }
 }
