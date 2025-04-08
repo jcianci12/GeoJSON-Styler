@@ -31,7 +31,6 @@ export class MapComponent implements OnInit {
   // add a button to the map to toggle the tile layer
   @Input() options: MapOptions = {
     layers: [this.tileLayer],
-    layers: [this.tileLayer],
     zoom: 1,
     center: latLng(0, 0),
     fullscreenControl: true,
@@ -67,7 +66,6 @@ export class MapComponent implements OnInit {
   //easybutton = L.easyButton('fa-map', this.toggleTileLayer).addTo(this.map);
 
   constructor(private fcs: FeaturecollectionService, private snackbar: MatSnackBar) {}
-  constructor(private fcs: FeaturecollectionService, private snackbar: MatSnackBar) {}
 
   ngOnInit() {
     this.sub = this.fcs.FeatureCollectionLayerObservable.subscribe((f) => {
@@ -76,13 +74,9 @@ export class MapComponent implements OnInit {
     });
 
     let button = L.Control.extend({
-      onAdd: function () {},
-    });
-      onAdd: function () {},
+      onAdd: function () {}
     });
     let control = new L.Control({ position: 'topright' });
-    //this.map?.addControl(new L.Control({position:'topright'}))
-    // myControl.addTo(map);
   }
 
   ngOnDestroy() {
@@ -206,7 +200,6 @@ export class MapComponent implements OnInit {
 
         //geo.setOpacity(Number.parseFloat(value));
         opacity = a.opacityvalue;
-        opacity = a.opacityvalue;
         break;
       }
       case 'colour': {
@@ -222,12 +215,10 @@ export class MapComponent implements OnInit {
       case 'text': {
         let a = s.ruletype as text;
         text = a.textvalue == '' ? value : a.textvalue;
-        text = a.textvalue == '' ? value : a.textvalue;
 
         break;
       }
     }
-    geo.setIcon(this.geticon(colour, opacity, text));
     geo.setIcon(this.geticon(colour, opacity, text));
     return geo;
   }
@@ -268,11 +259,7 @@ export class MapComponent implements OnInit {
   geticon(colour: string, opacity: number, text: string): L.DivIcon {
     let markerHtmlStyles =
       `
-
     width: 1rem;
-    opacity: ` +
-      opacity +
-      `;
     opacity: ` +
       opacity +
       `;
@@ -292,62 +279,36 @@ export class MapComponent implements OnInit {
       html: `<div><span style="${markerHtmlStyles}"/>` + text + `</div>`,
     });
     return icon;
-    return icon;
   }
 
   handlePolygon(stylerules: stylerule[], feature: geojson.Feature<geojson.Geometry, geojson.GeoJsonProperties>, stylerow: string[], i: number, _fc: FeatureCollectionLayer): L.GeoJSON<any> {
-    let geo = geoJSON(feature);
     let styledata = new CSVtoJSONPipe().csvJSON(this._featureCollection[i].styledata as any);
-    let PathOptions: L.PathOptions = { fill: false, stroke: false };
+    let styledatacolumnindex = styledata[0].indexOf(stylerules[0].column);
+    let value = stylerow[styledatacolumnindex];
+    let geo = L.geoJSON(feature);
+    let opacity = 1;
+    let colour = '';
     stylerules.forEach((s) => {
-      let styledatacolumnindex = styledata[0].indexOf(s.column);
-      let value = stylerow[styledatacolumnindex];
-
-      //starting style
       switch (s.ruletype.rulename) {
         case 'opacity': {
-          PathOptions.fillOpacity = Number.parseFloat(value);
+          let a = s.ruletype as opacity;
+          opacity = a.opacityvalue;
           break;
         }
         case 'colour': {
           let a = s.ruletype as colour;
-          //if the style has been set globally, use that value
-          if (a.dynamic == false) {
-            // value = a.colour.toLowerCase()
-            PathOptions.fillColor = a.colour.toLowerCase();
-            PathOptions.color = a.colour.toLowerCase();
-          } else {
-            PathOptions.fillColor = value.toLowerCase();
-            PathOptions.color = value.toLowerCase();
-          }
-          PathOptions.stroke = true;
-          PathOptions.fill = true;
-          break;
-        }
-        case 'text': {
-          if (true) {
-            let lat = (s.ruletype as text).latoffset + geo.getBounds().getCenter().lat;
-            let lng = (s.ruletype as text).lngoffset + geo.getBounds().getCenter().lng;
-
-            let label = L.marker([lat, lng], {
-              draggable:true,
-              autoPan:true,
-              icon: L.divIcon({
-                className: 'text-labels', // Set class for CSS styling
-                html: '<div style="' + (s.ruletype as text).cssstyle + '">' + value + '</div>',
-              }),
-              zIndexOffset: 1000, // Make appear above other map features
-            });
-            //apply the offset
-
-            label.addTo(geo);
+          if (a.colour) {
+            colour = value;
           }
           break;
         }
       }
-      geo.setStyle(PathOptions);
     });
-
+    geo.setStyle({
+      fillOpacity: opacity,
+      fillColor: colour,
+      color: colour,
+    });
     return geo;
   }
 }
