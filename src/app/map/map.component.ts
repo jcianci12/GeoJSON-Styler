@@ -31,6 +31,7 @@ export class MapComponent implements OnInit {
   // add a button to the map to toggle the tile layer
   @Input() options: MapOptions = {
     layers: [this.tileLayer],
+    layers: [this.tileLayer],
     zoom: 1,
     center: latLng(0, 0),
     fullscreenControl: true,
@@ -58,10 +59,14 @@ export class MapComponent implements OnInit {
   get FeatureCollection() {
     return this._featureCollection;
   }
+
   public map: Map | undefined;
+  public tempmap: point[] = [];
+
   public zoom: number | undefined;
   //easybutton = L.easyButton('fa-map', this.toggleTileLayer).addTo(this.map);
 
+  constructor(private fcs: FeaturecollectionService, private snackbar: MatSnackBar) {}
   constructor(private fcs: FeaturecollectionService, private snackbar: MatSnackBar) {}
 
   ngOnInit() {
@@ -71,6 +76,8 @@ export class MapComponent implements OnInit {
     });
 
     let button = L.Control.extend({
+      onAdd: function () {},
+    });
       onAdd: function () {},
     });
     let control = new L.Control({ position: 'topright' });
@@ -199,6 +206,7 @@ export class MapComponent implements OnInit {
 
         //geo.setOpacity(Number.parseFloat(value));
         opacity = a.opacityvalue;
+        opacity = a.opacityvalue;
         break;
       }
       case 'colour': {
@@ -214,18 +222,57 @@ export class MapComponent implements OnInit {
       case 'text': {
         let a = s.ruletype as text;
         text = a.textvalue == '' ? value : a.textvalue;
+        text = a.textvalue == '' ? value : a.textvalue;
 
         break;
       }
     }
     geo.setIcon(this.geticon(colour, opacity, text));
+    geo.setIcon(this.geticon(colour, opacity, text));
     return geo;
   }
+  getxypoint(map: L.Map | undefined) {
+    this.tempmap = []
+    // Create an array to hold all the points
+
+    // Loop through all the layers on the map
+    map?.eachLayer((layer: L.Layer) => {
+      // Check if the layer is a marker, circle, or polygon
+      if (layer instanceof L.Marker || layer instanceof L.Circle || layer instanceof L.Polygon) {
+        //  console.log(layer)
+        let d = new point([1,1]);
+        //layer._icon.innerText
+        d.id = (layer as any)?._icon.innerText;
+        const crs = L.CRS.EPSG3857;
+        // let latlng = crs.latLngToPoint((layer as L.Marker).getLatLng(),this.map?.getZoom()??1);
+        let latlng = (layer as L.Marker).getLatLng();
+
+        d.setLatLng(latlng);
+        d.x = this.latLngToXY(latlng.lat,latlng.lng)[0]
+        d.y = this.latLngToXY(latlng.lat,latlng.lng)[1]
+
+        this.tempmap.push(d);
+
+      }
+    });
+
+    // The `points` array now contains all the points on the map
+  }
+   latLngToXY(lat:number, lng:number) {
+    var R = 6378137;
+    var x = R * lng * Math.PI / 180;
+    var y = R * Math.log(Math.tan((90 + lat) * Math.PI / 360));
+    return [x, y];
+  }
+
   geticon(colour: string, opacity: number, text: string): L.DivIcon {
     let markerHtmlStyles =
       `
 
     width: 1rem;
+    opacity: ` +
+      opacity +
+      `;
     opacity: ` +
       opacity +
       `;
@@ -244,6 +291,7 @@ export class MapComponent implements OnInit {
       popupAnchor: [0, -36],
       html: `<div><span style="${markerHtmlStyles}"/>` + text + `</div>`,
     });
+    return icon;
     return icon;
   }
 
@@ -302,4 +350,9 @@ export class MapComponent implements OnInit {
 
     return geo;
   }
+}
+export class point extends L.Marker {
+  id: string | undefined;
+  x:number |undefined
+  y:number |undefined
 }
