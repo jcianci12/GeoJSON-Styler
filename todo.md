@@ -9,3 +9,4 @@ README.md has more context
 3. Lets mod the app so we can toggle between geojson layer with a join and pure points data (just a csv)
 3.1 we now need to work out why we cant see any thing includeing file upload, lat and lng when we are in csv mode [DONE]
 3.2 in the styling component, the file selector isnt showing. we need that to show along with the lat lng selectors. deep dive, find context so the changes are holistic.
+3.3 The map is showing features right! We just need to get the x and y coords table to show the data.
