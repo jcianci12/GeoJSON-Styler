@@ -102,25 +102,27 @@ export class LatLngColumnComponent {
     }
 
     const headers = csvData[0];
-    const latIndex = headers.indexOf(this.selectedLatColumn);
-    const lngIndex = headers.indexOf(this.selectedLngColumn);
-
-    if (latIndex === -1 || lngIndex === -1) {
-      this.snackBar.open('Selected columns not found in data', 'OK', { duration: 3000 });
-      return;
-    }
+    const latColumn = this.selectedLatColumn;
+    const lngColumn = this.selectedLngColumn;
 
     const features: geojson.Feature<geojson.Point>[] = csvData.slice(1)
       .map((row: string[]) => {
-        const lat = parseFloat(row[latIndex]);
-        const lng = parseFloat(row[lngIndex]);
+        // Create a map of header to value for easier access
+        const rowData = headers.reduce((acc, header, index) => {
+          acc[header] = row[index];
+          return acc;
+        }, {} as { [key: string]: string });
+
+        const lat = parseFloat(rowData[latColumn]);
+        const lng = parseFloat(rowData[lngColumn]);
 
         if (isNaN(lat) || isNaN(lng)) return null;
 
+        // Create properties object excluding lat/lng columns
         const properties: { [key: string]: any } = {};
-        headers.forEach((header: string, index: number) => {
-          if (index !== latIndex && index !== lngIndex) {
-            properties[header] = row[index];
+        Object.entries(rowData).forEach(([header, value]) => {
+          if (header !== latColumn && header !== lngColumn) {
+            properties[header] = value;
           }
         });
 

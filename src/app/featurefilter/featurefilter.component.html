@@ -1,0 +1,20 @@
+<div class="row">
+  <div class="col">
+    <div *ngIf="feature?.properties">
+      <div *ngFor="let item of feature?.properties | keyvalue">
+        <ng-container *ngIf="item.value">
+          <div class="form-group">
+            <label for="{{ item.key }}">{{ item.key }}</label>
+            <input
+              type="text"
+              class="form-control"
+              id="{{ item.key }}"
+              [value]="getTermValue(item.key)"
+              (input)="triggerChange(item.key, $event)"
+            />
+          </div>
+        </ng-container>
+      </div>
+    </div>
+  </div>
+</div> 

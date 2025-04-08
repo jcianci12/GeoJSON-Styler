@@ -1,7 +1,7 @@
-<app-suburbfilter
+<app-featurefilter
                   [feature]="featureCollection | firstfeature"
 [layerIndex]="layerIndex"
-                ></app-suburbfilter>
+                ></app-featurefilter>
 <div *ngIf="(featureCollection | featurefilter : 0).features.length > 50; else elsetemplate">
   <p>
     There are
@@ -9,14 +9,14 @@
   </p>
   <div *ngFor="let feature of (featureCollection | featurefilter : 0).features | slice : 0 : 50">
     <ng-container *ngIf="feature.properties">
-      <app-suburbrow [feature]="feature"></app-suburbrow>
+      <app-featurerow [feature]="feature"></app-featurerow>
     </ng-container>
   </div>
 </div>
 <ng-template #elsetemplate>
   <div *ngFor="let feature of (featureCollection | featurefilter : 0).features">
     <ng-container *ngIf="feature.properties">
-      <app-suburbrow [feature]="feature"></app-suburbrow>
+      <app-featurerow [feature]="feature"></app-featurerow>
     </ng-container>
   </div>
-</ng-template>
+</ng-template> 

@@ -2,7 +2,7 @@ import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
 import { MatSelectChange } from '@angular/material/select';
 import { FeatureCollectionLayer } from 'src/app/featureCollection';
 import { FeaturecollectionService } from 'src/app/featurecollection.service';
-import { terms } from 'src/app/suburbfilter/suburbfilter.component';
+import { terms } from '../../featurefilter/featurefilter.component';
 import { Select } from 'src/app/tableheaders.pipe';
 
 @Component({

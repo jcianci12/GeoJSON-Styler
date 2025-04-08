@@ -5,7 +5,7 @@ import { config, distinctUntilChanged, of } from 'rxjs';
 import { FeatureCollectionLayer } from 'src/app/featureCollection';
 import { FeaturecollectionService } from 'src/app/featurecollection.service';
 import { JsontocsvPipe } from 'src/app/jsontocsv.pipe';
-import { terms } from 'src/app/suburbfilter/suburbfilter.component';
+import { terms } from '../../featurefilter/featurefilter.component';
 import { openDB } from 'idb';
 
 @Component({

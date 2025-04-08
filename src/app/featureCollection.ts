@@ -7,7 +7,7 @@ import {
 } from 'geojson';
 import { stylerule } from './data/data.component';
 import { GeoColumnMapping } from './data/geocolumn/geocolumn.component';
-import { terms } from './suburbfilter/suburbfilter.component';
+import { terms } from './featurefilter/featurefilter.component';
 
 //the purpose of this class is so we dont need to work with the feature collection and the search terms in parrallel, we can set both here
 

@@ -2,7 +2,7 @@ import { Pipe, PipeTransform } from '@angular/core';
 import { Feature } from 'geojson';
 import { featureGroup } from 'leaflet';
 import { FeatureCollectionLayer } from './featureCollection';
-import { terms } from './suburbfilter/suburbfilter.component';
+import { terms } from './featurefilter/featurefilter.component';
 
 @Pipe({
   name: 'featurefilter',
@@ -77,13 +77,12 @@ export class FeaturefilterPipe implements PipeTransform {
   }
 
   //removes empty search terms
-  cleanTerms(termsval: terms): terms  {
+  cleanTerms(termsval: terms): terms {
     if (termsval) {
-      let t = termsval.terms.filter((term) => term.phrase);
+      let t: { key: string; phrase: string }[] = termsval.terms.filter((term: { key: string; phrase: string }) => term.phrase);
       termsval.terms = t;
       return termsval;
-    } else {
-      return new terms();
     }
+    return termsval;
   }
 }

@@ -11,7 +11,7 @@ import { colour, opacity, stylerule, text } from '../data/data.component';
 import { FeatureCollectionLayer } from '../featureCollection';
 import { FeaturecollectionService } from '../featurecollection.service';
 import { FeaturefilterPipe } from '../featurefilter.pipe';
-import { terms } from '../suburbfilter/suburbfilter.component';
+import { terms } from '../featurefilter/featurefilter.component';
 import { MapStateService, LayerInfo } from '../services/map-state.service';
 
 interface FeatureGroupInfo {

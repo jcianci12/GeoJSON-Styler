@@ -1,4 +1,4 @@
-import { NgModule } from '@angular/core';
+import { NgModule, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 
 import { AppRoutingModule } from './app-routing.module';
@@ -9,13 +9,13 @@ import { AngularMaterialModule } from './material/material.module';
 import { HttpClientModule } from '@angular/common/http';
 import { MapComponent } from './map/map.component';
 import { LeafletModule } from '@asymmetrik/ngx-leaflet';
-import { SuburblistComponent } from './suburblist/suburblist.component';
-import { SuburbfilterComponent } from './suburbfilter/suburbfilter.component';
+import { FeaturelistComponent } from './featurelist/featurelist.component';
+import { FeaturefilterComponent } from './featurefilter/featurefilter.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { FeaturefilterPipe } from './featurefilter.pipe';
 import { FirstfeaturePipe } from './firstfeature.pipe';
 import { SlicePipe } from './slice.pipe';
-import { SuburbrowComponent } from './suburblist/suburbrow/suburbrow.component';
+import { FeaturerowComponent } from './featurelist/featurerow/featurerow.component';
 import { DataComponent } from './data/data.component';
 import { CSVtoJSONPipe } from './csvtojsonpipe';
 import { TableheadersPipe } from './tableheaders.pipe';
@@ -36,12 +36,12 @@ import { LatLngColumnComponent } from './data/latlng-column/latlng-column.compon
     AppComponent,
     FileuploadComponent,
     MapComponent,
-    SuburblistComponent,
-    SuburbfilterComponent,
+    FeaturelistComponent,
+    FeaturefilterComponent,
     FeaturefilterPipe,
     FirstfeaturePipe,
     SlicePipe,
-    SuburbrowComponent,
+    FeaturerowComponent,
     DataComponent,
     CSVtoJSONPipe,
     TableheadersPipe,
@@ -68,6 +68,7 @@ import { LatLngColumnComponent } from './data/latlng-column/latlng-column.compon
     ReactiveFormsModule
   ],
   providers: [],
-  bootstrap: [AppComponent]
+  bootstrap: [AppComponent],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
 export class AppModule { }
