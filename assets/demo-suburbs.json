@@ -1,0 +1,185 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "suburb": "Riverside Heights",
+        "population": 12500,
+        "area_km2": 8.5
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [153.0, -27.5],
+          [153.1, -27.5],
+          [153.1, -27.6],
+          [153.0, -27.6],
+          [153.0, -27.5]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "suburb": "Sunset Valley",
+        "population": 8900,
+        "area_km2": 6.2
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [153.1, -27.5],
+          [153.2, -27.5],
+          [153.2, -27.6],
+          [153.1, -27.6],
+          [153.1, -27.5]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "suburb": "Green Meadows",
+        "population": 15600,
+        "area_km2": 9.8
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [153.0, -27.6],
+          [153.1, -27.6],
+          [153.1, -27.7],
+          [153.0, -27.7],
+          [153.0, -27.6]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "suburb": "Ocean View",
+        "population": 11200,
+        "area_km2": 7.3
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [153.1, -27.6],
+          [153.2, -27.6],
+          [153.2, -27.7],
+          [153.1, -27.7],
+          [153.1, -27.6]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "suburb": "Mountain Ridge",
+        "population": 7800,
+        "area_km2": 5.4
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [153.2, -27.5],
+          [153.3, -27.5],
+          [153.3, -27.6],
+          [153.2, -27.6],
+          [153.2, -27.5]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "suburb": "Lakeside Gardens",
+        "population": 13400,
+        "area_km2": 8.9
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [153.2, -27.6],
+          [153.3, -27.6],
+          [153.3, -27.7],
+          [153.2, -27.7],
+          [153.2, -27.6]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "suburb": "Harbor Bay",
+        "population": 9800,
+        "area_km2": 6.7
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [153.0, -27.7],
+          [153.1, -27.7],
+          [153.1, -27.8],
+          [153.0, -27.8],
+          [153.0, -27.7]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "suburb": "Forest Park",
+        "population": 14500,
+        "area_km2": 10.2
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [153.1, -27.7],
+          [153.2, -27.7],
+          [153.2, -27.8],
+          [153.1, -27.8],
+          [153.1, -27.7]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "suburb": "Desert Springs",
+        "population": 6700,
+        "area_km2": 4.8
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [153.2, -27.7],
+          [153.3, -27.7],
+          [153.3, -27.8],
+          [153.2, -27.8],
+          [153.2, -27.7]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "suburb": "Crystal Cove",
+        "population": 12300,
+        "area_km2": 7.9
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [153.3, -27.5],
+          [153.4, -27.5],
+          [153.4, -27.6],
+          [153.3, -27.6],
+          [153.3, -27.5]
+        ]]
+      }
+    }
+  ]
+}
