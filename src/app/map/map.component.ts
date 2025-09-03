@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output, OnDestroy } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import * as geojson from 'geojson';
 import * as L from 'leaflet';
@@ -62,14 +62,18 @@ export class MapComponent implements OnInit, OnDestroy {
   private subscriptions: Subscription[] = [];
   public map: Map | undefined;
   public zoom: number | undefined;
-  public currentFeatureCollection: geojson.FeatureCollection | null = null;
+  public currentFeatureCollection: geojson.FeatureCollection = {
+    type: 'FeatureCollection',
+    features: []
+  };
   private tempmap: MapPoint[] = [];
   private _featureCollection: FeatureCollectionLayer[] = [];
 
   constructor(
     private snackbar: MatSnackBar,
     private mapState: MapStateService,
-    private featurecollectionService: FeaturecollectionService
+    private featurecollectionService: FeaturecollectionService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
@@ -88,7 +92,10 @@ export class MapComponent implements OnInit, OnDestroy {
     // Subscribe to feature collection layers to render styled data from FeaturecollectionService
     this.subscriptions.push(
       this.featurecollectionService.FeatureCollectionLayerObservable.subscribe(layers => {
-        this.renderFeaturecollectionLayers();
+        // Use setTimeout to defer the render to the next change detection cycle
+        setTimeout(() => {
+          this.renderFeaturecollectionLayers();
+        }, 0);
       })
     );
 
@@ -146,10 +153,15 @@ export class MapComponent implements OnInit, OnDestroy {
 
     // Update feature count
     const totalFeatures = layers.reduce((sum, layer) => sum + layer.features.length, 0);
-    this.currentFeatureCollection = {
-      type: 'FeatureCollection',
-      features: layers.flatMap(layer => layer.features)
-    };
+    
+    // Use setTimeout to defer the update to the next change detection cycle
+    setTimeout(() => {
+      this.currentFeatureCollection = {
+        type: 'FeatureCollection',
+        features: layers.flatMap(layer => layer.features)
+      };
+      this.cdr.detectChanges();
+    }, 0);
 
     // Fit bounds to show all features
     this.fitBounds();
@@ -215,9 +227,14 @@ export class MapComponent implements OnInit, OnDestroy {
     this.mapState.setMap(map);
     this.zoom = map.getZoom();
     this.zoom$.emit(this.zoom);
-    this.updateFeatureCollection();
-    // Initial render from FeaturecollectionService (if any layers exist already)
-    this.renderFeaturecollectionLayers();
+    
+    // Use setTimeout to defer these updates to the next change detection cycle
+    setTimeout(() => {
+      this.updateFeatureCollection();
+      // Initial render from FeaturecollectionService (if any layers exist already)
+      this.renderFeaturecollectionLayers();
+    }, 0);
+    
     setTimeout(() => {
       this.loadBounds();
     }, 1000);
@@ -257,10 +274,15 @@ export class MapComponent implements OnInit, OnDestroy {
 
   updateFeatureCollection(featureCollection?: FeatureCollectionLayer[] | null) {
     if (!featureCollection) return;
-    this.currentFeatureCollection = {
-      type: 'FeatureCollection',
-      features: featureCollection.flatMap(layer => layer.features)
-    };
+    
+    // Use setTimeout to defer the update to the next change detection cycle
+    setTimeout(() => {
+      this.currentFeatureCollection = {
+        type: 'FeatureCollection',
+        features: featureCollection.flatMap(layer => layer.features)
+      };
+      this.cdr.detectChanges();
+    }, 0);
   }
 
   getxypoint(map: L.Map | undefined) {
@@ -315,7 +337,12 @@ export class MapComponent implements OnInit, OnDestroy {
     if (!this.map) return;
 
     const fc = this.featurecollectionService.getGeoJsonForAllLayers();
-    this.currentFeatureCollection = fc as any;
+    
+    // Use setTimeout to defer the update to the next change detection cycle
+    setTimeout(() => {
+      this.currentFeatureCollection = fc as any;
+      this.cdr.detectChanges();
+    }, 0);
 
     const featureGroup = new FeatureGroup();
 

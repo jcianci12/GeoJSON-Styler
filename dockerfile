@@ -1,23 +1,18 @@
-### STAGE 1: Build ###
-FROM node:current-alpine3.16 AS build
+### Development Stage ###
+FROM node:18-alpine
+
+# Set working directory
 WORKDIR /usr/src/app
-COPY package.json ./
-RUN npm i -g @angular/cli
 
-# Install app dependencies:
-RUN npm i
+# Install dependencies first (better layer caching)
+COPY package*.json ./
+RUN npm ci && npm cache clean --force
 
+# Copy source code
 COPY . .
-RUN npm run build
 
-# Stage 2: Serve app with nginx server
+# Expose port 4200 for Angular dev server
+EXPOSE 4200
 
-# Use official nginx image as the base image
-FROM nginx:latest
-
-# Copy the build output to replace the default nginx contents.
-COPY --from=build /usr/src/app/dist /usr/share/nginx/html
-COPY --from=build /usr/src/app/default.conf /etc/nginx/conf.d/default.conf
-
-# Expose port 80
-EXPOSE 80
+# Start Angular dev server with host binding for Docker
+CMD ["npm", "start", "--", "--host", "0.0.0.0", "--port", "4200"]
