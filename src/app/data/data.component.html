@@ -29,12 +29,7 @@
               <p>Choose the csv formatted data you would like to use.</p>
               <app-fileupload [fileextension]="'csv'" (fileadded)="addData($event)"></app-fileupload>
               
-              <!-- Add lat/lng column selector when CSV data is loaded -->
-              <div *ngIf="d">
-                <app-latlng-column [csvData]="d" (latLngColumnsSelected)="onLatLngColumnsSelected($event)"
-                                   (testPoints)="onTestPointsAdded($event)">
-                </app-latlng-column>
-              </div>
+              
             </mat-tab>
             <mat-tab label="JSON">
               <app-jsonendpoint [endpointurl]="endpointurl" (dataChange)="addJSONData($event)"></app-jsonendpoint>
@@ -51,7 +46,13 @@
           <h1>Data layers</h1>
           <p>Choose the column to join on (Eg. The suburb column)</p>
           <app-geocolumn [featureCollectionIndex]="featurecollectionlayerindex"
-            [tableheaders]="d | csvtojson | tableheaders"></app-geocolumn>
+            [tableheaders]="d | csvtojson | tableheaders"
+            (geocolumnChange)="onGeocolumnChange($event)"></app-geocolumn>
+          
+          <!-- Add joined rows summary -->
+          <div *ngIf="joinedRowsCount > 0" class="joined-summary">
+            <p><strong>Joined {{ joinedRowsCount }} rows</strong></p>
+          </div>
 
         </div>
       </div>

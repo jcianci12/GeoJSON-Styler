@@ -34,6 +34,9 @@ export class DataComponent implements OnInit {
   @Input() csvData: string = '';
   @Input() headers: string[] = [];
 
+  // Add property to store joined rows count
+  joinedRowsCount: number = 0;
+
   constructor(
     private fcs: FeaturecollectionService, 
     private api: GeoDataEndpointClient,
@@ -59,7 +62,61 @@ export class DataComponent implements OnInit {
       _temp.stylerules = _temp.stylerules;
       this.featureCollectionLayers[this.featurecollectionlayerindex] = _temp;
       this.fcs.FeatureCollectionLayerObservable.next(this.featureCollectionLayers);
+      this.calculateJoinedRowsCount();
     }
+  }
+
+  // Add method to calculate joined rows count
+  calculateJoinedRowsCount() {
+    if (!this.featureCollectionLayers || !this.d) {
+      this.joinedRowsCount = 0;
+      return;
+    }
+
+    const layer = this.featureCollectionLayers[this.featurecollectionlayerindex];
+    if (!layer || !layer.geocolumn || !layer.geocolumn.GEOColumn || !layer.geocolumn.GEOJSON) {
+      this.joinedRowsCount = 0;
+      return;
+    }
+
+    // Parse CSV data
+    const csvData = new CSVtoJSONPipe().csvJSON(this.d);
+    if (csvData.length < 2) {
+      this.joinedRowsCount = 0;
+      return;
+    }
+
+    const headers = csvData[0];
+    const csvColumnIndex = headers.indexOf(layer.geocolumn.GEOColumn);
+    
+    if (csvColumnIndex === -1) {
+      this.joinedRowsCount = 0;
+      return;
+    }
+
+    // Get unique values from CSV column
+    const csvValues = new Set<string>();
+    for (let i = 1; i < csvData.length; i++) {
+      const value = csvData[i][csvColumnIndex];
+      if (value && value.trim() !== '') {
+        csvValues.add(value.trim());
+      }
+    }
+
+    // Count matching features in GeoJSON
+    let matchedCount = 0;
+    if (layer.features && layer.features.length > 0) {
+      layer.features.forEach(feature => {
+        if (feature.properties && feature.properties[layer.geocolumn.GEOJSON]) {
+          const geoValue = feature.properties[layer.geocolumn.GEOJSON];
+          if (csvValues.has(geoValue.toString().trim())) {
+            matchedCount++;
+          }
+        }
+      });
+    }
+
+    this.joinedRowsCount = matchedCount;
   }
 
   addData(data: FileList) {
@@ -76,6 +133,11 @@ export class DataComponent implements OnInit {
   addJSONData(data: string) {
     this.d = data;
     this.updateData();
+  }
+
+  // Handle geocolumn changes
+  onGeocolumnChange(geocolumn: GeoColumnMapping) {
+    this.calculateJoinedRowsCount();
   }
 
   onLatLngColumnsSelected(event: Event) {
