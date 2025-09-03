@@ -5,6 +5,7 @@ import { FeatureCollectionLayer } from './featureCollection';
 import { stylerule } from './data/data.component';
 import { LatLngColumnMapping } from './data/latlng-column/latlng-column-mapping';
 import { CSVtoJSONPipe } from './csvtojsonpipe';
+import { StyleruleStateService } from './data/stylerule/stylerule-state.service';
 
 @Injectable({
   providedIn: 'root',
@@ -12,8 +13,7 @@ import { CSVtoJSONPipe } from './csvtojsonpipe';
 export class FeaturecollectionService {
   FeatureCollectionLayerObservable: BehaviorSubject<FeatureCollectionLayer[]> = new BehaviorSubject<FeatureCollectionLayer[]>([]);
   FeatureCollectionLayers: FeatureCollectionLayer[] | undefined;
-
-  constructor() {
+  constructor(private styleruleStateService: StyleruleStateService) {
     this.FeatureCollectionLayerObservable.subscribe((i) => (this.FeatureCollectionLayers = i));
   }
 
@@ -136,69 +136,66 @@ export class FeaturecollectionService {
       };
     }
 
-    // Apply styling rules to all features
+    // Compute concrete visual properties from current layer stylerules
+    const rules = layer.stylerules || [];
+    // Prepare style CSV lookup structures
+    const styleDataRaw = layer.styledata as any;
+    const styleTable: string[][] = Array.isArray(styleDataRaw)
+      ? styleDataRaw
+      : (typeof styleDataRaw === 'string' && styleDataRaw.length
+          ? new CSVtoJSONPipe().csvJSON(styleDataRaw)
+          : []);
+    const headers: string[] = styleTable.length ? styleTable[0] : [];
+    const rows: string[][] = styleTable.length > 1 ? styleTable.slice(1) : [];
+
+    const csvJoinColumn = layer.geocolumn?.GEOColumn;
+    const geojsonJoinProperty = layer.geocolumn?.GEOJSON;
+    const csvJoinIndex = headers.length ? headers.indexOf(csvJoinColumn) : -1;
+
     const styledFeatures = layer.features.map((feature) => {
-      const styledFeature = { ...feature };
-      
-      // Apply styling rules to the feature properties
-      layer.stylerules.forEach((rule) => {
-        if (styledFeature.properties) {
-          // Check if this is a dynamic rule (looks up values from styledata)
-          console.log(`[DEBUG] Processing rule: ${rule.ruletype.rulename}, dynamic: ${rule.ruletype.dynamic}, column: ${rule.column}`);
-          console.log(`[DEBUG] Available feature properties:`, Object.keys(styledFeature.properties || {}));
-          console.log(`[DEBUG] Feature properties values:`, styledFeature.properties);
-          
-          if (rule.ruletype.dynamic && layer.styledata) {
-            console.log(`[DEBUG] Dynamic rule detected - looking up value from styledata`);
-            // For dynamic rules, we need to look up the value from styledata
-            // The rule.column contains the column name to match against
-            // We need to find the matching row in styledata and get the value
-            const styledataRows = new CSVtoJSONPipe().csvJSON(layer.styledata as any);
-            console.log(`[DEBUG] Styledata headers:`, styledataRows[0]);
-            const matchColumnIndex = styledataRows[0].indexOf(rule.column);
-            
-            console.log(`[DEBUG] Match column index: ${matchColumnIndex}, styledata rows: ${styledataRows.length}`);
-            
-            if (matchColumnIndex !== -1) {
-              
-              const featureValue = styledFeature.properties[layer.geocolumn.GEOJSON];
-              // Lookup the value from the csv data, csvdata[matchinrowindex]
-              const matchingstyledata = styledataRows.find((row: string[]) => {
-                let match = row[matchColumnIndex] === featureValue;
-                console.log("row",row,"matchColumnIndex",matchColumnIndex,"featureValue",featureValue,"match",match);
-                return match;
-              });
+      feature.properties = feature.properties || {};
+      const style: any = (feature.properties as any).style || {};
 
-              //get the row index of the feature value
-              // console.log("styledataRows",styledataRows,"matchColumnIndex",matchColumnIndex,"matchingStyledataRowIndex",matchingstyledata);
-              //log the selected style type and data column
-              console.log("rule",rule);
-              console.log("matchingstyledata",matchingstyledata);
-              // matchingstyledata Array(5) [ "Crystal Cove", "#9B59B6", "0.8", "high", "medium" ]
-              //what is t
+      // Find the matching style row for this feature if possible
+      let matchedRow: string[] | undefined = undefined;
+      const featureKey = geojsonJoinProperty ? (feature.properties as any)[geojsonJoinProperty] : undefined;
+      if (csvJoinIndex >= 0 && featureKey !== undefined && rows.length) {
+        matchedRow = rows.find(r => r[csvJoinIndex] != null && r[csvJoinIndex].toString() === featureKey.toString());
+      }
 
-            }
-          } else {
-            // Static rule - apply the styling directly
-            console.log(`[DEBUG] Static rule detected - applying styling directly`);
-            if (rule.ruletype.rulename === 'opacity') {
-              const opacityValue = (rule.ruletype as any).opacityvalue;
-              styledFeature.properties['opacity'] = opacityValue;
-              console.log(`[DEBUG] Applied static opacity: ${opacityValue}`);
-            } else if (rule.ruletype.rulename === 'colour') {
-              const colourValue = (rule.ruletype as any).colour;
-              styledFeature.properties['colour'] = colourValue;
-              console.log(`[DEBUG] Applied static colour: ${colourValue}`);
-            } else if (rule.ruletype.rulename === 'text') {
-              const textValue = (rule.ruletype as any).textvalue;
-              styledFeature.properties['text'] = textValue;
-              console.log(`[DEBUG] Applied static text: ${textValue}`);
-            }
-          }
+      rules.forEach((r) => {
+        const name = r.ruletype?.rulename;
+        const isDynamic = (r.ruletype as any)?.dynamic === true;
+
+        // Determine the value source: CSV dynamic or static from rule config
+        const columnName = r.column;
+        const columnIndex = headers.length ? headers.indexOf(columnName) : -1;
+        const csvValue = (isDynamic && matchedRow && columnIndex >= 0) ? matchedRow[columnIndex] : undefined;
+
+        if (name === 'opacity') {
+          const staticOpacity = (r.ruletype as any).opacityvalue;
+          const parsed = csvValue != null ? parseFloat(csvValue) : undefined;
+          const value = (isFinite(parsed as number) ? parsed : undefined) ?? staticOpacity;
+          if (value !== undefined) style.opacity = value;
+        }
+        if (name === 'colour') {
+          const staticColour = (r.ruletype as any).colour;
+          const value = (csvValue && csvValue.length ? csvValue : undefined) ?? staticColour;
+          if (value !== undefined) style.color = value;
+        }
+        if (name === 'text') {
+          const t = r.ruletype as any;
+          const staticText = t.textvalue;
+          const value = (csvValue && csvValue.length ? csvValue : undefined) ?? staticText;
+          if (value !== undefined) style.labelText = value;
+          if (t.latoffset !== undefined) style.labelLatOffset = t.latoffset;
+          if (t.lngoffset !== undefined) style.labelLngOffset = t.lngoffset;
+          if (t.cssstyle !== undefined) style.labelCss = t.cssstyle;
         }
       });
-      
-      return styledFeature;
+
+      (feature.properties as any).style = style;
+      return feature;
     });
 
     return {

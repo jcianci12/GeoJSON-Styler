@@ -56,12 +56,12 @@
 
         </div>
       </div>
-      <div class="row">
-        <div class="col">
-          <app-stylerule (stylerulesChange)="updateStyleRules($event)"
+      <div class="row"> <app-stylerule (stylerulesChange)="updateStyleRules($event)"
             [stylerules]="featureCollectionLayers[this.featurecollectionlayerindex].stylerules"
             [tableheaders]="d | csvtojson | tableheaders" [featureCollectionIndex]="featurecollectionlayerindex">
           </app-stylerule>
+        <div class="col">
+         
           <!-- {{featurecollectionlayerindex}}
           {{stylerules|json}} -->
         </div>

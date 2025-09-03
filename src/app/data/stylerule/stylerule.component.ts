@@ -9,6 +9,7 @@ import {
   stylerules,
   text,
 } from '../data.component';
+import { StyleruleStateService, StyleruleDropdownState } from './stylerule-state.service';
 
 @Component({
   selector: 'app-stylerule',
@@ -16,7 +17,7 @@ import {
   styleUrls: ['./stylerule.component.css'],
 })
 export class StyleruleComponent implements OnInit {
-  constructor(private fcs: FeaturecollectionService) { }
+  constructor(private fcs: FeaturecollectionService, private styleState: StyleruleStateService) { }
   styleruleOptions: (string | undefined)[] = [new opacity(), new colour(), new text()].map(
     (i) => i.rulename
   );
@@ -30,6 +31,8 @@ export class StyleruleComponent implements OnInit {
       _temp[this.featureCollectionIndex].stylerules = this.stylerules;
     }
     this.fcs.FeatureCollectionLayerObservable.next(_temp);
+    // mirror to service state
+    this.syncStateToService();
   }
   get stylerules() {
     return this._stylerules;
@@ -47,12 +50,14 @@ export class StyleruleComponent implements OnInit {
     _temp.push({ column: 'demoint', ruletype: new text() });
     this.stylerules = _temp;
     this.stylerulesChange.emit(this.stylerules)
+    this.styleState.addRule(this.featureCollectionIndex, this.toDropdownState({ column: 'demoint', ruletype: new text() }));
   }
 
   removeRule(index: number) {
     this.stylerules.splice(index, 1);
     this.stylerules = this.stylerules;
     this.stylerulesChange.emit(this.stylerules)
+    this.styleState.removeRule(this.featureCollectionIndex, index);
 
   }
   updateRule(index: number, stylerule: stylerule) {
@@ -80,5 +85,15 @@ export class StyleruleComponent implements OnInit {
     };
     //this is if you want to emit the change up the tree
     this.stylerulesChange.emit(this.stylerules);
+    this.styleState.setRule(this.featureCollectionIndex, index, this.toDropdownState(this.stylerules[index]));
+  }
+
+  private toDropdownState(rule: stylerule): StyleruleDropdownState {
+    return { column: rule.column, ruletype: rule.ruletype.rulename, dynamic: (rule.ruletype as any)?.dynamic };
+  }
+
+  private syncStateToService(): void {
+    const mapped: StyleruleDropdownState[] = (this.stylerules || []).map(r => this.toDropdownState(r));
+    this.styleState.setStateForFeatureCollection(this.featureCollectionIndex, mapped);
   }
 }
