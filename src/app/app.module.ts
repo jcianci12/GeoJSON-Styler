@@ -30,7 +30,6 @@ import { JsontocsvPipe } from './jsontocsv.pipe';
 import { MapdataComponent } from './mapdata/mapdata.component';
 import { XypointsPipe } from './xypoints.pipe';
 import { LatLngColumnComponent } from './data/latlng-column/latlng-column.component';
-import { FeatureCollectionLayerService } from './services/feature-collection-layer.service';
 
 @NgModule({
   declarations: [
@@ -69,7 +68,7 @@ import { FeatureCollectionLayerService } from './services/feature-collection-lay
     ReactiveFormsModule
   ],
   providers: [
-    FeatureCollectionLayerService
+    
   ],
   bootstrap: [AppComponent],
   schemas: [CUSTOM_ELEMENTS_SCHEMA]

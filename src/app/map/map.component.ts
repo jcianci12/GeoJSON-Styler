@@ -13,7 +13,6 @@ import { FeaturecollectionService } from '../featurecollection.service';
 import { FeaturefilterPipe } from '../featurefilter.pipe';
 import { terms } from '../featurefilter/featurefilter.component';
 import { MapStateService, LayerInfo } from '../services/map-state.service';
-import { FeatureCollectionLayerService } from '../services/feature-collection-layer.service';
 
 interface FeatureGroupInfo {
   id: string;
@@ -69,7 +68,8 @@ export class MapComponent implements OnInit, OnDestroy {
 
   constructor(
     private snackbar: MatSnackBar,
-    private mapState: MapStateService
+    private mapState: MapStateService,
+    private featurecollectionService: FeaturecollectionService
   ) {}
 
   ngOnInit() {
@@ -82,6 +82,13 @@ export class MapComponent implements OnInit, OnDestroy {
     this.subscriptions.push(
       this.mapState.layerVisibility$.subscribe(layers => {
         this.updateLayerVisibility(layers);
+      })
+    );
+
+    // Subscribe to feature collection layers to render styled data from FeaturecollectionService
+    this.subscriptions.push(
+      this.featurecollectionService.FeatureCollectionLayerObservable.subscribe(layers => {
+        this.renderFeaturecollectionLayers();
       })
     );
 
@@ -209,6 +216,8 @@ export class MapComponent implements OnInit, OnDestroy {
     this.zoom = map.getZoom();
     this.zoom$.emit(this.zoom);
     this.updateFeatureCollection();
+    // Initial render from FeaturecollectionService (if any layers exist already)
+    this.renderFeaturecollectionLayers();
     setTimeout(() => {
       this.loadBounds();
     }, 1000);
@@ -299,6 +308,69 @@ export class MapComponent implements OnInit, OnDestroy {
       html: `<div><span style="${markerHtmlStyles}"/>` + text + `</div>`,
     });
     return icon;
+  }
+
+  // Render layers using the FeaturecollectionService computed styles
+  private renderFeaturecollectionLayers() {
+    if (!this.map) return;
+
+    const fc = this.featurecollectionService.getGeoJsonForAllLayers();
+    this.currentFeatureCollection = fc as any;
+
+    const featureGroup = new FeatureGroup();
+
+    fc.features.forEach(feature => {
+      const geometry = feature.geometry;
+      const props: any = feature.properties || {};
+      const style: any = props.style || {};
+
+      if (geometry.type === 'Point' && Array.isArray((geometry as any).coordinates)) {
+        const coords = (geometry as geojson.Point).coordinates;
+        const lat = coords[1];
+        const lng = coords[0];
+
+        const icon = this.geticon(
+          style.color || style.fillColor || '#3388ff',
+          style.opacity != null ? style.opacity : 1,
+          style.labelText != null ? String(style.labelText) : ''
+        );
+        const marker = L.marker([lat, lng], { icon });
+
+        // Optional popup from properties
+        if (feature.properties) {
+          const popupContent = Object.entries(feature.properties)
+            .filter(([k]) => k !== 'style')
+            .map(([key, value]) => `${key}: ${value}`)
+            .join('<br>');
+          if (popupContent) marker.bindPopup(popupContent);
+        }
+
+        featureGroup.addLayer(marker);
+      } else if (geometry.type === 'Polygon' || geometry.type === 'MultiPolygon' || geometry.type === 'LineString' || geometry.type === 'MultiLineString') {
+        const gj = L.geoJSON(feature as any, {
+          style: () => ({
+            color: style.color || '#3388ff',
+            fillColor: style.fillColor || style.color || '#3388ff',
+            fillOpacity: style.fillOpacity != null ? style.fillOpacity : (style.opacity != null ? style.opacity : 0.2),
+            opacity: style.opacity != null ? style.opacity : 1,
+            weight: style.weight != null ? style.weight : 2
+          })
+        });
+        featureGroup.addLayer(gj);
+      }
+    });
+
+    // Replace previous group if present
+    const existingFeatureGroup = this.mapState.featureGroup;
+    if (existingFeatureGroup) {
+      this.map.removeLayer(existingFeatureGroup);
+    }
+    this.map.addLayer(featureGroup);
+    this.mapState.setFeatureGroup(featureGroup);
+
+    this.fitBounds();
+
+    this.snackbar.open(`Rendered ${fc.features.length} features`, 'OK', { duration: 3000 });
   }
 
   handlePolygon(stylerules: stylerule[], feature: geojson.Feature<geojson.Geometry, geojson.GeoJsonProperties>, stylerow: string[], i: number, _fc: FeatureCollectionLayer): L.GeoJSON<any> {
