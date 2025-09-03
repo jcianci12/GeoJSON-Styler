@@ -1,0 +1,45 @@
+/* JSON Endpoint Component Styles */
+.json-endpoint {
+  margin: 16px 0;
+}
+
+.endpoint-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.endpoint-input {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  font-family: 'Courier New', monospace;
+}
+
+.endpoint-input:focus {
+  outline: none;
+  border-color: #2196f3;
+  box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.2);
+}
+
+.endpoint-button {
+  padding: 8px 16px;
+  background-color: #2196f3;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s ease;
+}
+
+.endpoint-button:hover {
+  background-color: #1976d2;
+}
+
+.endpoint-button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+

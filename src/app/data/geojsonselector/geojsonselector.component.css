@@ -1,0 +1,31 @@
+/* GeoJSON Selector Component Styles */
+.geojson-selector {
+  margin: 16px 0;
+}
+
+.selector-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.selector-label {
+  font-weight: 500;
+  color: #333;
+  min-width: 120px;
+}
+
+.selector-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.selector-input:focus {
+  outline: none;
+  border-color: #2196f3;
+  box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.2);
+}
+

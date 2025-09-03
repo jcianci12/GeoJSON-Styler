@@ -19,7 +19,6 @@ import { Select } from './tableheaders.pipe';
 })
 export class AppComponent implements OnInit {
   title = 'GeoJson-Styler';
-  featureCollectionLayers: FeatureCollectionLayer[] = [];
   style: stylerule[] = [];
   reader = new FileReader();
   _triggerval: number = 0;
@@ -44,46 +43,38 @@ export class AppComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.fcs.FeatureCollectionLayerObservable.subscribe((i) => {
-      this.featureCollectionLayers = i;
-    });
+    // No need to subscribe here as we'll access through the service
+  }
+
+  // Getter to access feature collection layers from service
+  get featureCollectionLayers(): FeatureCollectionLayer[] {
+    return this.fcs.FeatureCollectionLayers || [];
+  }
+
+  // Getter to access the processed GeoJSON for all layers
+  get processedGeoJson(): geojson.FeatureCollection {
+    return this.fcs.getGeoJsonForAllLayers();
+  }
+
+  // Getter to access individual layer GeoJSON
+  getLayerGeoJson(index: number): geojson.FeatureCollection {
+    return this.fcs.getGeoJsonForLayer(index);
   }
 
   updateActive(event: any, index: number) {
-    this.featureCollectionLayers[index].active = event.checked;
-    this.fcs.FeatureCollectionLayerObservable.next(this.featureCollectionLayers);
+    this.fcs.updateActive(event, index);
   }
 
   onLayerTypeChange(index: number) {
-    const layer = this.featureCollectionLayers[index];
-    if (layer.layerType === 'csv') {
-      // Initialize CSV-specific properties
-      layer.styledata = [];
-      layer.features = [];
-      layer.stylerules = [];
-    }
-    this.fcs.FeatureCollectionLayerObservable.next(this.featureCollectionLayers);
+    this.fcs.onLayerTypeChange(index);
   }
 
   removeLayer(index: number) {
-    this.featureCollectionLayers.splice(index, 1);
-    this.fcs.FeatureCollectionLayerObservable.next(this.featureCollectionLayers);
+    this.fcs.removeLayer(index);
   }
 
   addLayer() {
-    let l = new FeatureCollectionLayer(
-      [],
-      {
-        terms: [],
-        triggerval: 0,
-      },
-      this.style,
-      { GEOColumn: "qld_loca_2", GEOJSON: "suburb" },
-      []
-    );
-
-    this.featureCollectionLayers.push(l);
-    this.fcs.FeatureCollectionLayerObservable.next(this.featureCollectionLayers);
+    this.fcs.addLayer();
   }
 
   addlistener() {
@@ -91,32 +82,12 @@ export class AppComponent implements OnInit {
       let fc = JSON.parse(
         this.reader.result as string
       ) as geojson.FeatureCollection;
-      let l = new FeatureCollectionLayer(
-        fc.features,
-        {
-          terms: [],
-          triggerval: 0,
-        },
-        this.style,
-        { GEOColumn: "qld_loca_2", GEOJSON: "suburb" },
-        []
-      );
-
-      this.featureCollectionLayers.push(l);
-      this.fcs.FeatureCollectionLayerObservable.next(this.featureCollectionLayers);
+      this.fcs.addLayerFromGeoJSON(fc.features);
     };
   }
 
   onLatLngColumnsSelected(index: number, mapping: LatLngColumnMapping) {
-    const layer = this.featureCollectionLayers[index];
-    if (layer.layerType === 'csv') {
-      // Update the layer with the new column mapping
-      layer.geocolumn = {
-        GEOColumn: mapping.lngColumn,
-        GEOJSON: mapping.latColumn
-      };
-      this.fcs.FeatureCollectionLayerObservable.next(this.featureCollectionLayers);
-    }
+    this.fcs.onLatLngColumnsSelected(index, mapping);
   }
 
   onFileAdded(files: FileList) {

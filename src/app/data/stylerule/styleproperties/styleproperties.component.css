@@ -1,0 +1,60 @@
+/* Style Properties Component Styles */
+.style-properties {
+  margin: 16px 0;
+}
+
+.properties-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.property-group {
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  padding: 12px;
+  background-color: #fafafa;
+}
+
+.property-group-title {
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.property-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.property-label {
+  min-width: 100px;
+  font-size: 14px;
+  color: #666;
+}
+
+.property-input {
+  flex: 1;
+  padding: 6px 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.property-input:focus {
+  outline: none;
+  border-color: #2196f3;
+  box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.2);
+}
+
+.color-picker {
+  width: 40px;
+  height: 32px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+}
+

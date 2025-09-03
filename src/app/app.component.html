@@ -7,7 +7,7 @@
     <span class="example-spacer"></span>
     <button mat-button [matMenuTriggerFor]="menu">Load/Save Map State</button>
     <mat-menu #menu="matMenu">
-      <app-loadsavebutton [(featureCollection)]="featureCollectionLayers"></app-loadsavebutton>
+      <app-loadsavebutton></app-loadsavebutton>
 
     </mat-menu>
     <button mat-button color="primary" (click)="addLayer()">Add layer</button>
@@ -28,10 +28,7 @@
         <mat-accordion>
           <mat-expansion-panel [expanded]="expanded | async">
             <mat-expansion-panel-header>
-              <mat-panel-title>
-                Geographical Layers ({{
-                featureCollectionLayers.length
-                }})</mat-panel-title>
+              
               <mat-panel-description> </mat-panel-description>
             </mat-expansion-panel-header>
 
@@ -39,6 +36,9 @@
                 let featureCollection of featureCollectionLayers;
                 let i = index
               ">
+              <!-- Raw feature collection  -->
+              {{featureCollection|json}}
+              <!-- GeoJson converted from feature collection -->
               <div class="row">
                 <div class="col">
                   <mat-checkbox class="example-margin" [checked]="featureCollection.active"
@@ -66,15 +66,13 @@
                   <div class="col">
                     <ng-container [ngSwitch]="featureCollection.layerType">
                       <app-data *ngSwitchCase="'geojson'" 
-                        [featurecollectionlayerindex]="i"
-                        [featureCollectionLayers]="featureCollectionLayers">
+                        [featurecollectionlayerindex]="i">
                       </app-data>
                       <div *ngSwitchCase="'csv'">
                         <app-latlng-column
                           [csvData]="csvData"
                           [headers]="headers"
                           [featurecollectionlayerindex]="i"
-                          [featureCollectionLayers]="featureCollectionLayers"
                           (testPoints)="onTestPointsAdded($any($event).detail)">
                         </app-latlng-column>
                       </div>
@@ -83,9 +81,31 @@
                 </div>
               </mat-expansion-panel>
 
+              <!-- Processed GeoJSON Output for this layer -->
+              <mat-expansion-panel [expanded]="false">
+                <mat-expansion-panel-header>
+                  <mat-panel-title> Processed GeoJSON (Layer {{i}}) </mat-panel-title>
+                  <mat-panel-description> Click to view styled GeoJSON </mat-panel-description>
+                </mat-expansion-panel-header>
+                <div style="max-height: 300px; overflow-y: auto; background-color: #f5f5f5; padding: 10px; border-radius: 4px;">
+                  <pre style="margin: 0; font-size: 12px;">{{getLayerGeoJson(i)|json}}</pre>
+                </div>
+              </mat-expansion-panel>
+
 
 
             </ng-container>
+          </mat-expansion-panel>
+
+          <!-- Combined GeoJSON Output -->
+          <mat-expansion-panel [expanded]="false">
+            <mat-expansion-panel-header>
+              <mat-panel-title> Combined GeoJSON Output </mat-panel-title>
+              <mat-panel-description> All active layers with styling applied </mat-panel-description>
+            </mat-expansion-panel-header>
+            <div style="max-height: 400px; overflow-y: auto; background-color: #f5f5f5; padding: 10px; border-radius: 4px;">
+              <pre style="margin: 0; font-size: 12px;">{{processedGeoJson|json}}</pre>
+            </div>
           </mat-expansion-panel>
         </mat-accordion>
 

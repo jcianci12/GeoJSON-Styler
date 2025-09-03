@@ -30,7 +30,7 @@ export class DataComponent implements OnInit {
 
   @Input() feature!: number;
   @Input() featurecollectionlayerindex!: number;
-  @Input() featureCollectionLayers!: FeatureCollectionLayer[];
+  featureCollectionLayers!: FeatureCollectionLayer[];
   @Input() csvData: string = '';
   @Input() headers: string[] = [];
 
