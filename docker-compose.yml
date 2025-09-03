@@ -9,6 +9,7 @@ services:
     restart: unless-stopped
     environment:
       - NODE_ENV=development
+      - WATCHPACK_POLLING=true
     volumes:
       - ./src:/usr/src/app/src
       - ./package.json:/usr/src/app/package.json
@@ -25,11 +26,11 @@ services:
     deploy:
       resources:
         limits:
-          memory: 1G
-          cpus: '1.0'
+          memory: 4G
+          cpus: '2.0'
         reservations:
-          memory: 512M
-          cpus: '0.5'
+          memory: 2G
+          cpus: '1.0'
 
 networks:
   geojson-network:

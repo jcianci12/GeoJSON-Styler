@@ -75,6 +75,15 @@
         },
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
+          "options": {
+            "host": "0.0.0.0",
+            "port": 4200,
+            "disableHostCheck": true,
+            "poll": 2000,
+            "verbose": true,
+            "liveReload": true,
+            "hmr": false
+          },
           "configurations": {
             "production": {
               "browserTarget": "GeoJson-Styler:build:production"

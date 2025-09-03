@@ -4,6 +4,9 @@ FROM node:18-alpine
 # Set working directory
 WORKDIR /usr/src/app
 
+# Install Angular CLI globally
+RUN npm install -g @angular/cli@14.2.3
+
 # Install dependencies first (better layer caching)
 COPY package*.json ./
 RUN npm ci && npm cache clean --force
@@ -14,5 +17,5 @@ COPY . .
 # Expose port 4200 for Angular dev server
 EXPOSE 4200
 
-# Start Angular dev server with host binding for Docker
-CMD ["npm", "start", "--", "--host", "0.0.0.0", "--port", "4200"]
+# Start Angular dev server
+CMD ["npm", "start"]

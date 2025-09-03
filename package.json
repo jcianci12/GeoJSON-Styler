@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "start": "npm i&&ng serve",
+    "start": "ng serve --host 0.0.0.0 --port 4200 --disable-host-check --poll 2000 --verbose",
     "build": "ng build",
     "githubbuild": "ng build --base-href https://jcianci12.github.io/GeoJSON-Styler/",
     "watch": "ng build --watch --configuration development",
