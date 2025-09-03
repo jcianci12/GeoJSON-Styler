@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output, OnDestroy, NgZone, ChangeDetectorRef, AfterViewInit } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, OnDestroy } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import * as geojson from 'geojson';
 import * as L from 'leaflet';
@@ -12,8 +12,7 @@ import { FeatureCollectionLayer } from '../featureCollection';
 import { FeaturecollectionService } from '../featurecollection.service';
 import { FeaturefilterPipe } from '../featurefilter.pipe';
 import { terms } from '../featurefilter/featurefilter.component';
-import { MapStateService, LayerInfo, Point } from '../services/map-state.service';
-import { FeatureCollectionLayerService } from '../services/feature-collection-layer.service';
+import { MapStateService, LayerInfo } from '../services/map-state.service';
 
 interface FeatureGroupInfo {
   id: string;
@@ -35,7 +34,7 @@ class MapPoint extends L.Marker {
   templateUrl: './map.component.html',
   styleUrls: ['./map.component.css'],
 })
-export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
+export class MapComponent implements OnInit, OnDestroy {
   @Output() map$: EventEmitter<Map> = new EventEmitter();
   @Output() zoom$: EventEmitter<number> = new EventEmitter();
   
@@ -70,8 +69,7 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
   constructor(
     private snackbar: MatSnackBar,
     private mapState: MapStateService,
-    private ngZone: NgZone,
-    private cdr: ChangeDetectorRef
+    private featurecollectionService: FeaturecollectionService
   ) {}
 
   ngOnInit() {
@@ -86,40 +84,15 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
         this.updateLayerVisibility(layers);
       })
     );
-  }
 
-  ngAfterViewInit() {
+    // Subscribe to feature collection layers to render styled data from FeaturecollectionService
+    this.subscriptions.push(
+      this.featurecollectionService.FeatureCollectionLayerObservable.subscribe(layers => {
+        this.renderFeaturecollectionLayers();
+      })
+    );
+
     this.initializeMap();
-  }
-
-  private initializeMap() {
-    if (this.map) {
-      return; // Map already initialized
-    }
-    
-    this.ngZone.runOutsideAngular(() => {
-      this.initMap();
-    });
-  }
-
-  initMap() {
-    this.map = L.map('map', this.options);
-    
-    // Initialize fullscreen control
-    if (this.options.fullscreenControl) {
-      const fullscreenControl = L.control.fullscreen(this.options.fullscreenControlOptions);
-      fullscreenControl.addTo(this.map);
-    }
-    
-    this.map.on('zoomend', (e: L.LeafletEvent) => this.onMapZoomEnd(e));
-    this.map.on('moveend', () => this.onMapMoveEnd());
-    
-    this.ngZone.run(() => {
-      if (this.map) {
-        this.onMapReady(this.map);
-        this.cdr.detectChanges();
-      }
-    });
   }
 
   private updateLayers(layers: LayerInfo[]) {
@@ -219,6 +192,17 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
     }
   }
 
+  ngAfterViewInit() {
+    this.initMap();
+  }
+
+  initMap() {
+    this.map = L.map('map', this.options);
+    this.map.on('zoomend', (e: L.LeafletEvent) => this.onMapZoomEnd(e));
+    this.map.on('moveend', () => this.onMapMoveEnd());
+    this.onMapReady(this.map);
+  }
+
   ngOnDestroy() {
     this.map?.clearAllEventListeners;
     this.map?.remove();
@@ -229,10 +213,11 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
     this.map = map;
     this.map$.emit(map);
     this.mapState.setMap(map);
-    this.getxypoint(map);
     this.zoom = map.getZoom();
     this.zoom$.emit(this.zoom);
     this.updateFeatureCollection();
+    // Initial render from FeaturecollectionService (if any layers exist already)
+    this.renderFeaturecollectionLayers();
     setTimeout(() => {
       this.loadBounds();
     }, 1000);
@@ -244,9 +229,8 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   onMapMoveEnd() {
-    if (this.map) {
-      this.getxypoint(this.map);
-    }
+    let bounds = this.map?.getBounds();
+    localStorage.setItem('bounds', JSON.stringify(bounds));
   }
 
   loadBounds() {
@@ -280,31 +264,22 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   getxypoint(map: L.Map | undefined) {
-    const points: Point[] = [];
-    
+    this.tempmap = [];
     map?.eachLayer((layer: L.Layer) => {
       if (layer instanceof L.Marker || layer instanceof L.Circle || layer instanceof L.Polygon) {
+        let d = new MapPoint([1,1]);
+        d.id = (layer as any)?._icon?.innerText || '';
         let latlng = (layer as L.Marker).getLatLng();
-        
-        // Format X and Y coordinates as numbers with 6 decimal places
-        const [x, y] = this.latLngToXY(latlng.lat, latlng.lng);
-        const formattedX = Number(x.toFixed(6));
-        const formattedY = Number(y.toFixed(6));
-        
-        points.push({
-          lat: latlng.lat,
-          lng: latlng.lng,
-          x: formattedX,
-          y: formattedY
-        });
+        d.setLatLng(latlng);
+        d.x = this.latLngToXY(latlng.lat, latlng.lng)[0];
+        d.y = this.latLngToXY(latlng.lat, latlng.lng)[1];
+        this.tempmap.push(d);
       }
     });
-    
-    this.mapState.updatePoints(points);
   }
   
   latLngToXY(lat:number, lng:number) {
-    var R = 6378137; // Earth's radius in meters
+    var R = 6378137;
     var x = R * lng * Math.PI / 180;
     var y = R * Math.log(Math.tan((90 + lat) * Math.PI / 360));
     return [x, y];
@@ -333,6 +308,69 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
       html: `<div><span style="${markerHtmlStyles}"/>` + text + `</div>`,
     });
     return icon;
+  }
+
+  // Render layers using the FeaturecollectionService computed styles
+  private renderFeaturecollectionLayers() {
+    if (!this.map) return;
+
+    const fc = this.featurecollectionService.getGeoJsonForAllLayers();
+    this.currentFeatureCollection = fc as any;
+
+    const featureGroup = new FeatureGroup();
+
+    fc.features.forEach(feature => {
+      const geometry = feature.geometry;
+      const props: any = feature.properties || {};
+      const style: any = props.style || {};
+
+      if (geometry.type === 'Point' && Array.isArray((geometry as any).coordinates)) {
+        const coords = (geometry as geojson.Point).coordinates;
+        const lat = coords[1];
+        const lng = coords[0];
+
+        const icon = this.geticon(
+          style.color || style.fillColor || '#3388ff',
+          style.opacity != null ? style.opacity : 1,
+          style.labelText != null ? String(style.labelText) : ''
+        );
+        const marker = L.marker([lat, lng], { icon });
+
+        // Optional popup from properties
+        if (feature.properties) {
+          const popupContent = Object.entries(feature.properties)
+            .filter(([k]) => k !== 'style')
+            .map(([key, value]) => `${key}: ${value}`)
+            .join('<br>');
+          if (popupContent) marker.bindPopup(popupContent);
+        }
+
+        featureGroup.addLayer(marker);
+      } else if (geometry.type === 'Polygon' || geometry.type === 'MultiPolygon' || geometry.type === 'LineString' || geometry.type === 'MultiLineString') {
+        const gj = L.geoJSON(feature as any, {
+          style: () => ({
+            color: style.color || '#3388ff',
+            fillColor: style.fillColor || style.color || '#3388ff',
+            fillOpacity: style.fillOpacity != null ? style.fillOpacity : (style.opacity != null ? style.opacity : 0.2),
+            opacity: style.opacity != null ? style.opacity : 1,
+            weight: style.weight != null ? style.weight : 2
+          })
+        });
+        featureGroup.addLayer(gj);
+      }
+    });
+
+    // Replace previous group if present
+    const existingFeatureGroup = this.mapState.featureGroup;
+    if (existingFeatureGroup) {
+      this.map.removeLayer(existingFeatureGroup);
+    }
+    this.map.addLayer(featureGroup);
+    this.mapState.setFeatureGroup(featureGroup);
+
+    this.fitBounds();
+
+    this.snackbar.open(`Rendered ${fc.features.length} features`, 'OK', { duration: 3000 });
   }
 
   handlePolygon(stylerules: stylerule[], feature: geojson.Feature<geojson.Geometry, geojson.GeoJsonProperties>, stylerow: string[], i: number, _fc: FeatureCollectionLayer): L.GeoJSON<any> {
@@ -370,5 +408,9 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
       color: colour,
     });
     return geo;
+  }
+
+  private initializeMap() {
+    // ... existing map initialization code ...
   }
 }

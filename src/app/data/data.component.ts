@@ -20,12 +20,22 @@ import { MapStateService } from '../services/map-state.service';
 })
 export class DataComponent implements OnInit {
   d: string | any = 'qld_loca_2,opacity,colour\r\nBeenleigh,0.5,blue\r\nSunnybank,0.7,red\r\n';
+  private _endpointurl: string = 'http://localhost:54933/GetSuburbRegistrantCountsForRound?runnumber=11';
+  set endpointurl(val: string) {
+    this._endpointurl = val;
+  }
+  get endpointurl() {
+    return this._endpointurl;
+  }
 
   @Input() feature!: number;
   @Input() featurecollectionlayerindex!: number;
-  @Input() featureCollectionLayers!: FeatureCollectionLayer[];
+  featureCollectionLayers!: FeatureCollectionLayer[];
   @Input() csvData: string = '';
   @Input() headers: string[] = [];
+
+  // Add property to store joined rows count
+  joinedRowsCount: number = 0;
 
   constructor(
     private fcs: FeaturecollectionService, 
@@ -52,7 +62,61 @@ export class DataComponent implements OnInit {
       _temp.stylerules = _temp.stylerules;
       this.featureCollectionLayers[this.featurecollectionlayerindex] = _temp;
       this.fcs.FeatureCollectionLayerObservable.next(this.featureCollectionLayers);
+      this.calculateJoinedRowsCount();
     }
+  }
+
+  // Add method to calculate joined rows count
+  calculateJoinedRowsCount() {
+    if (!this.featureCollectionLayers || !this.d) {
+      this.joinedRowsCount = 0;
+      return;
+    }
+
+    const layer = this.featureCollectionLayers[this.featurecollectionlayerindex];
+    if (!layer || !layer.geocolumn || !layer.geocolumn.GEOColumn || !layer.geocolumn.GEOJSON) {
+      this.joinedRowsCount = 0;
+      return;
+    }
+
+    // Parse CSV data
+    const csvData = new CSVtoJSONPipe().csvJSON(this.d);
+    if (csvData.length < 2) {
+      this.joinedRowsCount = 0;
+      return;
+    }
+
+    const headers = csvData[0];
+    const csvColumnIndex = headers.indexOf(layer.geocolumn.GEOColumn);
+    
+    if (csvColumnIndex === -1) {
+      this.joinedRowsCount = 0;
+      return;
+    }
+
+    // Get unique values from CSV column
+    const csvValues = new Set<string>();
+    for (let i = 1; i < csvData.length; i++) {
+      const value = csvData[i][csvColumnIndex];
+      if (value && value.trim() !== '') {
+        csvValues.add(value.trim());
+      }
+    }
+
+    // Count matching features in GeoJSON
+    let matchedCount = 0;
+    if (layer.features && layer.features.length > 0) {
+      layer.features.forEach(feature => {
+        if (feature.properties && feature.properties[layer.geocolumn.GEOJSON]) {
+          const geoValue = feature.properties[layer.geocolumn.GEOJSON];
+          if (csvValues.has(geoValue.toString().trim())) {
+            matchedCount++;
+          }
+        }
+      });
+    }
+
+    this.joinedRowsCount = matchedCount;
   }
 
   addData(data: FileList) {
@@ -64,6 +128,16 @@ export class DataComponent implements OnInit {
       this.updateData();
     };
     filereader.readAsText(data[0]);
+  }
+
+  addJSONData(data: string) {
+    this.d = data;
+    this.updateData();
+  }
+
+  // Handle geocolumn changes
+  onGeocolumnChange(geocolumn: GeoColumnMapping) {
+    this.calculateJoinedRowsCount();
   }
 
   onLatLngColumnsSelected(event: Event) {

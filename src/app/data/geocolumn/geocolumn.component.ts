@@ -37,13 +37,17 @@ export class GeocolumnComponent implements OnInit {
   // Event handler for the geoJSON select change event
   geoJSONChanged(event: MatSelectChange) {
     // Update the geocolumn with the new value
-    this.featureCollectionLayers[this.featureCollectionIndex].geocolumn.GEOJSON = event.value
+    this.featureCollectionLayers[this.featureCollectionIndex].geocolumn.GEOJSON = event.value;
+    this.fcs.FeatureCollectionLayerObservable.next(this.featureCollectionLayers);
+    this.geocolumnChange.emit(this.geocolumn);
   }
 
   // Event handler for the geoColumn select change event
   geoColumnChanged(event: MatSelectChange) {
     // Update the geocolumn with the new value
-    this.featureCollectionLayers[this.featureCollectionIndex].geocolumn.GEOColumn = event.value
+    this.featureCollectionLayers[this.featureCollectionIndex].geocolumn.GEOColumn = event.value;
+    this.fcs.FeatureCollectionLayerObservable.next(this.featureCollectionLayers);
+    this.geocolumnChange.emit(this.geocolumn);
   }
 }
 

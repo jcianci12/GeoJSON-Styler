@@ -1,8 +1,9 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, OnInit } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Select } from '../../tableheaders.pipe';
 import * as geojson from 'geojson';
 import { FeatureCollectionLayer } from '../../featureCollection';
+import { FeaturecollectionService } from '../../featurecollection.service';
 import { TableheadersPipe } from '../../tableheaders.pipe';
 import { CSVtoJSONPipe } from '../../csvtojsonpipe';
 import { LatLngColumnMapping } from './latlng-column-mapping';
@@ -14,10 +15,10 @@ import { MapStateService } from '../../services/map-state.service';
   templateUrl: './latlng-column.component.html',
   styleUrls: ['./latlng-column.component.css']
 })
-export class LatLngColumnComponent {
+export class LatLngColumnComponent implements OnInit {
   @Input() headers: Select[] = [];
   @Input() featurecollectionlayerindex!: number;
-  @Input() featureCollectionLayers!: FeatureCollectionLayer[];
+  featureCollectionLayers!: FeatureCollectionLayer[];
   
   selectedLatColumn: string = '';
   selectedLngColumn: string = '';
@@ -33,8 +34,15 @@ export class LatLngColumnComponent {
   constructor(
     private snackBar: MatSnackBar,
     private fileHandler: FileHandlerService,
-    private mapState: MapStateService
+    private mapState: MapStateService,
+    private fcs: FeaturecollectionService
   ) {}
+
+  ngOnInit(): void {
+    this.fcs.FeatureCollectionLayerObservable.subscribe((i) => {
+      this.featureCollectionLayers = i;
+    });
+  }
 
   togglePreview() {
     this.showPreview = !this.showPreview;
@@ -55,6 +63,9 @@ export class LatLngColumnComponent {
           this.featurecollectionlayerindex,
           result.csvRows
         );
+        
+        // Update the service
+        this.fcs.FeatureCollectionLayerObservable.next(this.featureCollectionLayers);
         
         // Auto-detect lat/lng columns
         this.autoDetectColumns();
