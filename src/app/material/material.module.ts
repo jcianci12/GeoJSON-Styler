@@ -98,7 +98,8 @@ import { MatPaginatorModule } from '@angular/material/paginator';
         MatExpansionModule,
         MatTabsModule,
         MatButtonToggleModule,
-        MatSlideToggleModule
+        MatSlideToggleModule,
+        MatSliderModule
     ],
     providers: [
         MatDatepickerModule,

@@ -332,6 +332,7 @@ export class MapComponent implements OnInit, OnDestroy {
   }
 
   geticon(colour: string, opacity: number, text: string): L.DivIcon {
+    console.log(`Creating icon with text: "${text}"`);
     let markerHtmlStyles =
       `
     width: 1rem;
@@ -351,7 +352,7 @@ export class MapComponent implements OnInit, OnDestroy {
       iconAnchor: [0, 24],
       tooltipAnchor: [-6, 0],
       popupAnchor: [0, -36],
-      html: `<div><span style="${markerHtmlStyles}"/>` + text + `</div>`,
+      html: `<div style="display: flex; align-items: center; gap: 4px;"><span style="${markerHtmlStyles}"/><span style="color: black; font-size: 12px; font-weight: bold;">${text}</span></div>`,
     });
     return icon;
   }
@@ -559,6 +560,8 @@ export class MapComponent implements OnInit, OnDestroy {
         style.opacity != null ? style.opacity : 1,
         style.labelText != null ? String(style.labelText) : ''
       );
+      console.log(`Feature style:`, style);
+      console.log(`Label text: "${style.labelText}"`);
       const marker = L.marker([lat, lng], { icon });
 
       // Optimize popup creation - only create if there are non-style properties
@@ -585,6 +588,54 @@ export class MapComponent implements OnInit, OnDestroy {
           weight: style.weight != null ? style.weight : 2
         })
       });
+
+      // Add text label for polygon/line features if labelText is set
+      if (style.labelText && style.labelText.trim() !== '') {
+        const coords = (geometry as any).coordinates;
+        let labelLat: number, labelLng: number;
+
+        if (geometry.type === 'Polygon') {
+          // Use centroid of first ring for polygon
+          const ring = coords[0];
+          const sum = ring.reduce((acc: any, coord: any) => [acc[0] + coord[0], acc[1] + coord[1]], [0, 0]);
+          labelLng = sum[0] / ring.length;
+          labelLat = sum[1] / ring.length;
+        } else if (geometry.type === 'LineString') {
+          // Use midpoint for line
+          const midIndex = Math.floor(coords.length / 2);
+          labelLng = coords[midIndex][0];
+          labelLat = coords[midIndex][1];
+        } else {
+          // For MultiPolygon/MultiLineString, use first feature
+          const firstCoords = coords[0];
+          if (geometry.type === 'MultiPolygon') {
+            const ring = firstCoords[0];
+            const sum = ring.reduce((acc: any, coord: any) => [acc[0] + coord[0], acc[1] + coord[1]], [0, 0]);
+            labelLng = sum[0] / ring.length;
+            labelLat = sum[1] / ring.length;
+          } else {
+            const midIndex = Math.floor(firstCoords.length / 2);
+            labelLng = firstCoords[midIndex][0];
+            labelLat = firstCoords[midIndex][1];
+          }
+        }
+
+        // Apply offset if specified
+        labelLat += (style.labelLatOffset || 0);
+        labelLng += (style.labelLngOffset || 0);
+
+        // Create text label
+        const labelDiv = L.divIcon({
+          className: 'polygon-label',
+          html: `<div style="color: black; font-size: 12px; font-weight: bold; background: white; padding: 2px 4px; border-radius: 2px; border: 1px solid #ccc; white-space: nowrap;">${style.labelText}</div>`,
+          iconSize: [0, 0],
+          iconAnchor: [0, 0]
+        });
+
+        const labelMarker = L.marker([labelLat, labelLng], { icon: labelDiv });
+        this.mainFeatureGroup?.addLayer(labelMarker);
+      }
+
       return gj;
     }
 

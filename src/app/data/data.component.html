@@ -28,8 +28,8 @@
             <mat-tab label="CSV">
               <p>Choose the csv formatted data you would like to use.</p>
               <app-fileupload [fileextension]="'csv'" (fileadded)="addData($event)"></app-fileupload>
-              
-              
+
+
             </mat-tab>
             <mat-tab label="JSON">
               <app-jsonendpoint [endpointurl]="endpointurl" (dataChange)="addJSONData($event)"></app-jsonendpoint>
@@ -48,7 +48,7 @@
           <app-geocolumn [featureCollectionIndex]="featurecollectionlayerindex"
             [tableheaders]="d | csvtojson | tableheaders"
             (geocolumnChange)="onGeocolumnChange($event)"></app-geocolumn>
-          
+
           <!-- Add joined rows summary -->
           <div *ngIf="joinedRowsCount > 0" class="joined-summary">
             <p><strong>Joined {{ joinedRowsCount }} rows</strong></p>
@@ -61,7 +61,7 @@
             [tableheaders]="d | csvtojson | tableheaders" [featureCollectionIndex]="featurecollectionlayerindex">
           </app-stylerule>
         <div class="col">
-         
+
           <!-- {{featurecollectionlayerindex}}
           {{stylerules|json}} -->
         </div>

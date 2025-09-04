@@ -38,7 +38,7 @@ export class DataComponent implements OnInit {
   joinedRowsCount: number = 0;
 
   constructor(
-    private fcs: FeaturecollectionService, 
+    private fcs: FeaturecollectionService,
     private api: GeoDataEndpointClient,
     private mapState: MapStateService
   ) {}
@@ -51,8 +51,7 @@ export class DataComponent implements OnInit {
   }
 
   updateStyleRules(val: stylerule[]) {
-    this.featureCollectionLayers[this.featurecollectionlayerindex].stylerules = val;
-    this.updateData();
+    this.fcs.updateStyleRules(this.featurecollectionlayerindex, val);
   }
 
   updateData() {
@@ -88,7 +87,7 @@ export class DataComponent implements OnInit {
 
     const headers = csvData[0];
     const csvColumnIndex = headers.indexOf(layer.geocolumn.GEOColumn);
-    
+
     if (csvColumnIndex === -1) {
       this.joinedRowsCount = 0;
       return;
@@ -220,6 +219,7 @@ export class opacity extends baseStyle {
   constructor() {
     super();
     this.opacityvalue = 1;
+    this.dynamic = false;
     this.rulename = 'opacity';
   }
   opacityvalue: number;
@@ -239,6 +239,7 @@ export class text extends baseStyle {
   constructor() {
     super();
     this.textvalue = '';
+    this.dynamic = false;
     this.rulename = 'text';
     this.latoffset = 0;
     this.lngoffset = 0;

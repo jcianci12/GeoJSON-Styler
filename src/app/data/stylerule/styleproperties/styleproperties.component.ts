@@ -36,6 +36,10 @@ export class StylepropertiesComponent implements OnInit {
       if (typeof event.target?.value == 'number') {
         (this.ruletype as any)[property] = parseFloat(event.target.value);
       }
+      // Handle MatSliderChange events where value is on the event object
+      if (typeof event.value === 'number') {
+        (this.ruletype as any)[property] = event.value;
+      }
 
       console.log(this.ruletype);
       this.ruletypeChange.emit(this.ruletype);
@@ -64,5 +68,13 @@ export class StylepropertiesComponent implements OnInit {
     // .filter(
     //   (i) => i == 'latoffset' || i == 'lngoffset'
     // );
+  }
+  getNumberProperty(property: string): number {
+    if (this.ruletype.hasOwnProperty(property)) {
+      const v = (this.ruletype as any)[property];
+      const n = typeof v === 'number' ? v : parseFloat(v);
+      return isNaN(n) ? 1 : n;
+    }
+    return 1;
   }
 }

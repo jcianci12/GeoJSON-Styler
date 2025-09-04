@@ -94,6 +94,13 @@ export class FeaturecollectionService {
     }
   }
 
+  updateStyleRules(index: number, styleRules: stylerule[]) {
+    if (this.FeatureCollectionLayers && this.FeatureCollectionLayers[index]) {
+      this.FeatureCollectionLayers[index].stylerules = styleRules;
+      this.FeatureCollectionLayerObservable.next(this.FeatureCollectionLayers);
+    }
+  }
+
   //loop through all the feature collection layers and returns a geo json object with all the features and styling rules added.
   getGeoJsonForAllLayers(): FeatureCollection {
     if (!this.FeatureCollectionLayers || this.FeatureCollectionLayers.length === 0) {
@@ -194,16 +201,26 @@ export class FeaturecollectionService {
         const columnIndex = headers.length ? headers.indexOf(columnName) : -1;
         const csvValue = (isDynamic && matchedRow && columnIndex >= 0) ? matchedRow[columnIndex] : undefined;
 
+        console.log(`Processing rule: ${name}, dynamic: ${isDynamic}, column: ${columnName}, csvValue: ${csvValue}`);
+
         if (name === 'opacity') {
           const staticOpacity = (r.ruletype as any).opacityvalue;
           const parsed = csvValue != null ? parseFloat(csvValue) : undefined;
           const value = (isFinite(parsed as number) ? parsed : undefined) ?? staticOpacity;
-          if (value !== undefined) style.opacity = value;
+          if (value !== undefined) {
+            style.opacity = value;
+            style.fillOpacity = value; // Also set fillOpacity for consistency with polygon rendering
+            console.log(`Set opacity: ${value}`);
+          }
         }
         if (name === 'colour') {
           const staticColour = (r.ruletype as any).colour;
           const value = (csvValue && csvValue.length ? csvValue : undefined) ?? staticColour;
-          if (value !== undefined) style.color = value;
+          if (value !== undefined) {
+            style.color = value;
+            style.fillColor = value; // Also set fillColor for consistency with polygon rendering
+            console.log(`Set color: ${value}`);
+          }
         }
         if (name === 'text') {
           const t = r.ruletype as any;
@@ -213,6 +230,7 @@ export class FeaturecollectionService {
           if (t.latoffset !== undefined) style.labelLatOffset = t.latoffset;
           if (t.lngoffset !== undefined) style.labelLngOffset = t.lngoffset;
           if (t.cssstyle !== undefined) style.labelCss = t.cssstyle;
+          console.log(`Set text: ${value}, offset: ${t.latoffset},${t.lngoffset}`);
         }
       });
 
