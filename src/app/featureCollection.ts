@@ -41,7 +41,7 @@ export class FeatureCollectionLayer implements GeoJSON.FeatureCollection {
     this.geocolumn = geo;
     this.layerType = 'csv';
   }
-  
+
   active: boolean;
   type: 'FeatureCollection';
   features: Feature<Geometry, GeoJsonProperties>[];

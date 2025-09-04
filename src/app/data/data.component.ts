@@ -118,6 +118,17 @@ export class DataComponent implements OnInit {
     this.joinedRowsCount = matchedCount;
   }
 
+  onDataChange(newData: string) {
+    this.d = newData;
+    this.featureCollectionLayers[this.featurecollectionlayerindex].styledata = this.d;
+
+    // Clear CSV lookup cache when data is edited
+    this.fcs.clearCsvLookupCache();
+
+    this.updateData();
+
+  }
+
   addData(data: FileList) {
     let filereader = new FileReader();
     filereader.onload = (e) => {
@@ -129,9 +140,6 @@ export class DataComponent implements OnInit {
       this.fcs.clearCsvLookupCache();
 
       this.updateData();
-
-      // Aggressively pre-filter features to improve performance
-      this.fcs.preFilterLayerFeatures(this.featurecollectionlayerindex);
     };
     filereader.readAsText(data[0]);
   }
@@ -144,16 +152,12 @@ export class DataComponent implements OnInit {
 
     this.updateData();
 
-    // Aggressively pre-filter features to improve performance
-    this.fcs.preFilterLayerFeatures(this.featurecollectionlayerindex);
   }
 
   // Handle geocolumn changes
   onGeocolumnChange(geocolumn: GeoColumnMapping) {
     this.calculateJoinedRowsCount();
 
-    // Re-filter features when column mapping changes
-    this.fcs.preFilterLayerFeatures(this.featurecollectionlayerindex);
   }
 
   onLatLngColumnsSelected(event: Event) {

@@ -36,7 +36,7 @@
             </mat-tab>
 
           </mat-tab-group>
-          <app-datatable [d]="d"></app-datatable>
+          <app-datatable [d]="d" (dataChange)="onDataChange($event)"></app-datatable>
 
         </div>
       </div>

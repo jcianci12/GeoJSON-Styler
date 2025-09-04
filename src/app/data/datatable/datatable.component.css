@@ -1,0 +1,100 @@
+.edit-controls {
+  margin-bottom: 16px;
+  padding: 16px 0;
+}
+
+.edit-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.edit-buttons button {
+  min-width: 100px;
+}
+
+.edit-indicator {
+  color: #ff9800;
+  font-weight: 500;
+}
+
+.editable-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.editable-table td {
+  padding: 4px;
+  border: 1px solid #e0e0e0;
+  vertical-align: top;
+}
+
+.editable-cell {
+  min-width: 120px;
+}
+
+.cell-input {
+  width: 100%;
+}
+
+.cell-input .mat-mdc-form-field {
+  width: 100%;
+}
+
+.cell-input .mat-mdc-text-field-wrapper {
+  padding: 4px 8px;
+}
+
+.header-input {
+  font-weight: 500;
+}
+
+.header-row {
+  background-color: #f5f5f5;
+}
+
+.header-row .cell-input {
+  background-color: #f9f9f9;
+}
+
+.action-cell {
+  width: 60px;
+  text-align: center;
+  padding: 8px !important;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table td {
+  padding: 8px;
+  border: 1px solid #e0e0e0;
+  text-align: left;
+}
+
+.table .header-row {
+  background-color: #f5f5f5;
+  font-weight: 500;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .edit-buttons {
+    flex-direction: column;
+  }
+
+  .edit-buttons button {
+    width: 100%;
+  }
+
+  .editable-cell {
+    min-width: 100px;
+  }
+
+  .cell-input .mat-mdc-text-field-wrapper {
+    padding: 2px 4px;
+  }
+}
