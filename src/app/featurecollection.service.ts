@@ -141,6 +141,97 @@ export class FeaturecollectionService {
     }, 0);
   }
 
+  // Drawing functionality methods
+  addDrawnPolygon(feature: Feature) {
+    // Find or create a "Drawn Polygons" layer
+    let drawnLayerIndex = this.FeatureCollectionLayers?.findIndex(layer =>
+      layer.layerType === 'drawn' || layer.name === 'Drawn Polygons'
+    );
+
+    if (drawnLayerIndex === -1 || drawnLayerIndex === undefined) {
+      // Create new drawn layer
+      const drawnLayer = new FeatureCollectionLayer(
+        [],
+        {
+          terms: [],
+          triggerval: 0,
+        },
+        [],
+        { GEOColumn: "id", GEOJSON: "id" },
+        []
+      );
+      drawnLayer.layerType = 'drawn';
+      drawnLayer.name = 'Drawn Polygons';
+      drawnLayer.active = true;
+
+      if (this.FeatureCollectionLayers) {
+        this.FeatureCollectionLayers.push(drawnLayer);
+        drawnLayerIndex = this.FeatureCollectionLayers.length - 1;
+      }
+    }
+
+    // Add feature to the drawn layer
+    if (drawnLayerIndex !== undefined && this.FeatureCollectionLayers) {
+      this.FeatureCollectionLayers[drawnLayerIndex].features.push(feature);
+      this.FeatureCollectionLayerObservable.next(this.FeatureCollectionLayers);
+    }
+  }
+
+  updateDrawnPolygon(geoJsonFeature: any) {
+    if (!this.FeatureCollectionLayers) return;
+
+    const drawnLayerIndex = this.FeatureCollectionLayers.findIndex(layer =>
+      layer.layerType === 'drawn' || layer.name === 'Drawn Polygons'
+    );
+
+    if (drawnLayerIndex !== -1) {
+      const layer = this.FeatureCollectionLayers[drawnLayerIndex];
+            const featureIndex = layer.features.findIndex(f =>
+        f.properties?.['id'] === geoJsonFeature.properties?.['id']
+      );
+
+      if (featureIndex !== -1) {
+        layer.features[featureIndex] = geoJsonFeature;
+        this.FeatureCollectionLayerObservable.next(this.FeatureCollectionLayers);
+      }
+    }
+  }
+
+  removeDrawnPolygon(layer: any) {
+    if (!this.FeatureCollectionLayers) return;
+
+    const drawnLayerIndex = this.FeatureCollectionLayers.findIndex(l =>
+      l.layerType === 'drawn' || l.name === 'Drawn Polygons'
+    );
+
+    if (drawnLayerIndex !== -1) {
+      const drawnLayer = this.FeatureCollectionLayers[drawnLayerIndex];
+      const geoJsonFeature = layer.toGeoJSON();
+
+            const featureIndex = drawnLayer.features.findIndex(f =>
+        f.properties?.['id'] === geoJsonFeature.properties?.['id']
+      );
+
+      if (featureIndex !== -1) {
+        drawnLayer.features.splice(featureIndex, 1);
+        this.FeatureCollectionLayerObservable.next(this.FeatureCollectionLayers);
+      }
+    }
+  }
+
+  clearDrawnPolygons() {
+    if (!this.FeatureCollectionLayers) return;
+
+    const drawnLayerIndex = this.FeatureCollectionLayers.findIndex(layer =>
+      layer.layerType === 'drawn' || layer.name === 'Drawn Polygons'
+    );
+
+    if (drawnLayerIndex !== -1) {
+      this.FeatureCollectionLayers[drawnLayerIndex].features = [];
+      this.FeatureCollectionLayerObservable.next(this.FeatureCollectionLayers);
+    }
+  }
+
   //returns the geojson for the feature collection layer. uses the styling rules to add styling to the geojson.
   getGeoJsonForLayer(layerIndex: number): FeatureCollection {
     if (!this.FeatureCollectionLayers || this.FeatureCollectionLayers.length === 0) {

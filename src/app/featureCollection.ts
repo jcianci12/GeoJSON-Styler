@@ -12,7 +12,7 @@ import * as geojson from 'geojson';
 
 //the purpose of this class is so we dont need to work with the feature collection and the search terms in parrallel, we can set both here
 
-export type LayerType = 'geojson' | 'csv';
+export type LayerType = 'geojson' | 'csv' | 'drawn';
 
 export interface geocolumn {
   GEOColumn: string;
@@ -28,6 +28,7 @@ export interface FeatureCollectionLayer {
   terms: terms;
   geocolumn: GeoColumnMapping;
   layerType: LayerType;
+  name?: string;
 }
 
 export class FeatureCollectionLayer implements GeoJSON.FeatureCollection {
@@ -40,8 +41,9 @@ export class FeatureCollectionLayer implements GeoJSON.FeatureCollection {
     this.styledata = styledata;
     this.geocolumn = geo;
     this.layerType = 'csv';
+    this.name = '';
   }
-  
+
   active: boolean;
   type: 'FeatureCollection';
   features: Feature<Geometry, GeoJsonProperties>[];
@@ -51,4 +53,5 @@ export class FeatureCollectionLayer implements GeoJSON.FeatureCollection {
   styledata: string[][];
   geocolumn: GeoColumnMapping;
   layerType: LayerType;
+  name?: string;
 }

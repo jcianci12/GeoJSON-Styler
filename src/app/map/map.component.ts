@@ -4,6 +4,8 @@ import * as geojson from 'geojson';
 import * as L from 'leaflet';
 import { Bounds, FeatureGroup, geoJSON, latLng, Layer, LayerGroup as LeafletLayerGroup, Map, MapOptions, tileLayer, ZoomAnimEvent } from 'leaflet';
 import 'leaflet.fullscreen';
+import 'leaflet-draw';
+import * as LeafletDraw from 'leaflet-draw';
 import { CSVtoJSONPipe } from '../csvtojsonpipe';
 import { Subscription } from 'rxjs';
 
@@ -92,6 +94,15 @@ export class MapComponent implements OnInit, OnDestroy {
   public shouldAutoRender = true;
   public pendingFeatureCount = 0;
   public isRendering = false;
+
+  // Drawing properties
+  private drawControl: L.Control.Draw | undefined;
+  private drawnItems: L.FeatureGroup | undefined;
+  private editControl: L.Control.Draw | undefined;
+  public isDrawingMode = false;
+  public isEditMode = false;
+  public selectedPolygon: L.Polygon | undefined;
+  private originalPolygonData: any = null;
 
   constructor(
     private snackbar: MatSnackBar,
@@ -251,6 +262,9 @@ export class MapComponent implements OnInit, OnDestroy {
     this.mapState.setMap(map);
     this.zoom = map.getZoom();
     this.zoom$.emit(this.zoom);
+
+    // Initialize drawing functionality
+    this.initializeDrawing();
 
     // Use setTimeout to defer these updates to the next change detection cycle
     setTimeout(() => {
@@ -652,5 +666,269 @@ export class MapComponent implements OnInit, OnDestroy {
     this.shouldAutoRender = !this.shouldAutoRender;
     const status = this.shouldAutoRender ? 'enabled' : 'disabled';
     this.snackbar.open(`Auto-render ${status}`, 'OK', { duration: 2000 });
+  }
+
+  // Initialize drawing functionality
+  private initializeDrawing() {
+    if (!this.map) return;
+
+    // Create a feature group to store editable layers
+    this.drawnItems = new L.FeatureGroup();
+    this.map.addLayer(this.drawnItems);
+
+    // Initialize draw control
+    this.drawControl = new L.Control.Draw({
+      position: 'topleft',
+      draw: {
+        marker: false,
+        circle: false,
+        circlemarker: false,
+        rectangle: {
+          shapeOptions: {
+            color: '#3388ff',
+            weight: 2,
+            opacity: 0.8,
+            fillOpacity: 0.2
+          }
+        },
+        polygon: {
+          allowIntersection: false,
+          drawError: {
+            color: '#e1e100',
+            message: '<strong>Error:</strong> Shape edges cannot cross!'
+          },
+          shapeOptions: {
+            color: '#3388ff',
+            weight: 2,
+            opacity: 0.8,
+            fillOpacity: 0.2
+          }
+        },
+        polyline: {
+          shapeOptions: {
+            color: '#3388ff',
+            weight: 3,
+            opacity: 0.8
+          }
+        }
+      },
+      edit: {
+        featureGroup: this.drawnItems,
+        remove: true
+      }
+    });
+
+    // Add draw control to map
+    this.map.addControl(this.drawControl);
+
+    // Bind draw events
+    this.map.on('draw:created', (e: any) => this.onDrawCreated(e));
+    this.map.on('draw:edited', (e: any) => this.onDrawEdited(e));
+    this.map.on('draw:deleted', (e: any) => this.onDrawDeleted(e));
+
+    // Bind click events for polygon selection
+    this.map.on('click', (e: any) => this.onMapClick(e));
+  }
+
+  // Handle draw creation events
+  private onDrawCreated(e: any) {
+    const layer = e.layer;
+    const type = e.layerType;
+
+    if (type === 'polygon') {
+      // Add the drawn polygon to the feature group
+      this.drawnItems?.addLayer(layer);
+
+      // Convert to GeoJSON and add to feature collection service
+      const geoJsonFeature = layer.toGeoJSON();
+      this.addDrawnPolygonToService(geoJsonFeature);
+
+      this.snackbar.open('Polygon drawn successfully!', 'OK', { duration: 2000 });
+    }
+  }
+
+  // Handle draw edit events
+  private onDrawEdited(e: any) {
+    const layers = e.layers;
+    let editedCount = 0;
+
+    layers.eachLayer((layer: any) => {
+      if (layer instanceof L.Polygon) {
+        const geoJsonFeature = layer.toGeoJSON();
+        this.updatePolygonInService(geoJsonFeature);
+        editedCount++;
+      }
+    });
+
+    if (editedCount > 0) {
+      this.snackbar.open(`${editedCount} polygon(s) updated!`, 'OK', { duration: 2000 });
+    }
+  }
+
+  // Handle draw deletion events
+  private onDrawDeleted(e: any) {
+    const layers = e.layers;
+    let deletedCount = 0;
+
+    layers.eachLayer((layer: any) => {
+      if (layer instanceof L.Polygon) {
+        this.removePolygonFromService(layer);
+        deletedCount++;
+      }
+    });
+
+    if (deletedCount > 0) {
+      this.snackbar.open(`${deletedCount} polygon(s) deleted!`, 'OK', { duration: 2000 });
+    }
+  }
+
+  // Handle map clicks for polygon selection
+  private onMapClick(e: any) {
+    if (this.isEditMode && this.selectedPolygon) {
+      // Deselect current polygon
+      this.deselectPolygon();
+    }
+  }
+
+  // Add drawn polygon to feature collection service
+  private addDrawnPolygonToService(geoJsonFeature: any) {
+    const feature: geojson.Feature = {
+      type: 'Feature',
+      geometry: geoJsonFeature.geometry,
+      properties: {
+        id: `drawn_${Date.now()}`,
+        name: `Drawn Polygon ${Date.now()}`,
+        style: {
+          color: '#3388ff',
+          fillColor: '#3388ff',
+          fillOpacity: 0.2,
+          opacity: 0.8,
+          weight: 2
+        }
+      }
+    };
+
+    // Add to a new layer in the feature collection service
+    this.featurecollectionService.addDrawnPolygon(feature);
+  }
+
+  // Update polygon in feature collection service
+  private updatePolygonInService(geoJsonFeature: any) {
+    // Find and update the polygon in the service
+    this.featurecollectionService.updateDrawnPolygon(geoJsonFeature);
+  }
+
+  // Remove polygon from feature collection service
+  private removePolygonFromService(layer: L.Polygon) {
+    // Find and remove the polygon from the service
+    this.featurecollectionService.removeDrawnPolygon(layer);
+  }
+
+  // Select a polygon for editing
+  public selectPolygonForEditing(polygon: L.Polygon) {
+    if (this.selectedPolygon) {
+      this.deselectPolygon();
+    }
+
+    this.selectedPolygon = polygon;
+    this.originalPolygonData = polygon.toGeoJSON();
+
+    // Highlight the selected polygon
+    polygon.setStyle({
+      color: '#ff4444',
+      weight: 3,
+      opacity: 1,
+      fillOpacity: 0.3
+    });
+
+    this.isEditMode = true;
+    this.snackbar.open('Polygon selected for editing. Use the edit tools to modify.', 'OK', { duration: 3000 });
+  }
+
+  // Deselect current polygon
+  private deselectPolygon() {
+    if (this.selectedPolygon) {
+      // Restore original style
+      this.selectedPolygon.setStyle({
+        color: '#3388ff',
+        weight: 2,
+        opacity: 0.8,
+        fillOpacity: 0.2
+      });
+      this.selectedPolygon = undefined;
+      this.originalPolygonData = null;
+    }
+    this.isEditMode = false;
+  }
+
+  // Duplicate selected polygon
+  public duplicateSelectedPolygon() {
+    if (!this.selectedPolygon) {
+      this.snackbar.open('No polygon selected for duplication', 'OK', { duration: 2000 });
+      return;
+    }
+
+    const originalGeoJson = this.selectedPolygon.toGeoJSON();
+    const duplicatedFeature: geojson.Feature = {
+      type: 'Feature',
+      geometry: originalGeoJson.geometry,
+      properties: {
+        ...originalGeoJson.properties,
+        id: `duplicated_${Date.now()}`,
+        name: `${originalGeoJson.properties?.name || 'Polygon'} (Copy)`,
+        style: {
+          color: '#ff8800',
+          fillColor: '#ff8800',
+          fillOpacity: 0.2,
+          opacity: 0.8,
+          weight: 2
+        }
+      }
+    };
+
+    // Add duplicated polygon to service
+    this.featurecollectionService.addDrawnPolygon(duplicatedFeature);
+
+    // Create visual duplicate on map
+    const duplicatedLayer = L.geoJSON(duplicatedFeature as any, {
+      style: () => ({
+        color: '#ff8800',
+        fillColor: '#ff8800',
+        fillOpacity: 0.2,
+        opacity: 0.8,
+        weight: 2
+      })
+    });
+
+    this.drawnItems?.addLayer(duplicatedLayer);
+    this.snackbar.open('Polygon duplicated successfully!', 'OK', { duration: 2000 });
+  }
+
+  // Toggle drawing mode
+  public toggleDrawingMode() {
+    this.isDrawingMode = !this.isDrawingMode;
+
+    if (this.isDrawingMode) {
+      // Enable drawing by showing the draw control
+      if (this.drawControl) {
+        this.map?.addControl(this.drawControl);
+      }
+      this.snackbar.open('Drawing mode enabled. Click and drag to draw polygons.', 'OK', { duration: 3000 });
+    } else {
+      // Disable drawing by removing the draw control
+      if (this.drawControl) {
+        this.map?.removeControl(this.drawControl);
+      }
+      this.snackbar.open('Drawing mode disabled.', 'OK', { duration: 2000 });
+    }
+  }
+
+  // Clear all drawn items
+  public clearDrawnItems() {
+    if (this.drawnItems) {
+      this.drawnItems.clearLayers();
+      this.featurecollectionService.clearDrawnPolygons();
+      this.snackbar.open('All drawn items cleared!', 'OK', { duration: 2000 });
+    }
   }
 }

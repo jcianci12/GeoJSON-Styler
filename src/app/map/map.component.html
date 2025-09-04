@@ -1,6 +1,34 @@
 <div class="map-container">
   <div id="map"></div>
 
+  <!-- Drawing Control Panel -->
+  <div class="drawing-control-panel">
+    <div class="drawing-info">
+      <span *ngIf="isDrawingMode">Drawing mode active</span>
+      <span *ngIf="isEditMode">Edit mode active</span>
+      <span *ngIf="!isDrawingMode && !isEditMode">Drawing tools available</span>
+    </div>
+    <div class="drawing-buttons">
+      <button
+        class="draw-btn"
+        (click)="toggleDrawingMode()"
+        [class.active]="isDrawingMode">
+        {{isDrawingMode ? 'Stop Drawing' : 'Start Drawing'}}
+      </button>
+      <button
+        class="duplicate-btn"
+        (click)="duplicateSelectedPolygon()"
+        [disabled]="!selectedPolygon">
+        Duplicate Selected
+      </button>
+      <button
+        class="clear-btn"
+        (click)="clearDrawnItems()">
+        Clear All Drawn
+      </button>
+    </div>
+  </div>
+
   <!-- Render Control Panel -->
   <div class="render-control-panel">
     <div class="render-info">
