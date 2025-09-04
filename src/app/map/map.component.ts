@@ -93,6 +93,10 @@ export class MapComponent implements OnInit, OnDestroy {
   public pendingFeatureCount = 0;
   public isRendering = false;
 
+  // Debounce properties
+  private renderDebounceTimer: any = null;
+  private readonly RENDER_DEBOUNCE_DELAY = 300; // 300ms debounce delay
+
   constructor(
     private snackbar: MatSnackBar,
     private mapState: MapStateService,
@@ -116,10 +120,8 @@ export class MapComponent implements OnInit, OnDestroy {
     // Subscribe to feature collection layers to render styled data from FeaturecollectionService
     this.subscriptions.push(
       this.featurecollectionService.FeatureCollectionLayerObservable.subscribe(layers => {
-        // Use setTimeout to defer the render to the next change detection cycle
-        setTimeout(() => {
-          this.renderFeaturecollectionLayers();
-        }, 0);
+        // Debounce the render to prevent excessive re-rendering
+        this.debouncedRenderFeaturecollectionLayers();
       })
     );
 
@@ -240,6 +242,12 @@ export class MapComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
+    // Clear debounce timer
+    if (this.renderDebounceTimer) {
+      clearTimeout(this.renderDebounceTimer);
+      this.renderDebounceTimer = null;
+    }
+
     this.map?.clearAllEventListeners;
     this.map?.remove();
     this.subscriptions.forEach(sub => sub.unsubscribe());
@@ -358,6 +366,19 @@ export class MapComponent implements OnInit, OnDestroy {
   }
 
   // Render layers using the FeaturecollectionService computed styles
+  private debouncedRenderFeaturecollectionLayers() {
+    // Clear any existing timer
+    if (this.renderDebounceTimer) {
+      clearTimeout(this.renderDebounceTimer);
+    }
+
+    // Set new timer
+    this.renderDebounceTimer = setTimeout(() => {
+      this.renderFeaturecollectionLayers();
+      this.renderDebounceTimer = null;
+    }, this.RENDER_DEBOUNCE_DELAY);
+  }
+
   private renderFeaturecollectionLayers() {
     if (!this.map) return;
 
@@ -627,7 +648,7 @@ export class MapComponent implements OnInit, OnDestroy {
         // Create text label
         const labelDiv = L.divIcon({
           className: 'polygon-label',
-          html: `<div style="color: black; font-size: 12px; font-weight: bold; background: white; padding: 2px 4px; border-radius: 2px; border: 1px solid #ccc; white-space: nowrap;">${style.labelText}</div>`,
+          html: `<div style="color: black; font-size: 12px; font-weight: bold; white-space: nowrap;">${style.labelText}</div>`,
           iconSize: [0, 0],
           iconAnchor: [0, 0]
         });

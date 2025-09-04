@@ -181,62 +181,73 @@ export class FeaturecollectionService {
     const geojsonJoinProperty = layer.geocolumn?.GEOJSON;
     const csvJoinIndex = headers.length ? headers.indexOf(csvJoinColumn) : -1;
 
-    const styledFeatures = layer.features.map((feature) => {
-      feature.properties = feature.properties || {};
-      const style: any = (feature.properties as any).style || {};
+    const styledFeatures = layer.features
+      .map((feature) => {
+        feature.properties = feature.properties || {};
+        const style: any = (feature.properties as any).style || {};
 
-      // Find the matching style row for this feature if possible
-      let matchedRow: string[] | undefined = undefined;
-      const featureKey = geojsonJoinProperty ? (feature.properties as any)[geojsonJoinProperty] : undefined;
-      if (csvJoinIndex >= 0 && featureKey !== undefined && rows.length) {
-        matchedRow = rows.find(r => r[csvJoinIndex] != null && r[csvJoinIndex].toString() === featureKey.toString());
-      }
+        // Find the matching style row for this feature if possible
+        let matchedRow: string[] | undefined = undefined;
+        const featureKey = geojsonJoinProperty ? (feature.properties as any)[geojsonJoinProperty] : undefined;
+        if (csvJoinIndex >= 0 && featureKey !== undefined && rows.length) {
+          matchedRow = rows.find(r => r[csvJoinIndex] != null && r[csvJoinIndex].toString().toLowerCase() === featureKey.toString().toLowerCase());
+        }
 
-      rules.forEach((r) => {
-        const name = r.ruletype?.rulename;
-        const isDynamic = (r.ruletype as any)?.dynamic === true;
+        // Check if we have any dynamic rules that require CSV data
+        const hasDynamicRules = rules.some(r => (r.ruletype as any)?.dynamic === true);
 
-        // Determine the value source: CSV dynamic or static from rule config
-        const columnName = r.column;
-        const columnIndex = headers.length ? headers.indexOf(columnName) : -1;
-        const csvValue = (isDynamic && matchedRow && columnIndex >= 0) ? matchedRow[columnIndex] : undefined;
+        // If we have dynamic rules but no matching row, skip this feature
+        if (hasDynamicRules && !matchedRow) {
+          console.log(`Skipping feature with key ${featureKey} - no matching style data found`,matchedRow);
+          return null;
+        }
 
-        console.log(`Processing rule: ${name}, dynamic: ${isDynamic}, column: ${columnName}, csvValue: ${csvValue}`);
+        rules.forEach((r) => {
+          const name = r.ruletype?.rulename;
+          const isDynamic = (r.ruletype as any)?.dynamic === true;
 
-        if (name === 'opacity') {
-          const staticOpacity = (r.ruletype as any).opacityvalue;
-          const parsed = csvValue != null ? parseFloat(csvValue) : undefined;
-          const value = (isFinite(parsed as number) ? parsed : undefined) ?? staticOpacity;
-          if (value !== undefined) {
-            style.opacity = value;
-            style.fillOpacity = value; // Also set fillOpacity for consistency with polygon rendering
-            console.log(`Set opacity: ${value}`);
+          // Determine the value source: CSV dynamic or static from rule config
+          const columnName = r.column;
+          const columnIndex = headers.length ? headers.indexOf(columnName) : -1;
+          const csvValue = (isDynamic && matchedRow && columnIndex >= 0) ? matchedRow[columnIndex] : undefined;
+
+          console.log(`Processing rule: ${name}, dynamic: ${isDynamic}, column: ${columnName}, csvValue: ${csvValue}`);
+
+          if (name === 'opacity') {
+            const staticOpacity = (r.ruletype as any).opacityvalue;
+            const parsed = csvValue != null ? parseFloat(csvValue) : undefined;
+            const value = (isFinite(parsed as number) ? parsed : undefined) ?? staticOpacity;
+            if (value !== undefined) {
+              style.opacity = value;
+              style.fillOpacity = value; // Also set fillOpacity for consistency with polygon rendering
+              console.log(`Set opacity: ${value}`);
+            }
           }
-        }
-        if (name === 'colour') {
-          const staticColour = (r.ruletype as any).colour;
-          const value = (csvValue && csvValue.length ? csvValue : undefined) ?? staticColour;
-          if (value !== undefined) {
-            style.color = value;
-            style.fillColor = value; // Also set fillColor for consistency with polygon rendering
-            console.log(`Set color: ${value}`);
+          if (name === 'colour') {
+            const staticColour = (r.ruletype as any).colour;
+            const value = (csvValue && csvValue.length ? csvValue : undefined) ?? staticColour;
+            if (value !== undefined) {
+              style.color = value;
+              style.fillColor = value; // Also set fillColor for consistency with polygon rendering
+              console.log(`Set color: ${value}`);
+            }
           }
-        }
-        if (name === 'text') {
-          const t = r.ruletype as any;
-          const staticText = t.textvalue;
-          const value = (csvValue && csvValue.length ? csvValue : undefined) ?? staticText;
-          if (value !== undefined) style.labelText = value;
-          if (t.latoffset !== undefined) style.labelLatOffset = t.latoffset;
-          if (t.lngoffset !== undefined) style.labelLngOffset = t.lngoffset;
-          if (t.cssstyle !== undefined) style.labelCss = t.cssstyle;
-          console.log(`Set text: ${value}, offset: ${t.latoffset},${t.lngoffset}`);
-        }
-      });
+          if (name === 'text') {
+            const t = r.ruletype as any;
+            const staticText = t.textvalue;
+            const value = (csvValue && csvValue.length ? csvValue : undefined) ?? staticText;
+            if (value !== undefined) style.labelText = value;
+            if (t.latoffset !== undefined) style.labelLatOffset = t.latoffset;
+            if (t.lngoffset !== undefined) style.labelLngOffset = t.lngoffset;
+            if (t.cssstyle !== undefined) style.labelCss = t.cssstyle;
+            console.log(`Set text: ${value}, offset: ${t.latoffset},${t.lngoffset}`);
+          }
+        });
 
-      (feature.properties as any).style = style;
-      return feature;
-    });
+        (feature.properties as any).style = style;
+        return feature;
+      })
+      .filter((feature): feature is any => feature !== null); // Remove null features
 
     return {
       type: 'FeatureCollection',
