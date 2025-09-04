@@ -1,5 +1,31 @@
 <div class="map-container">
   <div id="map"></div>
+
+  <!-- Render Control Panel -->
+  <div class="render-control-panel">
+    <div class="render-info">
+      <span *ngIf="pendingFeatureCount > 0">{{pendingFeatureCount}} features ready to render</span>
+      <span *ngIf="!shouldAutoRender && pendingFeatureCount === 0">Auto-render disabled</span>
+      <span *ngIf="shouldAutoRender && pendingFeatureCount === 0">
+        Auto-render enabled ({{featurecollectionService.getActiveFeatureCount()}} active / {{featurecollectionService.getTotalFeatureCount()}} total)
+      </span>
+    </div>
+    <div class="render-buttons">
+      <button
+        class="render-btn"
+        (click)="startManualRender()"
+        [disabled]="isRendering"
+        *ngIf="pendingFeatureCount > 0">
+        {{isRendering ? 'Rendering...' : 'Render Features'}}
+      </button>
+      <button
+        class="toggle-auto-btn"
+        (click)="toggleAutoRender()">
+        {{shouldAutoRender ? 'Disable Auto-Render' : 'Enable Auto-Render'}}
+      </button>
+    </div>
+  </div>
+
   <div class="map-info">
     <div class="feature-count">
       Features showing: {{currentFeatureCollection.features.length}}
@@ -10,4 +36,3 @@
   </div>
 </div>
 <app-mapdata [map]="map"></app-mapdata>
-<!-- {{tempmap|json}} -->

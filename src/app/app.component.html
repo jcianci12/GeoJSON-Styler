@@ -1,6 +1,6 @@
 <p>
   <mat-toolbar>
-    
+
     <span>
       <h1>GeoJSON Styler</h1>
     </span>
@@ -12,7 +12,7 @@
     </mat-menu>
     <button mat-button color="primary" (click)="addLayer()">Add layer</button>
 
-    
+
   </mat-toolbar>
 </p>
 
@@ -24,11 +24,11 @@
     </div>
     <div class="row">
       <div class="col-6">
-        
+
         <mat-accordion>
           <mat-expansion-panel [expanded]="expanded | async">
             <mat-expansion-panel-header>
-              
+
               <mat-panel-description> </mat-panel-description>
             </mat-expansion-panel-header>
 
@@ -65,7 +65,7 @@
                 <div class="row">
                   <div class="col">
                     <ng-container [ngSwitch]="featureCollection.layerType">
-                      <app-data *ngSwitchCase="'geojson'" 
+                      <app-data *ngSwitchCase="'geojson'"
                         [featurecollectionlayerindex]="i">
                       </app-data>
                       <div *ngSwitchCase="'csv'">
@@ -82,7 +82,7 @@
               </mat-expansion-panel>
 
               <!-- Processed GeoJSON Output for this layer -->
-              <mat-expansion-panel [expanded]="false">
+              <!-- <mat-expansion-panel [expanded]="false">
                 <mat-expansion-panel-header>
                   <mat-panel-title> Processed GeoJSON (Layer {{i}}) </mat-panel-title>
                   <mat-panel-description> Click to view styled GeoJSON </mat-panel-description>
@@ -90,7 +90,7 @@
                 <div style="max-height: 300px; overflow-y: auto; background-color: #f5f5f5; padding: 10px; border-radius: 4px;">
                   <pre style="margin: 0; font-size: 12px;">{{getLayerGeoJson(i)|json}}</pre>
                 </div>
-              </mat-expansion-panel>
+              </mat-expansion-panel> -->
 
 
 
@@ -98,7 +98,7 @@
           </mat-expansion-panel>
 
           <!-- Combined GeoJSON Output -->
-          <mat-expansion-panel [expanded]="false">
+          <!-- <mat-expansion-panel [expanded]="false">
             <mat-expansion-panel-header>
               <mat-panel-title> Combined GeoJSON Output </mat-panel-title>
               <mat-panel-description> All active layers with styling applied </mat-panel-description>
@@ -106,7 +106,7 @@
             <div style="max-height: 400px; overflow-y: auto; background-color: #f5f5f5; padding: 10px; border-radius: 4px;">
               <pre style="margin: 0; font-size: 12px;">{{processedGeoJson|json}}</pre>
             </div>
-          </mat-expansion-panel>
+          </mat-expansion-panel> -->
         </mat-accordion>
 
         <!-- {{term|json}} -->

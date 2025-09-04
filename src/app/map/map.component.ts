@@ -37,7 +37,7 @@ class MapPoint extends L.Marker {
 export class MapComponent implements OnInit, OnDestroy {
   @Output() map$: EventEmitter<Map> = new EventEmitter();
   @Output() zoom$: EventEmitter<number> = new EventEmitter();
-  
+
   bounds: Bounds = new Bounds();
   tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     opacity: 0.7,
@@ -69,10 +69,34 @@ export class MapComponent implements OnInit, OnDestroy {
   private tempmap: MapPoint[] = [];
   private _featureCollection: FeatureCollectionLayer[] = [];
 
+  // Progressive loading properties
+  private readonly BATCH_SIZE = 25; // Reduced from 100 to 25 for better performance
+  private readonly LOAD_DELAY = 50; // Reduced delay for faster loading
+  private loadingQueue: geojson.Feature[] = [];
+  private isLoading = false;
+  private currentBatchIndex = 0;
+  private loadedFeatures: L.Layer[] = [];
+  private mainFeatureGroup: L.FeatureGroup | undefined;
+
+  // DEBUG: Feature limit to prevent browser freezing
+  private readonly MAX_FEATURES_TO_RENDER = 100;
+
+  // Icon cache to avoid recreating identical icons
+  private iconCacheMap: {[key: string]: L.DivIcon} = {};
+
+  // Performance monitoring
+  private batchCount = 0;
+  private totalLoadTime = 0;
+
+  // Render control properties
+  public shouldAutoRender = true;
+  public pendingFeatureCount = 0;
+  public isRendering = false;
+
   constructor(
     private snackbar: MatSnackBar,
     private mapState: MapStateService,
-    private featurecollectionService: FeaturecollectionService,
+    public featurecollectionService: FeaturecollectionService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -107,7 +131,7 @@ export class MapComponent implements OnInit, OnDestroy {
 
     // Create a new feature group
     const featureGroup = new FeatureGroup();
-    
+
     layers.forEach(layer => {
       if (!layer.visible) return;
 
@@ -119,14 +143,14 @@ export class MapComponent implements OnInit, OnDestroy {
               feature.geometry.coordinates[1],
               feature.geometry.coordinates[0]
             ]);
-            
+
             if (feature.properties) {
               const popupContent = Object.entries(feature.properties)
                 .map(([key, value]) => `${key}: ${value}`)
                 .join('<br>');
               marker.bindPopup(popupContent);
             }
-            
+
             featureGroup.addLayer(marker);
           }
         });
@@ -153,7 +177,7 @@ export class MapComponent implements OnInit, OnDestroy {
 
     // Update feature count
     const totalFeatures = layers.reduce((sum, layer) => sum + layer.features.length, 0);
-    
+
     // Use setTimeout to defer the update to the next change detection cycle
     setTimeout(() => {
       this.currentFeatureCollection = {
@@ -227,14 +251,14 @@ export class MapComponent implements OnInit, OnDestroy {
     this.mapState.setMap(map);
     this.zoom = map.getZoom();
     this.zoom$.emit(this.zoom);
-    
+
     // Use setTimeout to defer these updates to the next change detection cycle
     setTimeout(() => {
       this.updateFeatureCollection();
       // Initial render from FeaturecollectionService (if any layers exist already)
       this.renderFeaturecollectionLayers();
     }, 0);
-    
+
     setTimeout(() => {
       this.loadBounds();
     }, 1000);
@@ -274,7 +298,7 @@ export class MapComponent implements OnInit, OnDestroy {
 
   updateFeatureCollection(featureCollection?: FeatureCollectionLayer[] | null) {
     if (!featureCollection) return;
-    
+
     // Use setTimeout to defer the update to the next change detection cycle
     setTimeout(() => {
       this.currentFeatureCollection = {
@@ -299,7 +323,7 @@ export class MapComponent implements OnInit, OnDestroy {
       }
     });
   }
-  
+
   latLngToXY(lat:number, lng:number) {
     var R = 6378137;
     var x = R * lng * Math.PI / 180;
@@ -337,81 +361,61 @@ export class MapComponent implements OnInit, OnDestroy {
     if (!this.map) return;
 
     const fc = this.featurecollectionService.getGeoJsonForAllLayers();
-    
+    const activeFeatureCount = fc.features.length;
+    const totalFeatureCount = this.featurecollectionService.getTotalFeatureCount();
+
+    // DEBUG: Limit to first 100 features to prevent browser freezing
+    const maxFeaturesToRender = this.MAX_FEATURES_TO_RENDER;
+    const featuresToRender = fc.features.slice(0, maxFeaturesToRender);
+    const limitedFeatureCount = featuresToRender.length;
+
+    console.log(`[DEBUG] MapComponent: Manual render - Total features available: ${fc.features.length}, limiting to: ${limitedFeatureCount}`);
+
+    this.isRendering = true;
+
     // Use setTimeout to defer the update to the next change detection cycle
     setTimeout(() => {
-      this.currentFeatureCollection = fc as any;
+      this.currentFeatureCollection = {
+        type: 'FeatureCollection',
+        features: featuresToRender
+      } as any;
       this.cdr.detectChanges();
     }, 0);
 
-    const featureGroup = new FeatureGroup();
-
-    fc.features.forEach(feature => {
-      const geometry = feature.geometry;
-      const props: any = feature.properties || {};
-      const style: any = props.style || {};
-
-      if (geometry.type === 'Point' && Array.isArray((geometry as any).coordinates)) {
-        const coords = (geometry as geojson.Point).coordinates;
-        const lat = coords[1];
-        const lng = coords[0];
-
-        const icon = this.geticon(
-          style.color || style.fillColor || '#3388ff',
-          style.opacity != null ? style.opacity : 1,
-          style.labelText != null ? String(style.labelText) : ''
-        );
-        const marker = L.marker([lat, lng], { icon });
-
-        // Optional popup from properties
-        if (feature.properties) {
-          const popupContent = Object.entries(feature.properties)
-            .filter(([k]) => k !== 'style')
-            .map(([key, value]) => `${key}: ${value}`)
-            .join('<br>');
-          if (popupContent) marker.bindPopup(popupContent);
-        }
-
-        featureGroup.addLayer(marker);
-      } else if (geometry.type === 'Polygon' || geometry.type === 'MultiPolygon' || geometry.type === 'LineString' || geometry.type === 'MultiLineString') {
-        const gj = L.geoJSON(feature as any, {
-          style: () => ({
-            color: style.color || '#3388ff',
-            fillColor: style.fillColor || style.color || '#3388ff',
-            fillOpacity: style.fillOpacity != null ? style.fillOpacity : (style.opacity != null ? style.opacity : 0.2),
-            opacity: style.opacity != null ? style.opacity : 1,
-            weight: style.weight != null ? style.weight : 2
-          })
-        });
-        featureGroup.addLayer(gj);
-      }
-    });
-
-    // Replace previous group if present
-    const existingFeatureGroup = this.mapState.featureGroup;
-    if (existingFeatureGroup) {
-      this.map.removeLayer(existingFeatureGroup);
+    // Check if we should auto-render or require manual render
+    // Use total feature count to determine if manual render is needed
+    if (totalFeatureCount > 100 && !this.shouldAutoRender) {
+      this.pendingFeatureCount = totalFeatureCount;
+      this.snackbar.open(`${totalFeatureCount} features ready to render. Click "Render Features" to start.`, 'OK', { duration: 4000 });
+      return;
     }
-    this.map.addLayer(featureGroup);
-    this.mapState.setFeatureGroup(featureGroup);
 
-    this.fitBounds();
+    // Only render if there are active features
+    if (limitedFeatureCount > 0) {
+      // Clear existing features and start progressive loading
+      this.clearExistingFeatures();
+      this.startProgressiveLoading(featuresToRender);
 
-    this.snackbar.open(`Rendered ${fc.features.length} features`, 'OK', { duration: 3000 });
+      if (activeFeatureCount > maxFeaturesToRender) {
+        this.snackbar.open(`DEBUG: Rendering first ${limitedFeatureCount} of ${activeFeatureCount} features to prevent freezing`, 'OK', { duration: 4000 });
+      } else {
+        this.snackbar.open(`Starting progressive load of ${limitedFeatureCount} features`, 'OK', { duration: 2000 });
+      }
+    }
   }
 
   handlePolygon(stylerules: stylerule[], feature: geojson.Feature<geojson.Geometry, geojson.GeoJsonProperties>, stylerow: string[], i: number, _fc: FeatureCollectionLayer): L.GeoJSON<any> {
     if (!this._featureCollection[i]?.styledata) {
       return L.geoJSON(feature);
     }
-    
+
     let styledata = new CSVtoJSONPipe().csvJSON(this._featureCollection[i].styledata as any);
     let styledatacolumnindex = styledata[0].indexOf(stylerules[0].column);
     let value = stylerow[styledatacolumnindex];
     let geo = L.geoJSON(feature);
     let opacity = 1;
     let colour = '';
-    
+
     stylerules.forEach((s) => {
       switch (s.ruletype.rulename) {
         case 'opacity': {
@@ -428,7 +432,7 @@ export class MapComponent implements OnInit, OnDestroy {
         }
       }
     });
-    
+
     geo.setStyle({
       fillOpacity: opacity,
       fillColor: colour,
@@ -439,5 +443,214 @@ export class MapComponent implements OnInit, OnDestroy {
 
   private initializeMap() {
     // ... existing map initialization code ...
+  }
+
+  // Clear existing features from the map
+  private clearExistingFeatures() {
+    if (this.mainFeatureGroup) {
+      this.map?.removeLayer(this.mainFeatureGroup);
+    }
+
+    this.loadedFeatures = [];
+    this.currentBatchIndex = 0;
+    this.isLoading = false;
+
+    // Create new feature group
+    this.mainFeatureGroup = new FeatureGroup();
+    this.map?.addLayer(this.mainFeatureGroup);
+    this.mapState.setFeatureGroup(this.mainFeatureGroup);
+
+    // Clear icon cache periodically to prevent memory leaks
+    if (Object.keys(this.iconCacheMap).length > 1000) {
+      this.iconCacheMap = {};
+      console.log('[DEBUG] MapComponent: Cleared icon cache to prevent memory leaks');
+    }
+  }
+
+  // Start progressive loading of features
+  private startProgressiveLoading(features: geojson.Feature[]) {
+    if (this.isLoading) {
+      console.log('[DEBUG] MapComponent: Cancelling previous loading operation');
+      this.isLoading = false;
+    }
+
+    this.loadingQueue = [...features];
+    this.isLoading = true;
+    this.currentBatchIndex = 0;
+    this.batchCount = 0;
+    this.totalLoadTime = 0;
+
+    console.log(`[DEBUG] MapComponent: Starting progressive loading of ${features.length} features`);
+    console.log(`[DEBUG] MapComponent: Using batch size: ${this.BATCH_SIZE}, load delay: ${this.LOAD_DELAY}ms`);
+
+    // Start loading the first batch
+    this.loadNextBatch();
+  }
+
+  // Load the next batch of features
+  private loadNextBatch() {
+    if (!this.isLoading || !this.mainFeatureGroup || this.currentBatchIndex >= this.loadingQueue.length) {
+      this.isLoading = false;
+      this.onLoadingComplete();
+      return;
+    }
+
+    const startIndex = this.currentBatchIndex;
+    const endIndex = Math.min(startIndex + this.BATCH_SIZE, this.loadingQueue.length);
+    const batch = this.loadingQueue.slice(startIndex, endIndex);
+
+    console.log(`[DEBUG] MapComponent: Loading batch ${Math.floor(startIndex / this.BATCH_SIZE) + 1}/${Math.ceil(this.loadingQueue.length / this.BATCH_SIZE)} (features ${startIndex + 1}-${endIndex})`);
+
+    // Track batch processing time
+    const batchStartTime = performance.now();
+    this.batchCount++;
+
+    // Process this batch with error handling
+    let successCount = 0;
+    batch.forEach(feature => {
+      try {
+        const layer = this.createFeatureLayer(feature);
+        if (layer) {
+          this.mainFeatureGroup?.addLayer(layer);
+          this.loadedFeatures.push(layer);
+          successCount++;
+        }
+      } catch (error) {
+        console.warn(`[DEBUG] MapComponent: Failed to create layer for feature:`, error, feature);
+      }
+    });
+
+    const batchProcessTime = performance.now() - batchStartTime;
+    this.totalLoadTime += batchProcessTime;
+    const avgBatchTime = this.totalLoadTime / this.batchCount;
+
+    console.log(`[DEBUG] MapComponent: Successfully loaded ${successCount}/${batch.length} features in batch (${batchProcessTime.toFixed(2)}ms, avg: ${avgBatchTime.toFixed(2)}ms)`);
+
+    this.currentBatchIndex = endIndex;
+
+    // Adaptive delay based on batch processing time to prevent freezing
+    let adaptiveDelay = this.LOAD_DELAY;
+    if (batchProcessTime > 100) {
+      adaptiveDelay = Math.min(this.LOAD_DELAY * 2, 200); // Increase delay if batch takes too long
+      console.log(`[DEBUG] MapComponent: Batch took ${batchProcessTime.toFixed(2)}ms, increasing delay to ${adaptiveDelay}ms`);
+    }
+
+    // Use requestAnimationFrame for better performance instead of setTimeout
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        this.loadNextBatch();
+      }, adaptiveDelay);
+    });
+  }
+
+  // Create a single feature layer
+  private createFeatureLayer(feature: geojson.Feature): L.Layer | null {
+    const geometry = feature.geometry;
+    const props: any = feature.properties || {};
+    const style: any = props.style || {};
+
+    if (geometry.type === 'Point' && Array.isArray((geometry as any).coordinates)) {
+      const coords = (geometry as geojson.Point).coordinates;
+      const lat = coords[1];
+      const lng = coords[0];
+
+      const icon = this.geticon(
+        style.color || style.fillColor || '#3388ff',
+        style.opacity != null ? style.opacity : 1,
+        style.labelText != null ? String(style.labelText) : ''
+      );
+      const marker = L.marker([lat, lng], { icon });
+
+      // Optimize popup creation - only create if there are non-style properties
+      if (feature.properties) {
+        const nonStyleProps = Object.entries(feature.properties)
+          .filter(([k]) => k !== 'style');
+
+        if (nonStyleProps.length > 0) {
+          const popupContent = nonStyleProps
+            .map(([key, value]) => `${key}: ${value}`)
+            .join('<br>');
+          marker.bindPopup(popupContent);
+        }
+      }
+
+      return marker;
+    } else if (geometry.type === 'Polygon' || geometry.type === 'MultiPolygon' || geometry.type === 'LineString' || geometry.type === 'MultiLineString') {
+      const gj = L.geoJSON(feature as any, {
+        style: () => ({
+          color: style.color || '#3388ff',
+          fillColor: style.fillColor || style.color || '#3388ff',
+          fillOpacity: style.fillOpacity != null ? style.fillOpacity : (style.opacity != null ? style.opacity : 0.2),
+          opacity: style.opacity != null ? style.opacity : 1,
+          weight: style.weight != null ? style.weight : 2
+        })
+      });
+      return gj;
+    }
+
+    return null;
+  }
+
+  // Method to stop progressive loading
+  public stopProgressiveLoading() {
+    if (this.isLoading) {
+      this.isLoading = false;
+      console.log('[DEBUG] MapComponent: Progressive loading stopped by user');
+      this.snackbar.open(`Loading stopped. ${this.loadedFeatures.length} features loaded so far.`, 'OK', { duration: 3000 });
+    }
+  }
+
+  // Called when progressive loading is complete
+  private onLoadingComplete() {
+    const avgBatchTime = this.batchCount > 0 ? this.totalLoadTime / this.batchCount : 0;
+    console.log(`[DEBUG] MapComponent: Progressive loading complete. Loaded ${this.loadedFeatures.length} features in ${this.batchCount} batches (avg: ${avgBatchTime.toFixed(2)}ms per batch)`);
+
+    this.isRendering = false;
+
+    if (this.mainFeatureGroup) {
+      this.fitBounds();
+      this.snackbar.open(`Progressive loading complete: ${this.loadedFeatures.length} features loaded`, 'OK', { duration: 3000 });
+    }
+  }
+
+  // Manual render trigger
+  public startManualRender() {
+    if (this.isRendering) {
+      this.snackbar.open('Rendering already in progress...', 'OK', { duration: 2000 });
+      return;
+    }
+
+    const fc = this.featurecollectionService.getGeoJsonForAllLayers();
+    const totalFeatureCount = this.featurecollectionService.getTotalFeatureCount();
+
+    if (totalFeatureCount === 0) {
+      this.snackbar.open('No features to render', 'OK', { duration: 2000 });
+      return;
+    }
+
+    // DEBUG: Limit to first 100 features to prevent browser freezing
+    const maxFeaturesToRender = this.MAX_FEATURES_TO_RENDER;
+    const featuresToRender = fc.features.slice(0, maxFeaturesToRender);
+    const limitedFeatureCount = featuresToRender.length;
+
+    this.isRendering = true;
+    this.pendingFeatureCount = 0;
+
+    // Clear existing features and start progressive loading
+    this.clearExistingFeatures();
+    this.startProgressiveLoading(featuresToRender);
+
+    if (fc.features.length > maxFeaturesToRender) {
+      this.snackbar.open(`DEBUG: Manual render of first ${limitedFeatureCount} of ${fc.features.length} features to prevent freezing`, 'OK', { duration: 4000 });
+    } else {
+      this.snackbar.open(`Starting manual render of ${limitedFeatureCount} active features`, 'OK', { duration: 2000 });
+    }
+  }
+
+  // Toggle auto-render setting
+  public toggleAutoRender() {
+    this.shouldAutoRender = !this.shouldAutoRender;
+    const status = this.shouldAutoRender ? 'enabled' : 'disabled';
+    this.snackbar.open(`Auto-render ${status}`, 'OK', { duration: 2000 });
   }
 }

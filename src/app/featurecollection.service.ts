@@ -104,7 +104,7 @@ export class FeaturecollectionService {
     }
 
     const allFeatures: Feature[] = [];
-    
+
     // Loop through all layers and collect their features
     this.FeatureCollectionLayers.forEach((layer, index) => {
       if (layer.active) { // Only include active layers
@@ -117,6 +117,28 @@ export class FeaturecollectionService {
       type: 'FeatureCollection',
       features: allFeatures
     };
+  }
+
+  // Get total feature count from all layers (active and inactive)
+  getTotalFeatureCount(): number {
+    if (!this.FeatureCollectionLayers || this.FeatureCollectionLayers.length === 0) {
+      return 0;
+    }
+
+    return this.FeatureCollectionLayers.reduce((total, layer) => {
+      return total + (layer.features?.length || 0);
+    }, 0);
+  }
+
+  // Get feature count from active layers only
+  getActiveFeatureCount(): number {
+    if (!this.FeatureCollectionLayers || this.FeatureCollectionLayers.length === 0) {
+      return 0;
+    }
+
+    return this.FeatureCollectionLayers.reduce((total, layer) => {
+      return total + (layer.active ? (layer.features?.length || 0) : 0);
+    }, 0);
   }
 
   //returns the geojson for the feature collection layer. uses the styling rules to add styling to the geojson.
