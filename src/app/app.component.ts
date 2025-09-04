@@ -28,12 +28,7 @@ export class AppComponent implements OnInit {
   set triggerval(val) {
     this._triggerval = val;
   }
-  expanded = new Promise((resolve) => {
-    setTimeout(() => {
-      console.log('resolving');
-      resolve(true);
-    }, 1000);
-  });
+  expanded: boolean = false;
 
   csvData: string = '';
   headers: Select[] = [];

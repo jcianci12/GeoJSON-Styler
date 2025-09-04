@@ -196,9 +196,11 @@ export class FeaturecollectionService {
         // Check if we have any dynamic rules that require CSV data
         const hasDynamicRules = rules.some(r => (r.ruletype as any)?.dynamic === true);
 
-        // If we have dynamic rules but no matching row, skip this feature
-        if (hasDynamicRules && !matchedRow) {
-          console.log(`Skipping feature with key ${featureKey} - no matching style data found`,matchedRow);
+        // Performance optimization: If we have CSV data configured but no matching row, skip this feature
+        // This helps performance by reducing the number of features to render
+        // Only skip if we have CSV data configured (csvJoinIndex >= 0) and no matching row
+        if (csvJoinIndex >= 0 && !matchedRow) {
+          console.log(`Skipping feature with key ${featureKey} - no matching style data found`);
           return null;
         }
 
