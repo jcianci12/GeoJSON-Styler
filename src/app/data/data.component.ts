@@ -124,19 +124,36 @@ export class DataComponent implements OnInit {
       this.d = filereader.result;
       this.d = this.d.replace(/"/g, "");
       this.featureCollectionLayers[this.featurecollectionlayerindex].styledata = this.d;
+
+      // Clear CSV lookup cache when new data is loaded
+      this.fcs.clearCsvLookupCache();
+
       this.updateData();
+
+      // Aggressively pre-filter features to improve performance
+      this.fcs.preFilterLayerFeatures(this.featurecollectionlayerindex);
     };
     filereader.readAsText(data[0]);
   }
 
   addJSONData(data: string) {
     this.d = data;
+
+    // Clear CSV lookup cache when new data is loaded
+    this.fcs.clearCsvLookupCache();
+
     this.updateData();
+
+    // Aggressively pre-filter features to improve performance
+    this.fcs.preFilterLayerFeatures(this.featurecollectionlayerindex);
   }
 
   // Handle geocolumn changes
   onGeocolumnChange(geocolumn: GeoColumnMapping) {
     this.calculateJoinedRowsCount();
+
+    // Re-filter features when column mapping changes
+    this.fcs.preFilterLayerFeatures(this.featurecollectionlayerindex);
   }
 
   onLatLngColumnsSelected(event: Event) {

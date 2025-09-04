@@ -40,6 +40,58 @@
   min-width: 250px;
 }
 
+.performance-control-panel {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: white;
+  padding: 15px;
+  border-radius: 5px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  z-index: 10000;
+  min-width: 280px;
+}
+
+.performance-info {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 15px;
+  font-size: 14px;
+}
+
+.large-dataset-warning {
+  color: #ff6b35;
+  font-weight: bold;
+  font-size: 12px;
+}
+
+.performance-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.max-features-control {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.max-features-control label {
+  font-size: 12px;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+.max-features-control input {
+  width: 80px;
+  padding: 4px 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
 .render-info {
   margin-bottom: 10px;
   font-weight: bold;
@@ -71,6 +123,26 @@
 .render-btn:disabled {
   background: #cccccc;
   cursor: not-allowed;
+}
+
+.auto-render-btn {
+  background: #6c757d;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: bold;
+  transition: all 0.3s ease;
+}
+
+.auto-render-btn.active {
+  background: #28a745;
+}
+
+.auto-render-btn:hover {
+  opacity: 0.8;
 }
 
 .toggle-auto-btn {

@@ -102,7 +102,7 @@ export class FeaturecollectionService {
   }
 
   //loop through all the feature collection layers and returns a geo json object with all the features and styling rules added.
-  getGeoJsonForAllLayers(): FeatureCollection {
+  getGeoJsonForAllLayers(maxFeatures?: number): FeatureCollection {
     if (!this.FeatureCollectionLayers || this.FeatureCollectionLayers.length === 0) {
       return {
         type: 'FeatureCollection',
@@ -111,14 +111,24 @@ export class FeaturecollectionService {
     }
 
     const allFeatures: Feature[] = [];
+    let totalProcessed = 0;
+    const limit = maxFeatures || 100; // Default to 100 if not specified
 
     // Loop through all layers and collect their features
-    this.FeatureCollectionLayers.forEach((layer, index) => {
+    for (let index = 0; index < this.FeatureCollectionLayers.length; index++) {
+      const layer = this.FeatureCollectionLayers[index];
       if (layer.active) { // Only include active layers
-        const layerGeoJson = this.getGeoJsonForLayer(index);
+        const layerGeoJson = this.getGeoJsonForLayer(index, limit - totalProcessed);
         allFeatures.push(...layerGeoJson.features);
+        totalProcessed += layerGeoJson.features.length;
+
+        // Stop processing if we've reached the limit
+        if (totalProcessed >= limit) {
+          console.log(`[PERFORMANCE] Limited processing to ${totalProcessed} features (max: ${limit})`);
+          break;
+        }
       }
-    });
+    }
 
     return {
       type: 'FeatureCollection',
@@ -148,8 +158,56 @@ export class FeaturecollectionService {
     }, 0);
   }
 
+  // Get filtered feature count (features that would actually be rendered after CSV matching)
+  getFilteredFeatureCount(): number {
+    if (!this.FeatureCollectionLayers || this.FeatureCollectionLayers.length === 0) {
+      return 0;
+    }
+
+    let totalFiltered = 0;
+
+    for (let index = 0; index < this.FeatureCollectionLayers.length; index++) {
+      const layer = this.FeatureCollectionLayers[index];
+      if (!layer.active) continue;
+
+      // Check if we have CSV filtering configured
+      const styleDataRaw = layer.styledata as any;
+      const styleTable: string[][] = Array.isArray(styleDataRaw)
+        ? styleDataRaw
+        : (typeof styleDataRaw === 'string' && styleDataRaw.length
+            ? new CSVtoJSONPipe().csvJSON(styleDataRaw)
+            : []);
+
+      const headers = styleTable.length ? styleTable[0] : [];
+      const csvJoinColumn = layer.geocolumn?.GEOColumn;
+      const csvJoinIndex = headers.length ? headers.indexOf(csvJoinColumn) : -1;
+
+      if (csvJoinIndex >= 0) {
+        // We have CSV filtering - count only matching features
+        const rows: string[][] = styleTable.length > 1 ? styleTable.slice(1) : [];
+        const csvKeys = new Set(rows.map(row => row[csvJoinIndex]?.toString().toLowerCase()).filter(k => k));
+
+        const geojsonJoinProperty = layer.geocolumn?.GEOJSON;
+        const matchingFeatures = layer.features.filter(feature => {
+          const featureKey = geojsonJoinProperty ? (feature.properties as any)?.[geojsonJoinProperty] : undefined;
+          return featureKey !== undefined && csvKeys.has(featureKey.toString().toLowerCase());
+        });
+
+        totalFiltered += matchingFeatures.length;
+      } else {
+        // No CSV filtering - count all features
+        totalFiltered += layer.features?.length || 0;
+      }
+    }
+
+    return totalFiltered;
+  }
+
+  // Performance optimization: Cache for CSV lookups to avoid repeated parsing
+  private csvLookupCache = new Map<string, Map<string, string[]>>();
+
   //returns the geojson for the feature collection layer. uses the styling rules to add styling to the geojson.
-  getGeoJsonForLayer(layerIndex: number): FeatureCollection {
+  getGeoJsonForLayer(layerIndex: number, maxFeatures?: number): FeatureCollection {
     if (!this.FeatureCollectionLayers || this.FeatureCollectionLayers.length === 0) {
       return {
         type: 'FeatureCollection',
@@ -165,44 +223,86 @@ export class FeaturecollectionService {
       };
     }
 
+    const limit = maxFeatures || 100; // Default to 100 if not specified
+    console.log(`[PERFORMANCE] Processing layer ${layerIndex} with limit: ${limit}`);
+
     // Compute concrete visual properties from current layer stylerules
     const rules = layer.stylerules || [];
-    // Prepare style CSV lookup structures
-    const styleDataRaw = layer.styledata as any;
-    const styleTable: string[][] = Array.isArray(styleDataRaw)
-      ? styleDataRaw
-      : (typeof styleDataRaw === 'string' && styleDataRaw.length
-          ? new CSVtoJSONPipe().csvJSON(styleDataRaw)
-          : []);
-    const headers: string[] = styleTable.length ? styleTable[0] : [];
-    const rows: string[][] = styleTable.length > 1 ? styleTable.slice(1) : [];
 
-    const csvJoinColumn = layer.geocolumn?.GEOColumn;
+    // Prepare style CSV lookup structures with caching
+    const styleDataRaw = layer.styledata as any;
+    const cacheKey = `layer_${layerIndex}_${JSON.stringify(styleDataRaw).substring(0, 100)}`;
+
+    let csvLookupMap: Map<string, string[]> | undefined = this.csvLookupCache.get(cacheKey);
+    let headers: string[] = [];
+    let csvJoinIndex = -1;
+
+    if (!csvLookupMap) {
+      const styleTable: string[][] = Array.isArray(styleDataRaw)
+        ? styleDataRaw
+        : (typeof styleDataRaw === 'string' && styleDataRaw.length
+            ? new CSVtoJSONPipe().csvJSON(styleDataRaw)
+            : []);
+      headers = styleTable.length ? styleTable[0] : [];
+      const rows: string[][] = styleTable.length > 1 ? styleTable.slice(1) : [];
+
+      const csvJoinColumn = layer.geocolumn?.GEOColumn;
+      csvJoinIndex = headers.length ? headers.indexOf(csvJoinColumn) : -1;
+
+      // Build lookup map for O(1) CSV row access
+      csvLookupMap = new Map<string, string[]>();
+      if (csvJoinIndex >= 0) {
+        rows.forEach(row => {
+          if (row[csvJoinIndex] != null) {
+            const key = row[csvJoinIndex].toString().toLowerCase();
+            csvLookupMap!.set(key, row);
+          }
+        });
+      }
+
+      // Cache the lookup map
+      this.csvLookupCache.set(cacheKey, csvLookupMap);
+      console.log(`[PERFORMANCE] Built CSV lookup cache for layer ${layerIndex} with ${csvLookupMap.size} entries`);
+    } else {
+      // Retrieve cached values
+      const styleTable: string[][] = Array.isArray(styleDataRaw)
+        ? styleDataRaw
+        : (typeof styleDataRaw === 'string' && styleDataRaw.length
+            ? new CSVtoJSONPipe().csvJSON(styleDataRaw)
+            : []);
+      headers = styleTable.length ? styleTable[0] : [];
+      const csvJoinColumn = layer.geocolumn?.GEOColumn;
+      csvJoinIndex = headers.length ? headers.indexOf(csvJoinColumn) : -1;
+      console.log(`[PERFORMANCE] Using cached CSV lookup for layer ${layerIndex}`);
+    }
+
     const geojsonJoinProperty = layer.geocolumn?.GEOJSON;
-    const csvJoinIndex = headers.length ? headers.indexOf(csvJoinColumn) : -1;
+    let processedCount = 0;
 
     const styledFeatures = layer.features
       .map((feature) => {
+        // Early termination if we've reached the limit
+        if (processedCount >= limit) {
+          return null;
+        }
+
         feature.properties = feature.properties || {};
         const style: any = (feature.properties as any).style || {};
 
-        // Find the matching style row for this feature if possible
+        // Find the matching style row using cached lookup
         let matchedRow: string[] | undefined = undefined;
         const featureKey = geojsonJoinProperty ? (feature.properties as any)[geojsonJoinProperty] : undefined;
-        if (csvJoinIndex >= 0 && featureKey !== undefined && rows.length) {
-          matchedRow = rows.find(r => r[csvJoinIndex] != null && r[csvJoinIndex].toString().toLowerCase() === featureKey.toString().toLowerCase());
+        if (csvJoinIndex >= 0 && featureKey !== undefined && csvLookupMap && csvLookupMap.size > 0) {
+          matchedRow = csvLookupMap.get(featureKey.toString().toLowerCase());
         }
 
-        // Check if we have any dynamic rules that require CSV data
-        const hasDynamicRules = rules.some(r => (r.ruletype as any)?.dynamic === true);
-
-        // Performance optimization: If we have CSV data configured but no matching row, skip this feature
-        // This helps performance by reducing the number of features to render
-        // Only skip if we have CSV data configured (csvJoinIndex >= 0) and no matching row
+        // Note: We now pre-filter features, so this check is less necessary
+        // But we keep it as a safety net for edge cases where pre-filtering wasn't applied
         if (csvJoinIndex >= 0 && !matchedRow) {
-          console.log(`Skipping feature with key ${featureKey} - no matching style data found`);
           return null;
         }
+
+        processedCount++;
 
         rules.forEach((r) => {
           const name = r.ruletype?.rulename;
@@ -213,8 +313,6 @@ export class FeaturecollectionService {
           const columnIndex = headers.length ? headers.indexOf(columnName) : -1;
           const csvValue = (isDynamic && matchedRow && columnIndex >= 0) ? matchedRow[columnIndex] : undefined;
 
-          console.log(`Processing rule: ${name}, dynamic: ${isDynamic}, column: ${columnName}, csvValue: ${csvValue}`);
-
           if (name === 'opacity') {
             const staticOpacity = (r.ruletype as any).opacityvalue;
             const parsed = csvValue != null ? parseFloat(csvValue) : undefined;
@@ -222,7 +320,6 @@ export class FeaturecollectionService {
             if (value !== undefined) {
               style.opacity = value;
               style.fillOpacity = value; // Also set fillOpacity for consistency with polygon rendering
-              console.log(`Set opacity: ${value}`);
             }
           }
           if (name === 'colour') {
@@ -231,7 +328,6 @@ export class FeaturecollectionService {
             if (value !== undefined) {
               style.color = value;
               style.fillColor = value; // Also set fillColor for consistency with polygon rendering
-              console.log(`Set color: ${value}`);
             }
           }
           if (name === 'text') {
@@ -242,7 +338,6 @@ export class FeaturecollectionService {
             if (t.latoffset !== undefined) style.labelLatOffset = t.latoffset;
             if (t.lngoffset !== undefined) style.labelLngOffset = t.lngoffset;
             if (t.cssstyle !== undefined) style.labelCss = t.cssstyle;
-            console.log(`Set text: ${value}, offset: ${t.latoffset},${t.lngoffset}`);
           }
         });
 
@@ -251,9 +346,74 @@ export class FeaturecollectionService {
       })
       .filter((feature): feature is any => feature !== null); // Remove null features
 
+    console.log(`[PERFORMANCE] Processed ${processedCount} matching features out of ${layer.features.length} total features`);
+
     return {
       type: 'FeatureCollection',
       features: styledFeatures
     };
+  }
+
+  // Method to clear CSV lookup cache when needed
+  clearCsvLookupCache(): void {
+    this.csvLookupCache.clear();
+    console.log('[PERFORMANCE] Cleared CSV lookup cache');
+  }
+
+  // Aggressively pre-filter features when CSV data is loaded
+  // This removes non-matching features from the layer entirely for better performance
+  preFilterLayerFeatures(layerIndex: number): void {
+    if (!this.FeatureCollectionLayers || layerIndex >= this.FeatureCollectionLayers.length) {
+      return;
+    }
+
+    const layer = this.FeatureCollectionLayers[layerIndex];
+    if (!layer || !layer.active) return;
+
+    // Check if we have CSV filtering configured
+    const styleDataRaw = layer.styledata as any;
+    const styleTable: string[][] = Array.isArray(styleDataRaw)
+      ? styleDataRaw
+      : (typeof styleDataRaw === 'string' && styleDataRaw.length
+          ? new CSVtoJSONPipe().csvJSON(styleDataRaw)
+          : []);
+
+    const headers = styleTable.length ? styleTable[0] : [];
+    const csvJoinColumn = layer.geocolumn?.GEOColumn;
+    const csvJoinIndex = headers.length ? headers.indexOf(csvJoinColumn) : -1;
+
+    if (csvJoinIndex >= 0) {
+      const originalCount = layer.features.length;
+
+      // Build set of valid CSV keys
+      const rows: string[][] = styleTable.length > 1 ? styleTable.slice(1) : [];
+      const csvKeys = new Set(rows.map(row => row[csvJoinIndex]?.toString().toLowerCase()).filter(k => k));
+
+      const geojsonJoinProperty = layer.geocolumn?.GEOJSON;
+
+      // Filter features to only include those with matching CSV data
+      layer.features = layer.features.filter(feature => {
+        const featureKey = geojsonJoinProperty ? (feature.properties as any)?.[geojsonJoinProperty] : undefined;
+        return featureKey !== undefined && csvKeys.has(featureKey.toString().toLowerCase());
+      });
+
+      const filteredCount = layer.features.length;
+      console.log(`[PERFORMANCE] Pre-filtered layer ${layerIndex}: ${originalCount} -> ${filteredCount} features (${originalCount - filteredCount} removed)`);
+
+      // Clear cache since we've modified the data
+      this.clearCsvLookupCache();
+
+      // Notify observers
+      this.FeatureCollectionLayerObservable.next(this.FeatureCollectionLayers);
+    }
+  }
+
+  // Pre-filter all layers
+  preFilterAllLayers(): void {
+    if (!this.FeatureCollectionLayers) return;
+
+    for (let i = 0; i < this.FeatureCollectionLayers.length; i++) {
+      this.preFilterLayerFeatures(i);
+    }
   }
 }

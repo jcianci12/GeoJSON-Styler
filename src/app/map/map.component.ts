@@ -57,6 +57,9 @@ export class MapComponent implements OnInit, OnDestroy {
       titleCancel: 'Full screen cancel',
       forcePseudoFullscreen: true,
     },
+    zoomSnap: 0.1, // Enables fine zoom with 0.1 increments instead of whole numbers
+    zoomDelta: 0.1, // Controls zoom step size when using zoom controls
+    wheelPxPerZoomLevel: 120, // Controls mouse wheel zoom sensitivity (optional)
   };
 
   private subscriptions: Subscription[] = [];
@@ -78,8 +81,11 @@ export class MapComponent implements OnInit, OnDestroy {
   private loadedFeatures: L.Layer[] = [];
   private mainFeatureGroup: L.FeatureGroup | undefined;
 
-  // DEBUG: Feature limit to prevent browser freezing
-  private readonly MAX_FEATURES_TO_RENDER = 100;
+  // Performance settings - configurable feature limits
+  private readonly DEFAULT_MAX_FEATURES_TO_RENDER = 100;
+  private readonly LARGE_DATASET_THRESHOLD = 500;
+  private readonly MAX_FEATURES_AUTO_RENDER = 100;
+  public maxFeaturesToRender = this.DEFAULT_MAX_FEATURES_TO_RENDER;
 
   // Icon cache to avoid recreating identical icons
   private iconCacheMap: {[key: string]: L.DivIcon} = {};
@@ -382,16 +388,13 @@ export class MapComponent implements OnInit, OnDestroy {
   private renderFeaturecollectionLayers() {
     if (!this.map) return;
 
-    const fc = this.featurecollectionService.getGeoJsonForAllLayers();
-    const activeFeatureCount = fc.features.length;
     const totalFeatureCount = this.featurecollectionService.getTotalFeatureCount();
 
-    // DEBUG: Limit to first 100 features to prevent browser freezing
-    const maxFeaturesToRender = this.MAX_FEATURES_TO_RENDER;
-    const featuresToRender = fc.features.slice(0, maxFeaturesToRender);
-    const limitedFeatureCount = featuresToRender.length;
+    // Use the service's optimized method with feature limit
+    const fc = this.featurecollectionService.getGeoJsonForAllLayers(this.maxFeaturesToRender);
+    const activeFeatureCount = fc.features.length;
 
-    console.log(`[DEBUG] MapComponent: Manual render - Total features available: ${fc.features.length}, limiting to: ${limitedFeatureCount}`);
+    console.log(`[PERFORMANCE] MapComponent: Rendering ${activeFeatureCount} features (max: ${this.maxFeaturesToRender}, total available: ${totalFeatureCount})`);
 
     this.isRendering = true;
 
@@ -399,30 +402,31 @@ export class MapComponent implements OnInit, OnDestroy {
     setTimeout(() => {
       this.currentFeatureCollection = {
         type: 'FeatureCollection',
-        features: featuresToRender
+        features: fc.features
       } as any;
       this.cdr.detectChanges();
     }, 0);
 
-    // Check if we should auto-render or require manual render
-    // Use total feature count to determine if manual render is needed
-    if (totalFeatureCount > 100 && !this.shouldAutoRender) {
+    // Check if we should auto-render or require manual render for large datasets
+    if (totalFeatureCount > this.MAX_FEATURES_AUTO_RENDER && !this.shouldAutoRender) {
       this.pendingFeatureCount = totalFeatureCount;
-      this.snackbar.open(`${totalFeatureCount} features ready to render. Click "Render Features" to start.`, 'OK', { duration: 4000 });
+      this.snackbar.open(`${totalFeatureCount} features ready to render. Click "Render Features" to start (will render first ${this.maxFeaturesToRender}).`, 'OK', { duration: 5000 });
       return;
     }
 
     // Only render if there are active features
-    if (limitedFeatureCount > 0) {
+    if (activeFeatureCount > 0) {
       // Clear existing features and start progressive loading
       this.clearExistingFeatures();
-      this.startProgressiveLoading(featuresToRender);
+      this.startProgressiveLoading(fc.features);
 
-      if (activeFeatureCount > maxFeaturesToRender) {
-        this.snackbar.open(`DEBUG: Rendering first ${limitedFeatureCount} of ${activeFeatureCount} features to prevent freezing`, 'OK', { duration: 4000 });
+      if (totalFeatureCount > this.maxFeaturesToRender) {
+        this.snackbar.open(`Rendering first ${activeFeatureCount} of ${totalFeatureCount} matching features for optimal performance`, 'OK', { duration: 4000 });
       } else {
-        this.snackbar.open(`Starting progressive load of ${limitedFeatureCount} features`, 'OK', { duration: 2000 });
+        this.snackbar.open(`Starting progressive load of ${activeFeatureCount} features`, 'OK', { duration: 2000 });
       }
+    } else if (totalFeatureCount > 0) {
+      this.snackbar.open(`No features match the current CSV data. ${totalFeatureCount} total features available.`, 'OK', { duration: 4000 });
     }
   }
 
@@ -692,7 +696,6 @@ export class MapComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const fc = this.featurecollectionService.getGeoJsonForAllLayers();
     const totalFeatureCount = this.featurecollectionService.getTotalFeatureCount();
 
     if (totalFeatureCount === 0) {
@@ -700,22 +703,21 @@ export class MapComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // DEBUG: Limit to first 100 features to prevent browser freezing
-    const maxFeaturesToRender = this.MAX_FEATURES_TO_RENDER;
-    const featuresToRender = fc.features.slice(0, maxFeaturesToRender);
-    const limitedFeatureCount = featuresToRender.length;
+    // Use the service's optimized method with feature limit
+    const fc = this.featurecollectionService.getGeoJsonForAllLayers(this.maxFeaturesToRender);
+    const activeFeatureCount = fc.features.length;
 
     this.isRendering = true;
     this.pendingFeatureCount = 0;
 
     // Clear existing features and start progressive loading
     this.clearExistingFeatures();
-    this.startProgressiveLoading(featuresToRender);
+    this.startProgressiveLoading(fc.features);
 
-    if (fc.features.length > maxFeaturesToRender) {
-      this.snackbar.open(`DEBUG: Manual render of first ${limitedFeatureCount} of ${fc.features.length} features to prevent freezing`, 'OK', { duration: 4000 });
+    if (totalFeatureCount > this.maxFeaturesToRender) {
+      this.snackbar.open(`Manual render of first ${activeFeatureCount} matching features out of ${totalFeatureCount} total for optimal performance`, 'OK', { duration: 4000 });
     } else {
-      this.snackbar.open(`Starting manual render of ${limitedFeatureCount} active features`, 'OK', { duration: 2000 });
+      this.snackbar.open(`Starting manual render of ${activeFeatureCount} active features`, 'OK', { duration: 2000 });
     }
   }
 
@@ -724,5 +726,33 @@ export class MapComponent implements OnInit, OnDestroy {
     this.shouldAutoRender = !this.shouldAutoRender;
     const status = this.shouldAutoRender ? 'enabled' : 'disabled';
     this.snackbar.open(`Auto-render ${status}`, 'OK', { duration: 2000 });
+  }
+
+    // Performance control methods
+  public onMaxFeaturesChange(event: Event) {
+    const target = event.target as HTMLInputElement;
+    if (target && target.value) {
+      const maxFeatures = parseInt(target.value, 10);
+      this.setMaxFeaturesToRender(maxFeatures);
+    }
+  }
+
+  public setMaxFeaturesToRender(maxFeatures: number) {
+    this.maxFeaturesToRender = Math.max(10, Math.min(1000, maxFeatures)); // Clamp between 10 and 1000
+    this.snackbar.open(`Max features to render set to ${this.maxFeaturesToRender}`, 'OK', { duration: 2000 });
+
+    // Clear cache when changing limits
+    this.featurecollectionService.clearCsvLookupCache();
+  }
+
+  public getPerformanceStats(): {totalFeatures: number, activeFeatures: number, maxRender: number, isLargeDataset: boolean} {
+    const totalFeatures = this.featurecollectionService.getTotalFeatureCount();
+    const activeFeatures = this.featurecollectionService.getFilteredFeatureCount(); // Use filtered count to match "Features showing"
+    return {
+      totalFeatures,
+      activeFeatures,
+      maxRender: this.maxFeaturesToRender,
+      isLargeDataset: totalFeatures > this.LARGE_DATASET_THRESHOLD
+    };
   }
 }

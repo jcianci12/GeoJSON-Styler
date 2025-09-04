@@ -1,20 +1,41 @@
 <div class="map-container">
   <div id="map"></div>
 
-  <!-- Render Control Panel -->
-  <!-- <div class="render-control-panel">
-    <div class="render-info">
-      <span>{{featurecollectionService.getActiveFeatureCount()}} active / {{featurecollectionService.getTotalFeatureCount()}} total features</span>
+  <!-- Performance Control Panel -->
+  <!-- <div class="performance-control-panel">
+    <div class="performance-info">
+      <span>{{getPerformanceStats().activeFeatures}} active / {{getPerformanceStats().totalFeatures}} total features</span>
+      <span *ngIf="getPerformanceStats().isLargeDataset" class="large-dataset-warning">⚠️ Large dataset detected</span>
     </div>
-    <div class="render-buttons">
-      <button
-        class="render-btn"
-        (click)="startManualRender()"
-        [disabled]="isRendering">
-        {{isRendering ? 'Rendering...' : 'Render Features'}}
-      </button>
+    <div class="performance-controls">
+      <div class="max-features-control">
+        <label>Max features to render:</label>
+                <input
+          type="number"
+          [value]="maxFeaturesToRender"
+          (change)="onMaxFeaturesChange($event)"
+          min="10"
+          max="1000"
+          step="10"
+          title="Maximum number of features to render"
+          placeholder="100">
+      </div>
+      <div class="render-buttons">
+        <button
+          class="render-btn"
+          (click)="startManualRender()"
+          [disabled]="isRendering">
+          {{isRendering ? 'Rendering...' : 'Render Features'}}
+        </button>
+        <button
+          class="auto-render-btn"
+          (click)="toggleAutoRender()"
+          [class.active]="shouldAutoRender">
+          Auto-render: {{shouldAutoRender ? 'ON' : 'OFF'}}
+        </button>
+      </div>
     </div>
-  </div> -->
+  </div>
 
   <div class="map-info">
     <div class="feature-count">
@@ -24,5 +45,5 @@
       <pre>{{currentFeatureCollection | json}}</pre>
     </div>
   </div>
-</div>
+</div> -->
 <app-mapdata [map]="map"></app-mapdata>

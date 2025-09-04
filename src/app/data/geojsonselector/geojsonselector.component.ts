@@ -34,9 +34,12 @@ export class GeojsonselectorComponent implements OnInit {
       try {
         const jsonData = JSON.parse(fileReader.result as string);
         this.featurecollectionLayer![this.layerindex].features = jsonData.features
+
+        // Clear CSV lookup cache when new GeoJSON data is loaded
+        this.fcs.clearCsvLookupCache();
+
         if (this.featurecollectionLayer) {
           this.fcs.FeatureCollectionLayerObservable.next(this.featurecollectionLayer);
-
         }
       } catch (e) {
         console.error('Error parsing JSON:', e);
