@@ -540,6 +540,7 @@ export class MapComponent implements OnInit, OnDestroy {
 
     // Process this batch with error handling
     let successCount = 0;
+    let hiddenCount = 0;
     batch.forEach(feature => {
       try {
         const layer = this.createFeatureLayer(feature);
@@ -547,6 +548,8 @@ export class MapComponent implements OnInit, OnDestroy {
           this.mainFeatureGroup?.addLayer(layer);
           this.loadedFeatures.push(layer);
           successCount++;
+        } else {
+          hiddenCount++;
         }
       } catch (error) {
         console.warn(`[DEBUG] MapComponent: Failed to create layer for feature:`, error, feature);
@@ -557,7 +560,7 @@ export class MapComponent implements OnInit, OnDestroy {
     this.totalLoadTime += batchProcessTime;
     const avgBatchTime = this.totalLoadTime / this.batchCount;
 
-    console.log(`[DEBUG] MapComponent: Successfully loaded ${successCount}/${batch.length} features in batch (${batchProcessTime.toFixed(2)}ms, avg: ${avgBatchTime.toFixed(2)}ms)`);
+    console.log(`[DEBUG] MapComponent: Successfully loaded ${successCount}/${batch.length} features in batch (${hiddenCount} hidden, ${batchProcessTime.toFixed(2)}ms, avg: ${avgBatchTime.toFixed(2)}ms)`);
 
     this.currentBatchIndex = endIndex;
 
@@ -581,14 +584,17 @@ export class MapComponent implements OnInit, OnDestroy {
     const geometry = feature.geometry;
     const props: any = feature.properties || {};
     const style: any = props.style || {};
-    
+
     // Generate unique ID for this feature
     const featureId = this.generateFeatureId(feature);
-    
+
     // Skip hidden features
     if (this.isFeatureHidden(featureId)) {
+      console.log(`[CREATE LAYER] Skipping hidden feature: ${featureId}`);
       return null;
     }
+
+    console.log(`[CREATE LAYER] Creating layer for feature: ${featureId}`);
 
     if (geometry.type === 'Point' && Array.isArray((geometry as any).coordinates)) {
       const coords = (geometry as geojson.Point).coordinates;
@@ -607,18 +613,18 @@ export class MapComponent implements OnInit, OnDestroy {
       // Add click handler for hiding feature
       marker.on('click', (e: L.LeafletMouseEvent) => {
         e.originalEvent.stopPropagation();
-        
+
         // Create context menu popup
         const popupContent = `
           <div style="text-align: center;">
             <strong>Feature Options</strong><br>
-            <button onclick="window.mapComponent.hideFeature('${featureId}', ${JSON.stringify(feature).replace(/"/g, '&quot;')})" 
+            <button onclick="window.mapComponent.hideFeature('${featureId}', ${JSON.stringify(feature).replace(/"/g, '&quot;')})"
                     style="margin: 5px; padding: 5px 10px; background: #ff4444; color: white; border: none; border-radius: 3px; cursor: pointer;">
               Hide Feature
             </button>
           </div>
         `;
-        
+
         marker.bindPopup(popupContent).openPopup();
       });
 
@@ -631,7 +637,7 @@ export class MapComponent implements OnInit, OnDestroy {
           const infoPopupContent = nonStyleProps
             .map(([key, value]) => `${key}: ${value}`)
             .join('<br>');
-          
+
           // Add info popup on right-click
           marker.on('contextmenu', (e: L.LeafletMouseEvent) => {
             e.originalEvent.preventDefault();
@@ -655,18 +661,18 @@ export class MapComponent implements OnInit, OnDestroy {
       // Add click handler for hiding polygon/line features
       gj.on('click', (e: L.LeafletMouseEvent) => {
         e.originalEvent.stopPropagation();
-        
+
         // Create context menu popup
         const popupContent = `
           <div style="text-align: center;">
             <strong>Feature Options</strong><br>
-            <button onclick="window.mapComponent.hideFeature('${featureId}', ${JSON.stringify(feature).replace(/"/g, '&quot;')})" 
+            <button onclick="window.mapComponent.hideFeature('${featureId}', ${JSON.stringify(feature).replace(/"/g, '&quot;')})"
                     style="margin: 5px; padding: 5px 10px; background: #ff4444; color: white; border: none; border-radius: 3px; cursor: pointer;">
               Hide Feature
             </button>
           </div>
         `;
-        
+
         gj.bindPopup(popupContent).openPopup();
       });
 
@@ -679,7 +685,7 @@ export class MapComponent implements OnInit, OnDestroy {
           const infoPopupContent = nonStyleProps
             .map(([key, value]) => `${key}: ${value}`)
             .join('<br>');
-          
+
           gj.on('contextmenu', (e: L.LeafletMouseEvent) => {
             e.originalEvent.preventDefault();
             gj.bindPopup(infoPopupContent).openPopup();
@@ -833,24 +839,40 @@ export class MapComponent implements OnInit, OnDestroy {
   private generateFeatureId(feature: geojson.Feature): string {
     const props = feature.properties || {};
     const geom = feature.geometry;
-    
+
     // Try to use a unique property if available
     if (props['id']) return `feature_${props['id']}`;
     if (props['name']) return `feature_${props['name']}`;
-    
+    if (props['lg_ply_pid']) return `feature_${props['lg_ply_pid']}`;
+    if (props['lga_pid']) return `feature_${props['lga_pid']}`;
+
     // Fallback to coordinates-based ID for Point features
     if (geom.type === 'Point' && Array.isArray(geom.coordinates)) {
       return `point_${geom.coordinates[1]}_${geom.coordinates[0]}`;
     }
-    
+
+    // For polygons, try to use a combination of properties
+    if (geom.type === 'Polygon' || geom.type === 'MultiPolygon') {
+      const keyProps = ['qld_lga__2', 'qld_lga__3', 'lg_ply_pid', 'lga_pid'];
+      for (const prop of keyProps) {
+        if (props[prop]) {
+          return `polygon_${prop}_${props[prop]}`;
+        }
+      }
+    }
+
     // Fallback to a hash of the feature
     return `feature_${JSON.stringify(feature).substring(0, 50).replace(/[^a-zA-Z0-9]/g, '_')}`;
   }
 
   // Hide a feature by its ID
   public hideFeature(featureId: string, feature: geojson.Feature) {
+    console.log(`[HIDE FEATURE] Hiding feature with ID: ${featureId}`);
+    console.log(`[HIDE FEATURE] Feature properties:`, feature.properties);
+    console.log(`[HIDE FEATURE] Feature geometry type:`, feature.geometry.type);
+
     this.hiddenFeatures.add(featureId);
-    
+
     // Add to hidden features list for UI display
     const existingIndex = this.hiddenFeaturesList.findIndex(f => f.id === featureId);
     if (existingIndex === -1) {
@@ -858,27 +880,30 @@ export class MapComponent implements OnInit, OnDestroy {
         id: featureId,
         properties: feature.properties || {}
       });
+      console.log(`[HIDE FEATURE] Added to hidden features list. Total hidden: ${this.hiddenFeaturesList.length}`);
+    } else {
+      console.log(`[HIDE FEATURE] Feature already in hidden list at index: ${existingIndex}`);
     }
-    
+
     // Re-render the map to hide the feature
     this.renderFeaturecollectionLayers();
-    
+
     this.snackbar.open(`Feature hidden. ${this.hiddenFeaturesList.length} features hidden total.`, 'OK', { duration: 3000 });
   }
 
   // Show a hidden feature by its ID
   public showFeature(featureId: string) {
     this.hiddenFeatures.delete(featureId);
-    
+
     // Remove from hidden features list
     const index = this.hiddenFeaturesList.findIndex(f => f.id === featureId);
     if (index !== -1) {
       this.hiddenFeaturesList.splice(index, 1);
     }
-    
+
     // Re-render the map to show the feature
     this.renderFeaturecollectionLayers();
-    
+
     this.snackbar.open(`Feature shown. ${this.hiddenFeaturesList.length} features hidden total.`, 'OK', { duration: 3000 });
   }
 
@@ -887,10 +912,10 @@ export class MapComponent implements OnInit, OnDestroy {
     const hiddenCount = this.hiddenFeatures.size;
     this.hiddenFeatures.clear();
     this.hiddenFeaturesList = [];
-    
+
     // Re-render the map
     this.renderFeaturecollectionLayers();
-    
+
     this.snackbar.open(`${hiddenCount} hidden features restored.`, 'OK', { duration: 3000 });
   }
 
@@ -902,7 +927,7 @@ export class MapComponent implements OnInit, OnDestroy {
   // Get display properties for a feature (limit to first 3 non-style properties)
   public getFeatureDisplayProps(properties: any): Array<{key: string, value: any}> {
     if (!properties) return [];
-    
+
     return Object.entries(properties)
       .filter(([key]) => key !== 'style')
       .slice(0, 3)
