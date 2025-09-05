@@ -1,6 +1,39 @@
 <div class="map-container">
   <div id="map"></div>
 
+  <!-- Hidden Features Panel -->
+  <div class="hidden-features-panel" *ngIf="hiddenFeaturesList.length > 0">
+    <div class="panel-header">
+      <strong>Hidden Features ({{hiddenFeaturesList.length}})</strong>
+      <button 
+        class="show-all-btn"
+        (click)="showAllHiddenFeatures()"
+        title="Show all hidden features">
+        Show All
+      </button>
+    </div>
+    <div class="hidden-features-list">
+      <div 
+        *ngFor="let hiddenFeature of hiddenFeaturesList" 
+        class="hidden-feature-item">
+        <div class="feature-info">
+          <span class="feature-id">{{hiddenFeature.id}}</span>
+          <span class="feature-props" *ngIf="hiddenFeature.properties">
+            <span *ngFor="let prop of getFeatureDisplayProps(hiddenFeature.properties); let last = last">
+              {{prop.key}}: {{prop.value}}<span *ngIf="!last">, </span>
+            </span>
+          </span>
+        </div>
+        <button 
+          class="show-feature-btn"
+          (click)="showFeature(hiddenFeature.id)"
+          title="Show this feature">
+          Show
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Performance Control Panel -->
   <!-- <div class="performance-control-panel">
     <div class="performance-info">

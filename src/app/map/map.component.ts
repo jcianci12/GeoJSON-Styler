@@ -99,6 +99,10 @@ export class MapComponent implements OnInit, OnDestroy {
   public pendingFeatureCount = 0;
   public isRendering = false;
 
+  // Hidden features tracking
+  private hiddenFeatures = new Set<string>();
+  public hiddenFeaturesList: Array<{id: string, properties: any}> = [];
+
   // Debounce properties
   private renderDebounceTimer: any = null;
   private readonly RENDER_DEBOUNCE_DELAY = 300; // 300ms debounce delay
@@ -265,6 +269,9 @@ export class MapComponent implements OnInit, OnDestroy {
     this.mapState.setMap(map);
     this.zoom = map.getZoom();
     this.zoom$.emit(this.zoom);
+
+    // Expose map component to window for popup button callbacks
+    (window as any).mapComponent = this;
 
     // Use setTimeout to defer these updates to the next change detection cycle
     setTimeout(() => {
@@ -574,6 +581,14 @@ export class MapComponent implements OnInit, OnDestroy {
     const geometry = feature.geometry;
     const props: any = feature.properties || {};
     const style: any = props.style || {};
+    
+    // Generate unique ID for this feature
+    const featureId = this.generateFeatureId(feature);
+    
+    // Skip hidden features
+    if (this.isFeatureHidden(featureId)) {
+      return null;
+    }
 
     if (geometry.type === 'Point' && Array.isArray((geometry as any).coordinates)) {
       const coords = (geometry as geojson.Point).coordinates;
@@ -589,16 +604,39 @@ export class MapComponent implements OnInit, OnDestroy {
       console.log(`Label text: "${style.labelText}"`);
       const marker = L.marker([lat, lng], { icon });
 
+      // Add click handler for hiding feature
+      marker.on('click', (e: L.LeafletMouseEvent) => {
+        e.originalEvent.stopPropagation();
+        
+        // Create context menu popup
+        const popupContent = `
+          <div style="text-align: center;">
+            <strong>Feature Options</strong><br>
+            <button onclick="window.mapComponent.hideFeature('${featureId}', ${JSON.stringify(feature).replace(/"/g, '&quot;')})" 
+                    style="margin: 5px; padding: 5px 10px; background: #ff4444; color: white; border: none; border-radius: 3px; cursor: pointer;">
+              Hide Feature
+            </button>
+          </div>
+        `;
+        
+        marker.bindPopup(popupContent).openPopup();
+      });
+
       // Optimize popup creation - only create if there are non-style properties
       if (feature.properties) {
         const nonStyleProps = Object.entries(feature.properties)
           .filter(([k]) => k !== 'style');
 
         if (nonStyleProps.length > 0) {
-          const popupContent = nonStyleProps
+          const infoPopupContent = nonStyleProps
             .map(([key, value]) => `${key}: ${value}`)
             .join('<br>');
-          marker.bindPopup(popupContent);
+          
+          // Add info popup on right-click
+          marker.on('contextmenu', (e: L.LeafletMouseEvent) => {
+            e.originalEvent.preventDefault();
+            marker.bindPopup(infoPopupContent).openPopup();
+          });
         }
       }
 
@@ -613,6 +651,41 @@ export class MapComponent implements OnInit, OnDestroy {
           weight: style.weight != null ? style.weight : 2
         })
       });
+
+      // Add click handler for hiding polygon/line features
+      gj.on('click', (e: L.LeafletMouseEvent) => {
+        e.originalEvent.stopPropagation();
+        
+        // Create context menu popup
+        const popupContent = `
+          <div style="text-align: center;">
+            <strong>Feature Options</strong><br>
+            <button onclick="window.mapComponent.hideFeature('${featureId}', ${JSON.stringify(feature).replace(/"/g, '&quot;')})" 
+                    style="margin: 5px; padding: 5px 10px; background: #ff4444; color: white; border: none; border-radius: 3px; cursor: pointer;">
+              Hide Feature
+            </button>
+          </div>
+        `;
+        
+        gj.bindPopup(popupContent).openPopup();
+      });
+
+      // Add info popup on right-click if feature has properties
+      if (feature.properties) {
+        const nonStyleProps = Object.entries(feature.properties)
+          .filter(([k]) => k !== 'style');
+
+        if (nonStyleProps.length > 0) {
+          const infoPopupContent = nonStyleProps
+            .map(([key, value]) => `${key}: ${value}`)
+            .join('<br>');
+          
+          gj.on('contextmenu', (e: L.LeafletMouseEvent) => {
+            e.originalEvent.preventDefault();
+            gj.bindPopup(infoPopupContent).openPopup();
+          });
+        }
+      }
 
       // Add text label for polygon/line features if labelText is set
       if (style.labelText && style.labelText.trim() !== '') {
@@ -754,5 +827,88 @@ export class MapComponent implements OnInit, OnDestroy {
       maxRender: this.maxFeaturesToRender,
       isLargeDataset: totalFeatures > this.LARGE_DATASET_THRESHOLD
     };
+  }
+
+  // Generate a unique ID for a feature based on its properties and geometry
+  private generateFeatureId(feature: geojson.Feature): string {
+    const props = feature.properties || {};
+    const geom = feature.geometry;
+    
+    // Try to use a unique property if available
+    if (props['id']) return `feature_${props['id']}`;
+    if (props['name']) return `feature_${props['name']}`;
+    
+    // Fallback to coordinates-based ID for Point features
+    if (geom.type === 'Point' && Array.isArray(geom.coordinates)) {
+      return `point_${geom.coordinates[1]}_${geom.coordinates[0]}`;
+    }
+    
+    // Fallback to a hash of the feature
+    return `feature_${JSON.stringify(feature).substring(0, 50).replace(/[^a-zA-Z0-9]/g, '_')}`;
+  }
+
+  // Hide a feature by its ID
+  public hideFeature(featureId: string, feature: geojson.Feature) {
+    this.hiddenFeatures.add(featureId);
+    
+    // Add to hidden features list for UI display
+    const existingIndex = this.hiddenFeaturesList.findIndex(f => f.id === featureId);
+    if (existingIndex === -1) {
+      this.hiddenFeaturesList.push({
+        id: featureId,
+        properties: feature.properties || {}
+      });
+    }
+    
+    // Re-render the map to hide the feature
+    this.renderFeaturecollectionLayers();
+    
+    this.snackbar.open(`Feature hidden. ${this.hiddenFeaturesList.length} features hidden total.`, 'OK', { duration: 3000 });
+  }
+
+  // Show a hidden feature by its ID
+  public showFeature(featureId: string) {
+    this.hiddenFeatures.delete(featureId);
+    
+    // Remove from hidden features list
+    const index = this.hiddenFeaturesList.findIndex(f => f.id === featureId);
+    if (index !== -1) {
+      this.hiddenFeaturesList.splice(index, 1);
+    }
+    
+    // Re-render the map to show the feature
+    this.renderFeaturecollectionLayers();
+    
+    this.snackbar.open(`Feature shown. ${this.hiddenFeaturesList.length} features hidden total.`, 'OK', { duration: 3000 });
+  }
+
+  // Show all hidden features
+  public showAllHiddenFeatures() {
+    const hiddenCount = this.hiddenFeatures.size;
+    this.hiddenFeatures.clear();
+    this.hiddenFeaturesList = [];
+    
+    // Re-render the map
+    this.renderFeaturecollectionLayers();
+    
+    this.snackbar.open(`${hiddenCount} hidden features restored.`, 'OK', { duration: 3000 });
+  }
+
+  // Check if a feature is hidden
+  private isFeatureHidden(featureId: string): boolean {
+    return this.hiddenFeatures.has(featureId);
+  }
+
+  // Get display properties for a feature (limit to first 3 non-style properties)
+  public getFeatureDisplayProps(properties: any): Array<{key: string, value: any}> {
+    if (!properties) return [];
+    
+    return Object.entries(properties)
+      .filter(([key]) => key !== 'style')
+      .slice(0, 3)
+      .map(([key, value]) => ({
+        key,
+        value: typeof value === 'string' ? value.substring(0, 20) + (value.length > 20 ? '...' : '') : value
+      }));
   }
 }
