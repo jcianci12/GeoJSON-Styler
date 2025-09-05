@@ -31,38 +31,41 @@
       </div>
     </div>
 
-    <!-- Read-only table -->
-    <table class="table" *ngIf="d && !editMode">
-      <tbody>
-        <tr *ngFor="let row of d | csvtojson; let i = index; trackBy: trackByIndex" [class.header-row]="i === 0">
-          <td *ngFor="let cell of row; trackBy: trackByIndex">{{ cell }}</td>
-        </tr>
-      </tbody>
-    </table>
+    <!-- Table Container with Horizontal Scroll -->
+    <div class="table-container">
+      <!-- Read-only table -->
+      <table class="table" *ngIf="d && !editMode">
+        <tbody>
+          <tr *ngFor="let row of d | csvtojson; let i = index; trackBy: trackByIndex" [class.header-row]="i === 0">
+            <td *ngFor="let cell of row; trackBy: trackByIndex">{{ cell }}</td>
+          </tr>
+        </tbody>
+      </table>
 
-    <!-- Editable table -->
-    <table class="table editable-table" *ngIf="editMode && editableData.length > 0">
-      <tbody>
-        <tr *ngFor="let row of editableData; let rowIndex = index; trackBy: trackByIndex"
-            [class.header-row]="rowIndex === 0">
-          <td *ngFor="let cell of row; let cellIndex = index; trackBy: trackByIndex" class="editable-cell">
-            <mat-form-field appearance="outline" class="cell-input" *ngIf="rowIndex === 0">
-              <input matInput [(ngModel)]="editableData[rowIndex][cellIndex]"
-                     placeholder="Header" class="header-input">
-            </mat-form-field>
-            <mat-form-field appearance="outline" class="cell-input" *ngIf="rowIndex > 0">
-              <input matInput [(ngModel)]="editableData[rowIndex][cellIndex]"
-                     placeholder="Enter value">
-            </mat-form-field>
-          </td>
-          <td *ngIf="rowIndex > 0" class="action-cell">
-            <button mat-icon-button color="warn" (click)="removeRow(rowIndex)"
-                    matTooltip="Delete row">
-              <mat-icon>delete</mat-icon>
-            </button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+      <!-- Editable table -->
+      <table class="table editable-table" *ngIf="editMode && editableData.length > 0">
+        <tbody>
+          <tr *ngFor="let row of editableData; let rowIndex = index; trackBy: trackByIndex"
+              [class.header-row]="rowIndex === 0">
+            <td *ngFor="let cell of row; let cellIndex = index; trackBy: trackByIndex" class="editable-cell">
+              <mat-form-field appearance="outline" class="cell-input" *ngIf="rowIndex === 0">
+                <input matInput [(ngModel)]="editableData[rowIndex][cellIndex]"
+                       placeholder="Header" class="header-input">
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="cell-input" *ngIf="rowIndex > 0">
+                <input matInput [(ngModel)]="editableData[rowIndex][cellIndex]"
+                       placeholder="Enter value">
+              </mat-form-field>
+            </td>
+            <td *ngIf="rowIndex > 0" class="action-cell">
+              <button mat-icon-button color="warn" (click)="removeRow(rowIndex)"
+                      matTooltip="Delete row">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </mat-expansion-panel>
 </mat-accordion>
