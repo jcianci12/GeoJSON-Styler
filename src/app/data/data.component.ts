@@ -127,6 +127,9 @@ export class DataComponent implements OnInit {
 
     this.updateData();
 
+    // Force immediate re-render of the map by triggering the observable
+    // This ensures opacity changes are reflected immediately without waiting for debounce
+    this.fcs.FeatureCollectionLayerObservable.next(this.featureCollectionLayers);
   }
 
   addData(data: FileList) {
@@ -140,6 +143,9 @@ export class DataComponent implements OnInit {
       this.fcs.clearCsvLookupCache();
 
       this.updateData();
+
+      // Force immediate re-render of the map
+      this.fcs.FeatureCollectionLayerObservable.next(this.featureCollectionLayers);
     };
     filereader.readAsText(data[0]);
   }
@@ -152,6 +158,8 @@ export class DataComponent implements OnInit {
 
     this.updateData();
 
+    // Force immediate re-render of the map
+    this.fcs.FeatureCollectionLayerObservable.next(this.featureCollectionLayers);
   }
 
   // Handle geocolumn changes

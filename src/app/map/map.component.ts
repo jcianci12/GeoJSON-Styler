@@ -105,7 +105,7 @@ export class MapComponent implements OnInit, OnDestroy {
 
   // Debounce properties
   private renderDebounceTimer: any = null;
-  private readonly RENDER_DEBOUNCE_DELAY = 300; // 300ms debounce delay
+  private readonly RENDER_DEBOUNCE_DELAY = 100; // Reduced to 100ms for faster response to data changes
 
   constructor(
     private snackbar: MatSnackBar,
@@ -390,6 +390,18 @@ export class MapComponent implements OnInit, OnDestroy {
       this.renderFeaturecollectionLayers();
       this.renderDebounceTimer = null;
     }, this.RENDER_DEBOUNCE_DELAY);
+  }
+
+  // Force immediate rendering (bypass debounce) - useful for data changes
+  public forceImmediateRender() {
+    // Clear any existing timer
+    if (this.renderDebounceTimer) {
+      clearTimeout(this.renderDebounceTimer);
+      this.renderDebounceTimer = null;
+    }
+
+    // Render immediately
+    this.renderFeaturecollectionLayers();
   }
 
   private renderFeaturecollectionLayers() {
