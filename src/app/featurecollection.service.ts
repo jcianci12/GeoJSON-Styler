@@ -31,7 +31,17 @@ export class FeaturecollectionService {
     this.FeatureCollectionLayerObservable.subscribe((i) => {
       console.log('[INIT] FeaturecollectionService internal subscription - layers:', i.length, 'features:', i[0]?.features?.length || 0, performance.now().toFixed(1), 'ms');
       this.FeatureCollectionLayers = i;
+      this._invalidateCache();
     });
+  }
+
+  // Memoization: cache getGeoJsonForAllLayers result until features change
+  private _cachedAllLayers: FeatureCollection | null = null;
+  private _cachedLayerResults: Map<number, FeatureCollection> = new Map();
+
+  private _invalidateCache() {
+    this._cachedAllLayers = null;
+    this._cachedLayerResults.clear();
   }
 
   updateActive(event: any, index: number) {
@@ -239,11 +249,15 @@ export class FeaturecollectionService {
 
   //loop through all the feature collection layers and returns a geo json object with all the features and styling rules added.
   getGeoJsonForAllLayers(): FeatureCollection {
+    // Return cached result if available (invalidated when features change)
+    if (this._cachedAllLayers) {
+      return this._cachedAllLayers;
+    }
+
     if (!this.FeatureCollectionLayers || this.FeatureCollectionLayers.length === 0) {
-      return {
-        type: 'FeatureCollection',
-        features: []
-      };
+      const empty: FeatureCollection = { type: 'FeatureCollection', features: [] };
+      this._cachedAllLayers = empty;
+      return empty;
     }
 
     const allFeatures: Feature[] = [];
@@ -256,10 +270,9 @@ export class FeaturecollectionService {
       }
     });
 
-    return {
-      type: 'FeatureCollection',
-      features: allFeatures
-    };
+    const result: FeatureCollection = { type: 'FeatureCollection', features: allFeatures };
+    this._cachedAllLayers = result;
+    return result;
   }
 
   //returns the geojson for the feature collection layer. uses the styling rules to add styling to the geojson.

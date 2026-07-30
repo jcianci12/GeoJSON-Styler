@@ -379,47 +379,62 @@ export class MapComponent implements OnInit, OnDestroy {
       this.cdr.detectChanges();
     }, 0);
 
+    // Split features by geometry type — polygons/lines can use single canvas layer
+    const polyFeatures: any[] = [];
+    const pointFeatures: any[] = [];
+    fc.features.forEach(f => {
+      const t = f.geometry.type;
+      if (t === 'Polygon' || t === 'MultiPolygon' || t === 'LineString' || t === 'MultiLineString') {
+        polyFeatures.push(f);
+      } else if (t === 'Point') {
+        pointFeatures.push(f);
+      }
+    });
+
     const featureGroup = new FeatureGroup();
 
-    fc.features.forEach(feature => {
-      const geometry = feature.geometry;
+    // Polygons + lines: single L.geoJSON with Canvas renderer — no DOM nodes per feature
+    if (polyFeatures.length > 0) {
+      const polyFC: any = { type: 'FeatureCollection', features: polyFeatures };
+      const canvasLayer = L.geoJSON(polyFC, {
+        renderer: L.canvas(),
+        style: (feature: any) => {
+          const s = feature?.properties?.style || {};
+          return {
+            color: s.color || '#3388ff',
+            fillColor: s.fillColor || s.color || '#3388ff',
+            fillOpacity: s.fillOpacity != null ? s.fillOpacity : (s.opacity != null ? s.opacity : 0.2),
+            opacity: s.opacity != null ? s.opacity : 1,
+            weight: s.weight != null ? s.weight : 2
+          };
+        }
+      } as any);
+      featureGroup.addLayer(canvasLayer);
+    }
+
+    // Points: individual markers (usually far fewer than polygons)
+    pointFeatures.forEach(feature => {
       const props: any = feature.properties || {};
       const style: any = props.style || {};
+      const coords = (feature.geometry as any).coordinates;
+      const lat = coords[1];
+      const lng = coords[0];
 
-      if (geometry.type === 'Point' && Array.isArray((geometry as any).coordinates)) {
-        const coords = (geometry as geojson.Point).coordinates;
-        const lat = coords[1];
-        const lng = coords[0];
+      const icon = this.geticon(
+        style.color || style.fillColor || '#3388ff',
+        style.opacity != null ? style.opacity : 1,
+        style.labelText != null ? String(style.labelText) : ''
+      );
+      const marker = L.marker([lat, lng], { icon });
 
-        const icon = this.geticon(
-          style.color || style.fillColor || '#3388ff',
-          style.opacity != null ? style.opacity : 1,
-          style.labelText != null ? String(style.labelText) : ''
-        );
-        const marker = L.marker([lat, lng], { icon });
-
-        // Optional popup from properties
-        if (feature.properties) {
-          const popupContent = Object.entries(feature.properties)
-            .filter(([k]) => k !== 'style')
-            .map(([key, value]) => `${key}: ${value}`)
-            .join('<br>');
-          if (popupContent) marker.bindPopup(popupContent);
-        }
-
-        featureGroup.addLayer(marker);
-      } else if (geometry.type === 'Polygon' || geometry.type === 'MultiPolygon' || geometry.type === 'LineString' || geometry.type === 'MultiLineString') {
-        const gj = L.geoJSON(feature as any, {
-          style: () => ({
-            color: style.color || '#3388ff',
-            fillColor: style.fillColor || style.color || '#3388ff',
-            fillOpacity: style.fillOpacity != null ? style.fillOpacity : (style.opacity != null ? style.opacity : 0.2),
-            opacity: style.opacity != null ? style.opacity : 1,
-            weight: style.weight != null ? style.weight : 2
-          })
-        });
-        featureGroup.addLayer(gj);
+      if (feature.properties) {
+        const popupContent = Object.entries(feature.properties)
+          .filter(([k]) => k !== 'style')
+          .map(([key, value]) => `${key}: ${value}`)
+          .join('<br>');
+        if (popupContent) marker.bindPopup(popupContent);
       }
+      featureGroup.addLayer(marker);
     });
 
     // Replace previous group if present

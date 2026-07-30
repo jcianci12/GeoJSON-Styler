@@ -26,6 +26,10 @@ export class AppComponent implements OnInit {
   _triggerval: number = 0;
   @ViewChild('loadSaveBtn', { static: false }) loadSaveBtn!: LoadsavebuttonComponent;
   private menuHasOpened = false;
+
+  // Guard JSON pipe evaluation — only expensive when panel is open
+  panelExpanded: boolean[] = [];
+  combinedPanelExpanded = false;
   get triggerval() {
     return this._triggerval;
   }
