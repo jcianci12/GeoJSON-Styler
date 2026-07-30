@@ -11,6 +11,7 @@ import { CSVtoJSONPipe } from './csvtojsonpipe';
 import { TableheadersPipe } from './tableheaders.pipe';
 import { Select } from './tableheaders.pipe';
 import { LoadsavebuttonComponent } from './data/loadsavebutton/loadsavebutton.component';
+import { xlsxFileToCsvString } from './services/xlsx-to-csv';
 
 @Component({
   selector: 'app-root',
@@ -84,10 +85,10 @@ export class AppComponent implements OnInit {
 
   addlistener() {
     this.reader.onloadend = () => {
-      let fc = JSON.parse(
+      const fc = JSON.parse(
         this.reader.result as string
       ) as geojson.FeatureCollection;
-      this.fcs.addLayerFromGeoJSON(fc.features);
+      this.fcs.addLayerFromGeoJSONChunked(fc.features);
     };
   }
 
@@ -97,14 +98,24 @@ export class AppComponent implements OnInit {
 
   onFileAdded(files: FileList) {
     const file = files[0];
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const csvData = reader.result as string;
-      this.csvData = csvData;
-      const csvRows = new CSVtoJSONPipe().csvJSON(csvData);
-      this.headers = new TableheadersPipe().transform([csvRows[0]]);
-    };
-    reader.readAsText(file);
+    const ext = file.name.split('.').pop()?.toLowerCase();
+
+    if (ext === 'xlsx' || ext === 'xls') {
+      xlsxFileToCsvString(file).then(csvData => {
+        this.csvData = csvData;
+        const csvRows = new CSVtoJSONPipe().csvJSON(csvData);
+        this.headers = new TableheadersPipe().transform([csvRows[0]]);
+      }).catch(err => console.error('XLSX parse error:', err));
+    } else {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const csvData = reader.result as string;
+        this.csvData = csvData;
+        const csvRows = new CSVtoJSONPipe().csvJSON(csvData);
+        this.headers = new TableheadersPipe().transform([csvRows[0]]);
+      };
+      reader.readAsText(file);
+    }
   }
 
   onTestPointsAdded(features: geojson.Feature<geojson.Point, geojson.GeoJsonProperties>[]) {

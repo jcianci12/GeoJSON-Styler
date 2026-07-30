@@ -1,1 +1,16 @@
-<input type="file" (change)="onFileSelected($event)" />
+<input type="file" (change)="onFileSelected($event)" [disabled]="isLoading" />
+
+<mat-progress-bar
+  *ngIf="isLoading"
+  mode="determinate"
+  [value]="progressPercent"
+  style="margin-top: 8px;">
+</mat-progress-bar>
+<div *ngIf="isLoading" style="font-size: 12px; color: #666; margin-top: 4px;">
+  <ng-container [ngSwitch]="progress.phase">
+    <span *ngSwitchCase="'reading'">Reading file: {{ progress.loaded | number }} / {{ progress.total | number }} bytes</span>
+    <span *ngSwitchCase="'parsing'">Parsing JSON...</span>
+    <span *ngSwitchCase="'processing'">Loading features: {{ progress.loaded | number }} / {{ progress.total | number }}</span>
+    <span *ngSwitchCase="'done'">Done.</span>
+  </ng-container>
+</div>

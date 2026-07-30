@@ -7,6 +7,7 @@ import { FeaturecollectionService } from 'src/app/featurecollection.service';
 import { JsontocsvPipe } from 'src/app/jsontocsv.pipe';
 import { terms } from '../../featurefilter/featurefilter.component';
 import { openDB } from 'idb';
+import { parseJSONInWorker } from 'src/app/services/json-parse-worker';
 
 @Component({
   selector: 'app-loadsavebutton',
@@ -76,21 +77,25 @@ export class LoadsavebuttonComponent implements OnInit {
 
   onFileSelected(event: any): void {
     const file = event.target.files[0];
+    if (!file) return;
+
+    this.matsnack.open('Loading map state...', 'Okay', { duration: 1000 });
+
     const fileReader = new FileReader();
-    fileReader.onload = () => {
+    fileReader.onload = async () => {
       try {
-        const jsonData = JSON.parse(fileReader.result as string);
+        const jsonData = await parseJSONInWorker(fileReader.result as string);
         this.fcs.FeatureCollectionLayerObservable.next(jsonData);
-
         this.matsnack.open('Successfully loaded map state', 'Okay', { duration: 2000 });
-
-        // do something with the parsed JSON data
+        event.target.value = '';
       } catch (e) {
         console.error('Error parsing JSON:', e);
         this.matsnack.open('File doesnt appear to be valid JSON', 'Okay', { duration: 2000 });
-
-        // handle the error, e.g. show an error message to the user
+        event.target.value = '';
       }
+    };
+    fileReader.onerror = () => {
+      this.matsnack.open('Error reading file', 'Okay', { duration: 2000 });
     };
     fileReader.readAsText(file, 'UTF-8');
   }
@@ -116,6 +121,7 @@ export class LoadsavebuttonComponent implements OnInit {
 
   async loadCookieState() {
     console.log('[INIT] loadsavebutton loadCookieState START', performance.now().toFixed(1), 'ms');
+    this.matsnack.open('Loading saved state...', '', { duration: 3000 });
     // Open an IndexedDB database
     let db = await openDB('myDatabase', 1, {
       upgrade(db) {
@@ -128,9 +134,17 @@ export class LoadsavebuttonComponent implements OnInit {
     let data = await db.get('myData', 'key');
     if (data) {
       console.log('[INIT] loadsavebutton loadCookieState - found IndexedDB data, size:', data.length, performance.now().toFixed(1), 'ms');
-      console.log('[INIT] loadsavebutton loadCookieState - parsing JSON...');
-      this.fcs.FeatureCollectionLayerObservable.next(JSON.parse(data));
-      console.log('[INIT] loadsavebutton loadCookieState - parsed + emitted', performance.now().toFixed(1), 'ms');
+      console.log('[INIT] loadsavebutton loadCookieState - parsing JSON in worker...');
+      try {
+        const parsed = await parseJSONInWorker(data);
+        console.log('[INIT] loadsavebutton loadCookieState - worker parsed, size:', data.length, performance.now().toFixed(1), 'ms');
+        this.fcs.FeatureCollectionLayerObservable.next(parsed);
+        console.log('[INIT] loadsavebutton loadCookieState - emitted', performance.now().toFixed(1), 'ms');
+        this.matsnack.open('Map state loaded', 'Okay', { duration: 2000 });
+      } catch (e) {
+        console.error('[INIT] loadsavebutton loadCookieState - parse error:', e);
+        this.matsnack.open('Failed to load saved state', 'Okay', { duration: 2000 });
+      }
     } else {
       console.log('[INIT] loadsavebutton loadCookieState - no IndexedDB data, fetching demomapstate.json', performance.now().toFixed(1), 'ms');
       this.http.get('assets/demomapstate.json').subscribe(data => {

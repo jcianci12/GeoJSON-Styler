@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, NgZone } from '@angular/core';
 import { Feature, FeatureCollection } from 'geojson';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { FeatureCollectionLayer } from './featureCollection';
@@ -7,13 +7,26 @@ import { LatLngColumnMapping } from './data/latlng-column/latlng-column-mapping'
 import { CSVtoJSONPipe } from './csvtojsonpipe';
 import { StyleruleStateService } from './data/stylerule/stylerule-state.service';
 
+export interface ChunkProgress {
+  loaded: number;
+  total: number;
+  phase: 'reading' | 'parsing' | 'processing' | 'done';
+}
+
+/** Duty cycle config: process for WORK_MS, then idle for YIELD_MS */
+const WORK_MS = 16;   // one frame
+const YIELD_MS = 16;  // one frame = 50% duty cycle
+
 @Injectable({
   providedIn: 'root',
 })
 export class FeaturecollectionService {
   FeatureCollectionLayerObservable: BehaviorSubject<FeatureCollectionLayer[]> = new BehaviorSubject<FeatureCollectionLayer[]>([]);
   FeatureCollectionLayers: FeatureCollectionLayer[] | undefined;
-  constructor(private styleruleStateService: StyleruleStateService) {
+  constructor(
+    private styleruleStateService: StyleruleStateService,
+    private ngZone: NgZone
+  ) {
     console.log('[INIT] FeaturecollectionService constructor', performance.now().toFixed(1), 'ms');
     this.FeatureCollectionLayerObservable.subscribe((i) => {
       console.log('[INIT] FeaturecollectionService internal subscription - layers:', i.length, 'features:', i[0]?.features?.length || 0, performance.now().toFixed(1), 'ms');
@@ -84,6 +97,130 @@ export class FeaturecollectionService {
       this.FeatureCollectionLayers.push(l);
       this.FeatureCollectionLayerObservable.next(this.FeatureCollectionLayers);
     }
+  }
+
+  /**
+   * Add GeoJSON features in chunks with 50% duty cycle (16ms work / 16ms idle).
+   * Runs bulk processing outside Angular zone so change detection stays idle.
+   * Only ticks the zone for progress updates and final Observable emission.
+   * @returns index of the new layer
+   */
+  async addLayerFromGeoJSONChunked(
+    features: Feature[],
+    onProgress?: (progress: ChunkProgress) => void,
+    chunkSize: number = 500
+  ): Promise<number> {
+    const total = features.length;
+
+    // Create empty layer placeholder (inside zone so UI sees it)
+    const l = new FeatureCollectionLayer(
+      [],
+      { terms: [], triggerval: 0 },
+      [],
+      { GEOColumn: "qld_loca_2", GEOJSON: "suburb" },
+      []
+    );
+    l.layerType = 'geojson';
+
+    if (!this.FeatureCollectionLayers) {
+      this.FeatureCollectionLayers = [];
+    }
+    const layerIndex = this.FeatureCollectionLayers.length;
+    this.FeatureCollectionLayers.push(l);
+    this.FeatureCollectionLayerObservable.next(this.FeatureCollectionLayers);
+
+    // Run the heavy work outside Angular zone
+    return this.ngZone.runOutsideAngular(async () => {
+      let offset = 0;
+
+      while (offset < total) {
+        const deadline = performance.now() + WORK_MS;
+
+        // Process as many chunks as fit in one frame budget
+        while (offset < total && performance.now() < deadline) {
+          const end = Math.min(offset + chunkSize, total);
+          const chunk = features.slice(offset, end);
+          l.features.push(...chunk);
+          offset = end;
+        }
+
+        // Tick zone just for progress bar update
+        if (onProgress) {
+          this.ngZone.run(() =>
+            onProgress({ loaded: Math.min(offset, total), total, phase: 'processing' })
+          );
+        }
+
+        // Yield for a full frame (50% duty cycle)
+        if (offset < total) {
+          await new Promise<void>(resolve => setTimeout(resolve, YIELD_MS));
+        }
+      }
+
+      // Back inside zone for final emission
+      this.ngZone.run(() => {
+        onProgress?.({ loaded: total, total, phase: 'done' });
+        this.FeatureCollectionLayerObservable.next(this.FeatureCollectionLayers!);
+      });
+
+      return layerIndex;
+    });
+  }
+
+  /**
+   * Replace features on an existing layer, chunked with 50% duty cycle.
+   * Preserves layer's stylerules, styledata, geocolumn etc.
+   * Runs bulk processing outside Angular zone.
+   */
+  async replaceLayerFeaturesChunked(
+    layerIndex: number,
+    features: Feature[],
+    onProgress?: (progress: ChunkProgress) => void,
+    chunkSize: number = 500
+  ): Promise<void> {
+    const total = features.length;
+    const layer = this.FeatureCollectionLayers?.[layerIndex];
+    if (!layer) {
+      console.warn(`replaceLayerFeaturesChunked: layer ${layerIndex} not found`);
+      return;
+    }
+
+    // Run bulk work outside Angular zone
+    return this.ngZone.runOutsideAngular(async () => {
+      // Clear existing features
+      layer.features = [];
+      let offset = 0;
+
+      while (offset < total) {
+        const deadline = performance.now() + WORK_MS;
+
+        // Fill the frame budget
+        while (offset < total && performance.now() < deadline) {
+          const end = Math.min(offset + chunkSize, total);
+          const chunk = features.slice(offset, end);
+          layer.features.push(...chunk);
+          offset = end;
+        }
+
+        // Tick zone just for progress bar
+        if (onProgress) {
+          this.ngZone.run(() =>
+            onProgress({ loaded: Math.min(offset, total), total, phase: 'processing' })
+          );
+        }
+
+        // Yield a full frame
+        if (offset < total) {
+          await new Promise<void>(resolve => setTimeout(resolve, YIELD_MS));
+        }
+      }
+
+      // Back inside zone for final emission
+      this.ngZone.run(() => {
+        onProgress?.({ loaded: total, total, phase: 'done' });
+        this.FeatureCollectionLayerObservable.next(this.FeatureCollectionLayers!);
+      });
+    });
   }
 
   onLatLngColumnsSelected(index: number, mapping: LatLngColumnMapping) {

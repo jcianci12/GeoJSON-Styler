@@ -3,7 +3,8 @@ import { Component, Input, OnInit } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Observable } from 'rxjs';
 import { FeatureCollectionLayer } from 'src/app/featureCollection';
-import { FeaturecollectionService } from 'src/app/featurecollection.service';
+import { FeaturecollectionService, ChunkProgress } from 'src/app/featurecollection.service';
+import { parseJSONInWorker } from 'src/app/services/json-parse-worker';
 
 @Component({
   selector: 'app-geojsonselector',
@@ -13,6 +14,12 @@ import { FeaturecollectionService } from 'src/app/featurecollection.service';
 })
 export class GeojsonselectorComponent implements OnInit {
   featurecollectionLayer: FeatureCollectionLayer[] | undefined;
+
+  // Progress tracking
+  isLoading = false;
+  progress: ChunkProgress = { loaded: 0, total: 0, phase: 'reading' };
+  progressPercent = 0;
+
   constructor(private http: HttpClient
     , private fcs: FeaturecollectionService, private matsnack: MatSnackBar) { }
   @Input() layerindex!: number;
@@ -27,22 +34,66 @@ export class GeojsonselectorComponent implements OnInit {
 
   }
 
-  onFileSelected(event: any): void {
-    const file = event.target.files[0];
-    const fileReader = new FileReader();
-    fileReader.onload = () => {
-      try {
-        const jsonData = JSON.parse(fileReader.result as string);
-        this.featurecollectionLayer![this.layerindex].features = jsonData.features
-        if (this.featurecollectionLayer) {
-          this.fcs.FeatureCollectionLayerObservable.next(this.featurecollectionLayer);
+  async onFileSelected(event: any): Promise<void> {
+    const file: File = event.target.files[0];
+    if (!file) return;
 
-        }
-      } catch (e) {
-        console.error('Error parsing JSON:', e);
-        this.matsnack.open("File doesnt appear to be valid JSON", "Okay", { duration: 2000 });
+    this.isLoading = true;
+    this.progress = { loaded: 0, total: file.size, phase: 'reading' };
+    this.progressPercent = 0;
+
+    const fileReader = new FileReader();
+
+    // Phase 1: track file read progress (bytes)
+    fileReader.onprogress = (e) => {
+      if (e.lengthComputable) {
+        this.progress = { loaded: e.loaded, total: e.total, phase: 'reading' };
+        this.progressPercent = Math.round((e.loaded / e.total) * 100);
       }
     };
+
+    fileReader.onload = async () => {
+      try {
+        // Phase 2: parsing (offloaded to Web Worker)
+        this.progress = { loaded: 0, total: 0, phase: 'parsing' };
+        const jsonData = await parseJSONInWorker(fileReader.result as string);
+        const features = jsonData.features;
+
+        if (!features || !Array.isArray(features)) {
+          this.matsnack.open('File does not contain a valid "features" array', 'Okay', { duration: 2000 });
+          this.isLoading = false;
+          event.target.value = '';
+          return;
+        }
+
+        // Phase 3: chunked processing — replace features on existing layer
+        await this.fcs.replaceLayerFeaturesChunked(
+          this.layerindex,
+          features,
+          (p) => {
+            this.progress = p;
+            this.progressPercent = p.total > 0 ? Math.round((p.loaded / p.total) * 100) : 0;
+          },
+          500
+        );
+
+        this.isLoading = false;
+        // Clear input so same file can be re-selected
+        event.target.value = '';
+      } catch (e) {
+        console.error('Error parsing JSON:', e);
+        this.matsnack.open("File doesn't appear to be valid JSON", 'Okay', { duration: 2000 });
+        this.isLoading = false;
+        event.target.value = '';
+      }
+    };
+
+    fileReader.onerror = () => {
+      this.matsnack.open('Error reading file', 'Okay', { duration: 2000 });
+      this.isLoading = false;
+      event.target.value = '';
+    };
+
     fileReader.readAsText(file, 'UTF-8');
   }
 
