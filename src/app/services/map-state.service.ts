@@ -23,6 +23,10 @@ export interface Point {
   providedIn: 'root'
 })
 export class MapStateService {
+  constructor() {
+    console.log('[INIT] MapStateService constructor', performance.now().toFixed(1), 'ms');
+  }
+
   private mapSubject = new BehaviorSubject<L.Map | null>(null);
   private featureGroupSubject = new BehaviorSubject<L.FeatureGroup | null>(null);
   private layersSubject = new BehaviorSubject<LayerInfo[]>([]);

@@ -31,13 +31,19 @@ export class LoadsavebuttonComponent implements OnInit {
   };
 
   ngOnInit() {
+    console.log('[INIT] loadsavebutton ngOnInit START', performance.now().toFixed(1), 'ms');
     this.fcs.FeatureCollectionLayerObservable.pipe().subscribe(i => {
-      this.featureCollection = i
-      this.saveCookieState()
-    }
-    )
-    this.loadCookieState()
+      this.featureCollection = i;
+      this.saveCookieState();
+    });
+    // Defer loadCookieState to avoid blocking app boot with 38MB demo data
+    // Called via loadSavedState() when user opens the menu
+    console.log('[INIT] loadsavebutton ngOnInit DONE (loadCookieState deferred)', performance.now().toFixed(1), 'ms');
+  }
 
+  loadSavedState() {
+    console.log('[INIT] loadsavebutton loadSavedState (user triggered)', performance.now().toFixed(1), 'ms');
+    this.loadCookieState();
   }
   fakeValidateUserData() {
     return of(this.featureCollection);
@@ -90,7 +96,9 @@ export class LoadsavebuttonComponent implements OnInit {
   }
   async saveCookieState() {
     if (this.featureCollection[0]?.features.length) {
+      console.log('[INIT] loadsavebutton saveCookieState START - features:', this.featureCollection[0].features.length, performance.now().toFixed(1), 'ms');
       let data = JSON.stringify(this.featureCollection);
+      console.log('[INIT] loadsavebutton JSON.stringify done, size:', data.length, performance.now().toFixed(1), 'ms');
       // Open an IndexedDB database
       let db = await openDB('myDatabase', 1, {
         upgrade(db) {
@@ -98,13 +106,16 @@ export class LoadsavebuttonComponent implements OnInit {
           db.createObjectStore('myData');
         }
       });
+      console.log('[INIT] loadsavebutton IndexedDB opened', performance.now().toFixed(1), 'ms');
       // Save the data in the IndexedDB database
       await db.put('myData', data, 'key');
+      console.log('[INIT] loadsavebutton IndexedDB saved', performance.now().toFixed(1), 'ms');
     }
   }
 
 
   async loadCookieState() {
+    console.log('[INIT] loadsavebutton loadCookieState START', performance.now().toFixed(1), 'ms');
     // Open an IndexedDB database
     let db = await openDB('myDatabase', 1, {
       upgrade(db) {
@@ -112,15 +123,23 @@ export class LoadsavebuttonComponent implements OnInit {
         db.createObjectStore('myData');
       }
     });
+    console.log('[INIT] loadsavebutton loadCookieState - IndexedDB opened', performance.now().toFixed(1), 'ms');
     // Get the data from the IndexedDB database
     let data = await db.get('myData', 'key');
     if (data) {
+      console.log('[INIT] loadsavebutton loadCookieState - found IndexedDB data, size:', data.length, performance.now().toFixed(1), 'ms');
+      console.log('[INIT] loadsavebutton loadCookieState - parsing JSON...');
       this.fcs.FeatureCollectionLayerObservable.next(JSON.parse(data));
+      console.log('[INIT] loadsavebutton loadCookieState - parsed + emitted', performance.now().toFixed(1), 'ms');
     } else {
+      console.log('[INIT] loadsavebutton loadCookieState - no IndexedDB data, fetching demomapstate.json', performance.now().toFixed(1), 'ms');
       this.http.get('assets/demomapstate.json').subscribe(data => {
+        console.log('[INIT] loadsavebutton HTTP demomapstate.json loaded, size:', JSON.stringify(data).length, performance.now().toFixed(1), 'ms');
         this.fcs.FeatureCollectionLayerObservable.next(data as FeatureCollectionLayer[]);
+        console.log('[INIT] loadsavebutton HTTP demomapstate.json emitted to observable', performance.now().toFixed(1), 'ms');
       });
     }
+    console.log('[INIT] loadsavebutton loadCookieState DONE', performance.now().toFixed(1), 'ms');
   }
 
 }

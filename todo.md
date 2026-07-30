@@ -1,3 +1,12 @@
+## Features
+
+### Demo Mode
+- Add "Demo" button/link in nav bar
+- Loads `assets/demomapstate.json` (38MB, 3324 features) on demand
+- Shows loading indicator while processing
+- Renders demo map with styled QLD LGA boundaries
+- Should NOT auto-load on boot (freeze issue fixed, see commit )
+
 #context:
 This is an angular app.
 README.md has more context

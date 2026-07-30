@@ -14,7 +14,11 @@ export class FeaturecollectionService {
   FeatureCollectionLayerObservable: BehaviorSubject<FeatureCollectionLayer[]> = new BehaviorSubject<FeatureCollectionLayer[]>([]);
   FeatureCollectionLayers: FeatureCollectionLayer[] | undefined;
   constructor(private styleruleStateService: StyleruleStateService) {
-    this.FeatureCollectionLayerObservable.subscribe((i) => (this.FeatureCollectionLayers = i));
+    console.log('[INIT] FeaturecollectionService constructor', performance.now().toFixed(1), 'ms');
+    this.FeatureCollectionLayerObservable.subscribe((i) => {
+      console.log('[INIT] FeaturecollectionService internal subscription - layers:', i.length, 'features:', i[0]?.features?.length || 0, performance.now().toFixed(1), 'ms');
+      this.FeatureCollectionLayers = i;
+    });
   }
 
   updateActive(event: any, index: number) {
@@ -63,6 +67,8 @@ export class FeaturecollectionService {
   }
 
   addLayerFromGeoJSON(features: Feature[]) {
+    console.log('[INIT] FeaturecollectionService.addLayerFromGeoJSON - features:', features.length, performance.now().toFixed(1), 'ms');
+    console.trace('[INIT] addLayerFromGeoJSON call stack');
     let l = new FeatureCollectionLayer(
       features,
       {

@@ -9,5 +9,5 @@
     </div>
   </div>
 </div>
-<app-mapdata [map]="map"></app-mapdata>
+<app-mapdata *ngIf="map" [map]="map"></app-mapdata>
 <!-- {{tempmap|json}} -->

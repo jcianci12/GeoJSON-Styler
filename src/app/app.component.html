@@ -6,8 +6,8 @@
     </span>
     <span class="example-spacer"></span>
     <button mat-button [matMenuTriggerFor]="menu">Load/Save Map State</button>
-    <mat-menu #menu="matMenu">
-      <app-loadsavebutton></app-loadsavebutton>
+    <mat-menu #menu="matMenu" (menuOpened)="onMenuOpened()">
+      <app-loadsavebutton #loadSaveBtn></app-loadsavebutton>
 
     </mat-menu>
     <button mat-button color="primary" (click)="addLayer()">Add layer</button>

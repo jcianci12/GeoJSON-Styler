@@ -74,11 +74,15 @@ export class MapComponent implements OnInit, OnDestroy {
     private mapState: MapStateService,
     private featurecollectionService: FeaturecollectionService,
     private cdr: ChangeDetectorRef
-  ) {}
+  ) {
+    console.log('[INIT] MapComponent constructor', performance.now().toFixed(1), 'ms');
+  }
 
   ngOnInit() {
+    console.log('[INIT] ngOnInit START', performance.now().toFixed(1), 'ms');
     this.subscriptions.push(
       this.mapState.layers$.subscribe(layers => {
+        console.log('[INIT] layers$ subscription fired, layers:', layers.length, performance.now().toFixed(1), 'ms');
         this.updateLayers(layers);
       })
     );
@@ -92,6 +96,7 @@ export class MapComponent implements OnInit, OnDestroy {
     // Subscribe to feature collection layers to render styled data from FeaturecollectionService
     this.subscriptions.push(
       this.featurecollectionService.FeatureCollectionLayerObservable.subscribe(layers => {
+        console.log('[INIT] FeatureCollectionLayerObservable fired, layers:', layers.length, performance.now().toFixed(1), 'ms');
         // Use setTimeout to defer the render to the next change detection cycle
         setTimeout(() => {
           this.renderFeaturecollectionLayers();
@@ -99,7 +104,9 @@ export class MapComponent implements OnInit, OnDestroy {
       })
     );
 
+    console.log('[INIT] calling initializeMap', performance.now().toFixed(1), 'ms');
     this.initializeMap();
+    console.log('[INIT] ngOnInit DONE', performance.now().toFixed(1), 'ms');
   }
 
   private updateLayers(layers: LayerInfo[]) {
@@ -205,14 +212,25 @@ export class MapComponent implements OnInit, OnDestroy {
   }
 
   ngAfterViewInit() {
+    console.log('[INIT] ngAfterViewInit', performance.now().toFixed(1), 'ms');
     this.initMap();
   }
 
   initMap() {
+    console.log('[INIT] initMap START', performance.now().toFixed(1), 'ms');
     this.map = L.map('map', this.options);
+    console.log('[INIT] L.map created', performance.now().toFixed(1), 'ms');
     this.map.on('zoomend', (e: L.LeafletEvent) => this.onMapZoomEnd(e));
     this.map.on('moveend', () => this.onMapMoveEnd());
+    let tileCount = 0;
+    this.map.on('tileloadstart', () => { tileCount++; });
+    this.map.on('tileload', () => { 
+      console.log('[INIT] tile loaded, count:', tileCount, performance.now().toFixed(1), 'ms');
+    });
+    this.map.on('tileerror', () => { console.log('[INIT] TILE ERROR', performance.now().toFixed(1), 'ms'); });
+    this.map.on('load', () => { console.log('[INIT] map load event fired', performance.now().toFixed(1), 'ms'); });
     this.onMapReady(this.map);
+    console.log('[INIT] initMap DONE', performance.now().toFixed(1), 'ms');
   }
 
   ngOnDestroy() {
@@ -222,22 +240,30 @@ export class MapComponent implements OnInit, OnDestroy {
   }
 
   onMapReady(map: Map) {
+    console.log('[INIT] onMapReady START', performance.now().toFixed(1), 'ms');
     this.map = map;
+    this.cdr.detectChanges();
+    console.log('[INIT] cdr.detectChanges done', performance.now().toFixed(1), 'ms');
     this.map$.emit(map);
     this.mapState.setMap(map);
     this.zoom = map.getZoom();
     this.zoom$.emit(this.zoom);
+    console.log('[INIT] map emitted, zoom:', this.zoom, performance.now().toFixed(1), 'ms');
     
     // Use setTimeout to defer these updates to the next change detection cycle
     setTimeout(() => {
+      console.log('[INIT] setTimeout(0) firing', performance.now().toFixed(1), 'ms');
       this.updateFeatureCollection();
-      // Initial render from FeaturecollectionService (if any layers exist already)
       this.renderFeaturecollectionLayers();
+      console.log('[INIT] setTimeout(0) DONE', performance.now().toFixed(1), 'ms');
     }, 0);
     
     setTimeout(() => {
+      console.log('[INIT] setTimeout(1000) loadBounds', performance.now().toFixed(1), 'ms');
       this.loadBounds();
     }, 1000);
+
+    console.log('[INIT] onMapReady DONE', performance.now().toFixed(1), 'ms');
   }
 
   onMapZoomEnd(e: L.LeafletEvent) {
@@ -251,8 +277,10 @@ export class MapComponent implements OnInit, OnDestroy {
   }
 
   loadBounds() {
+    console.log('[INIT] loadBounds START', performance.now().toFixed(1), 'ms');
     let savedBounds = localStorage.getItem('bounds') as string;
     if (savedBounds !== null) {
+      console.log('[INIT] loadBounds - found saved bounds', performance.now().toFixed(1), 'ms');
       let parsed = JSON.parse(savedBounds) as any;
       let bounds = L.latLngBounds(parsed._northEast, parsed._southWest);
       this.map?.flyToBounds(bounds);
@@ -270,9 +298,11 @@ export class MapComponent implements OnInit, OnDestroy {
         }
       }
     }
+    console.log('[INIT] loadBounds DONE', performance.now().toFixed(1), 'ms');
   }
 
   updateFeatureCollection(featureCollection?: FeatureCollectionLayer[] | null) {
+    console.log('[INIT] updateFeatureCollection called, has data:', !!featureCollection, performance.now().toFixed(1), 'ms');
     if (!featureCollection) return;
     
     // Use setTimeout to defer the update to the next change detection cycle
@@ -334,9 +364,14 @@ export class MapComponent implements OnInit, OnDestroy {
 
   // Render layers using the FeaturecollectionService computed styles
   private renderFeaturecollectionLayers() {
-    if (!this.map) return;
+    console.log('[INIT] renderFeaturecollectionLayers START', performance.now().toFixed(1), 'ms');
+    if (!this.map) {
+      console.log('[INIT] renderFeaturecollectionLayers - no map, returning');
+      return;
+    }
 
     const fc = this.featurecollectionService.getGeoJsonForAllLayers();
+    console.log('[INIT] renderFeaturecollectionLayers - features:', fc.features.length, performance.now().toFixed(1), 'ms');
     
     // Use setTimeout to defer the update to the next change detection cycle
     setTimeout(() => {
@@ -398,6 +433,7 @@ export class MapComponent implements OnInit, OnDestroy {
     this.fitBounds();
 
     this.snackbar.open(`Rendered ${fc.features.length} features`, 'OK', { duration: 3000 });
+    console.log('[INIT] renderFeaturecollectionLayers DONE', performance.now().toFixed(1), 'ms');
   }
 
   handlePolygon(stylerules: stylerule[], feature: geojson.Feature<geojson.Geometry, geojson.GeoJsonProperties>, stylerow: string[], i: number, _fc: FeatureCollectionLayer): L.GeoJSON<any> {

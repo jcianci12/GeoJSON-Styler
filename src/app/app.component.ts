@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import * as geojson from 'geojson';
 import { Map } from 'leaflet';
 import { FeatureCollectionLayer, LayerType } from './featureCollection';
@@ -10,6 +10,7 @@ import { LatLngColumnMapping } from './data/latlng-column/latlng-column-mapping'
 import { CSVtoJSONPipe } from './csvtojsonpipe';
 import { TableheadersPipe } from './tableheaders.pipe';
 import { Select } from './tableheaders.pipe';
+import { LoadsavebuttonComponent } from './data/loadsavebutton/loadsavebutton.component';
 
 @Component({
   selector: 'app-root',
@@ -22,6 +23,8 @@ export class AppComponent implements OnInit {
   style: stylerule[] = [];
   reader = new FileReader();
   _triggerval: number = 0;
+  @ViewChild('loadSaveBtn', { static: false }) loadSaveBtn!: LoadsavebuttonComponent;
+  private menuHasOpened = false;
   get triggerval() {
     return this._triggerval;
   }
@@ -39,10 +42,12 @@ export class AppComponent implements OnInit {
   headers: Select[] = [];
 
   constructor(private http: HttpClient, private fcs: FeaturecollectionService) {
+    console.log('[INIT] AppComponent constructor', performance.now().toFixed(1), 'ms');
     this.addlistener();
   }
 
   ngOnInit(): void {
+    console.log('[INIT] AppComponent ngOnInit', performance.now().toFixed(1), 'ms');
     // No need to subscribe here as we'll access through the service
   }
 
@@ -115,5 +120,13 @@ export class AppComponent implements OnInit {
 
   receiveZoom(zoom: number) {
     this.zoom = zoom;
+  }
+
+  onMenuOpened() {
+    if (!this.menuHasOpened && this.loadSaveBtn) {
+      this.menuHasOpened = true;
+      console.log('[INIT] AppComponent onMenuOpened - triggering loadSavedState', performance.now().toFixed(1), 'ms');
+      this.loadSaveBtn.loadSavedState();
+    }
   }
 }
