@@ -1,21 +1,32 @@
-## Features
+# GeoJSON-Styler TODO
 
-### Demo Mode
-- Add "Demo" button/link in nav bar
-- Loads `assets/demomapstate.json` (38MB, 3324 features) on demand
-- Shows loading indicator while processing
-- Renders demo map with styled QLD LGA boundaries
-- Should NOT auto-load on boot (freeze issue fixed, see commit )
+## Next: Stroke Style Rules
 
-#context:
-This is an angular app.
-README.md has more context
-1. Currently, a user needs to upload geojson and a csv file to 'join' a geojson object, with a css style to show the object on a map. The user would select what column to 'join' on. For example a suburb column. The app will look at the csv data and check if any GeoJSON objects match on the join column. If there is, the app will try and render that object on the map.
+Align with Leaflet's style model so stroke can be controlled independently from fill.
 
-#TODO
-1. Lets make it so that a user can just upload a csv to the map. We will need a component to allow the user to select the lat and lng cols (auto select if the headers are either 'lat' 'latitude' etc). once the columns are selected, render the points on the map. Make sure that the existing method of rendering geoJSON data on the map still works. It might be that we need to make things more modular to keep things working the same. Try to reuse components and use the DRY principle.
-2. building on point 1, add a way to toggle the csv between point data and joining data - aka data we need to join to a geojson daataset. Lets allow the csv to have stying data, and then we can select what column does what. eg. colour, styles the colour of the point. etc.
-3. Lets mod the app so we can toggle between geojson layer with a join and pure points data (just a csv)
-3.1 we now need to work out why we cant see any thing includeing file upload, lat and lng when we are in csv mode [DONE]
-3.2 in the styling component, the file selector isnt showing. we need that to show along with the lat lng selectors. deep dive, find context so the changes are holistic.
-3.3 The map is showing features right! We just need to get the x and y coords table to show the data.
+### Leaflet style properties
+| Property | Controls | Default |
+|---|---|---|
+| `color` | Stroke colour | `#3388ff` |
+| `weight` | Stroke width (px) | `3` |
+| `opacity` | Stroke opacity | `1.0` |
+| `fillColor` | Fill colour | same as `color` |
+| `fillOpacity` | Fill opacity | `0.2` |
+
+### Current limitation
+`colour` rule sets both `color` and `fillColor` to the same value. Stroke and fill are coupled. Can't have blue fill + black stroke, or thin stroke + opaque fill.
+
+### Plan: Add 3 new rule types (backward compatible)
+| New rule | Sets | Default |
+|---|---|---|
+| `strokecolour` | `style.color` only (not fill) | inherited from colour rule |
+| `strokeweight` | `style.weight` | `2` |
+| `strokeopacity` | `style.opacity` (stroke only) | `1` |
+
+Existing `colour` rule keeps setting both (backward compat). New rules override specific Leaflet properties. Can be static or dynamic (CSV column).
+
+### Implementation
+1. Add `strokecolour`, `strokeweight`, `strokeopacity` to `ruletype` in `data.component.ts`
+2. Add rendering cases in `featurecollection.service.ts` `getGeoJsonForLayer()`
+3. Apply in `map.component.ts` style function
+4. Add to style rule dropdown options

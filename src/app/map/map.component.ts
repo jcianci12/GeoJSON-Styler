@@ -214,6 +214,36 @@ export class MapComponent implements OnInit, OnDestroy {
     }
   }
 
+  private addFitBoundsButton() {
+    if (!this.map) return;
+    const FitBoundsControl = L.Control.extend({
+      options: { position: 'topleft' },
+      onAdd: () => {
+        const btn = L.DomUtil.create('button', 'leaflet-bar leaflet-control');
+        btn.innerHTML = '⊡';
+        btn.title = 'Fit to features';
+        btn.style.fontSize = '18px';
+        btn.style.cursor = 'pointer';
+        btn.style.width = '34px';
+        btn.style.height = '34px';
+        L.DomEvent.disableClickPropagation(btn);
+        L.DomEvent.on(btn, 'click', () => {
+          // Fit to all features in the feature group
+          if (this.featureGroup) {
+            try {
+              const bounds = this.featureGroup.getBounds();
+              if (bounds.isValid()) {
+                this.map!.fitBounds(bounds);
+              }
+            } catch {}
+          }
+        });
+        return btn;
+      }
+    });
+    new FitBoundsControl().addTo(this.map);
+  }
+
   ngAfterViewInit() {
     console.log('[INIT] ngAfterViewInit', performance.now().toFixed(1), 'ms');
     this.initMap();
@@ -222,6 +252,7 @@ export class MapComponent implements OnInit, OnDestroy {
   private featureGroup: L.FeatureGroup | null = null;
   private _renderDebounce: any = null;
   private _hasInitialRender = false;
+  private _fitBtnAdded = false;
 
   initMap() {
     console.log('[INIT] initMap START', performance.now().toFixed(1), 'ms');
@@ -408,10 +439,16 @@ export class MapComponent implements OnInit, OnDestroy {
   // Add text labels at polygon centroids for features with labelText style
   private addTextLabels(features: any[], group: L.FeatureGroup): number {
     let count = 0;
+    const seenLabels = new Set<string>(); // deduplicate: only one label per unique text
     features.forEach((feature: any) => {
       const style = feature?.properties?.style;
       const labelText = style?.labelText;
       if (!labelText) return;
+
+      // Skip duplicate labels
+      const key = labelText.toString().trim();
+      if (seenLabels.has(key)) return;
+      seenLabels.add(key);
 
       const center = this.getFeatureCenter(feature);
       if (!center) return;
@@ -431,7 +468,7 @@ export class MapComponent implements OnInit, OnDestroy {
         iconSize: [0, 0],
         iconAnchor: [0, 0]
       });
-      const marker = L.marker(pos, { icon, interactive: false });
+      const marker = L.marker(pos, { icon, interactive: true, draggable: true });
       group.addLayer(marker);
       count++;
     });
@@ -572,6 +609,12 @@ export class MapComponent implements OnInit, OnDestroy {
     if (!this._hasInitialRender) {
       this.fitBounds();
       this._hasInitialRender = true;
+    }
+
+    // Add fit-to-features button if not already added
+    if (!this._fitBtnAdded) {
+      this.addFitBoundsButton();
+      this._fitBtnAdded = true;
     }
     this.snackbar.open(`Rendered ${fc.features.length} features`, 'OK', { duration: 3000 });
     console.log('[RENDER] DONE — total:', (t7 - t0).toFixed(1), 'ms', '| geoJson:', (t1-t0).toFixed(1), 'ms', '| split:', (t2-t1).toFixed(1), 'ms', '| canvas:', canvasCreateMs.toFixed(1), 'ms', '| addLayer:', (t6-t5).toFixed(1), 'ms', '| vertices:~' + totalVertices);
