@@ -6,6 +6,10 @@
       <mat-label>{{ item }}</mat-label>
       <input title="String Input" matInput [type]="gettype(item)" [value]="getProperty(item)" (change)="setProperty($event, item)" />
     </mat-form-field>
+    <mat-form-field class="example-full-width" *ngIf="gettype(item) == 'number'">
+      <mat-label>{{ item }}</mat-label>
+      <input title="Number Input" matInput type="number" step="0.0001" [value]="getProperty(item)" (change)="setProperty($event, item)" />
+    </mat-form-field>
     <ng-container *ngIf="gettype(item) == 'boolean'">
       <!-- used for dynamic styling -->
       <mat-checkbox class="example-margin" [checked]="getProperty(item)"  (change)="setProperty($event, item)">

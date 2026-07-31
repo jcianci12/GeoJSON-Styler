@@ -1,0 +1,86 @@
+<div class="trimmer-container">
+  <mat-toolbar>
+    <span><h2>GeoJSON Trimmer</h2></span>
+    <span class="spacer"></span>
+    <a mat-button routerLink="/">← Back to Styler</a>
+  </mat-toolbar>
+
+  <!-- Upload section -->
+  <div class="upload-section" *ngIf="!features.length">
+    <p>Load a GeoJSON file to filter and trim features before styling.</p>
+    <input type="file" (change)="onFileSelected($event)" accept=".json,.geojson" />
+    <mat-progress-bar *ngIf="isLoading" mode="determinate" [value]="progressPercent"></mat-progress-bar>
+    <div *ngIf="isLoading" class="progress-text">{{ progressText }}</div>
+  </div>
+
+  <!-- Filter + results -->
+  <div *ngIf="features.length" class="results-section">
+    <div class="stats-bar">
+      <span>Total features: <strong>{{ features.length | number }}</strong></span>
+      <span>Selected: <strong>{{ selectedCount | number }}</strong></span>
+      <span>Properties: <strong>{{ propertyKeys.length }}</strong></span>
+    </div>
+
+    <!-- Filter controls -->
+    <div class="filter-row">
+      <mat-form-field appearance="outline" class="filter-field">
+        <mat-label>Filter by {{ activeProperty }}</mat-label>
+        <input matInput [(ngModel)]="filterText" (ngModelChange)="applyFilter()" placeholder="e.g. Brisbane" />
+        <mat-icon matSuffix (click)="clearFilter()" *ngIf="filterText">close</mat-icon>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="property-select">
+        <mat-label>Property</mat-label>
+        <mat-select [(ngModel)]="activeProperty" (ngModelChange)="onPropertyChange()">
+          <mat-option *ngFor="let key of propertyKeys" [value]="key">{{ key }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <button mat-stroked-button (click)="selectAllFiltered()">
+        Select all {{ filteredCount | number }}
+      </button>
+      <button mat-stroked-button (click)="deselectAllFiltered()">
+        Deselect all
+      </button>
+      <button mat-stroked-button (click)="invertSelection()">
+        Invert
+      </button>
+    </div>
+
+    <!-- Feature table -->
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th class="col-check"><input type="checkbox" [checked]="allSelected" (change)="toggleAll($event)" /></th>
+            <th class="col-id">#</th>
+            <th class="col-name" *ngFor="let key of visibleProperties">{{ key }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of filteredFeatures; let i = index" [class.selected]="item.selected">
+            <td class="col-check">
+              <input type="checkbox" [checked]="item.selected" (change)="toggleFeature(item)" />
+            </td>
+            <td class="col-id">{{ item.index + 1 }}</td>
+            <td class="col-name" *ngFor="let key of visibleProperties">
+              {{ item.feature.properties?.[key] || '—' }}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Action bar -->
+    <div class="action-bar">
+      <button mat-raised-button color="primary" (click)="downloadFiltered()" [disabled]="selectedCount === 0">
+        <mat-icon>download</mat-icon>
+        Download {{ selectedCount | number }} features
+      </button>
+      <button mat-raised-button color="accent" (click)="openInStyler()" [disabled]="selectedCount === 0">
+        <mat-icon>open_in_new</mat-icon>
+        Open in Styler
+      </button>
+    </div>
+  </div>
+</div>

@@ -42,6 +42,7 @@ export class FeaturecollectionService {
   private _invalidateCache() {
     this._cachedAllLayers = null;
     this._cachedLayerResults.clear();
+    console.log('[CACHE] Invalidated', performance.now().toFixed(1), 'ms');
   }
 
   updateActive(event: any, index: number) {
@@ -186,7 +187,8 @@ export class FeaturecollectionService {
     layerIndex: number,
     features: Feature[],
     onProgress?: (progress: ChunkProgress) => void,
-    chunkSize: number = 500
+    chunkSize: number = 500,
+    setActive: boolean | null = null
   ): Promise<void> {
     const total = features.length;
     const layer = this.FeatureCollectionLayers?.[layerIndex];
@@ -227,6 +229,9 @@ export class FeaturecollectionService {
 
       // Back inside zone for final emission
       this.ngZone.run(() => {
+        if (setActive !== null) {
+          layer.active = setActive;
+        }
         onProgress?.({ loaded: total, total, phase: 'done' });
         this.FeatureCollectionLayerObservable.next(this.FeatureCollectionLayers!);
       });
@@ -277,24 +282,17 @@ export class FeaturecollectionService {
 
   //returns the geojson for the feature collection layer. uses the styling rules to add styling to the geojson.
   getGeoJsonForLayer(layerIndex: number): FeatureCollection {
+    const t0 = performance.now();
     if (!this.FeatureCollectionLayers || this.FeatureCollectionLayers.length === 0) {
-      return {
-        type: 'FeatureCollection',
-        features: []
-      };
+      return { type: 'FeatureCollection', features: [] };
     }
 
     const layer = this.FeatureCollectionLayers[layerIndex];
     if (!layer) {
-      return {
-        type: 'FeatureCollection',
-        features: []
-      };
+      return { type: 'FeatureCollection', features: [] };
     }
 
-    // Compute concrete visual properties from current layer stylerules
     const rules = layer.stylerules || [];
-    // Prepare style CSV lookup structures
     const styleDataRaw = layer.styledata as any;
     const styleTable: string[][] = Array.isArray(styleDataRaw)
       ? styleDataRaw
@@ -308,6 +306,8 @@ export class FeaturecollectionService {
     const geojsonJoinProperty = layer.geocolumn?.GEOJSON;
     const csvJoinIndex = headers.length ? headers.indexOf(csvJoinColumn) : -1;
 
+    const tSetup = performance.now();
+
     const styledFeatures = layer.features.map((feature) => {
       feature.properties = feature.properties || {};
       const style: any = (feature.properties as any).style || {};
@@ -316,17 +316,21 @@ export class FeaturecollectionService {
       let matchedRow: string[] | undefined = undefined;
       const featureKey = geojsonJoinProperty ? (feature.properties as any)[geojsonJoinProperty] : undefined;
       if (csvJoinIndex >= 0 && featureKey !== undefined && rows.length) {
-        matchedRow = rows.find(r => r[csvJoinIndex] != null && r[csvJoinIndex].toString() === featureKey.toString());
+        const featureKeyStr = featureKey.toString();
+        matchedRow = rows.find(r => r[csvJoinIndex] != null && 
+          r[csvJoinIndex].toString().toLowerCase() === featureKeyStr.toLowerCase());
       }
 
       rules.forEach((r) => {
         const name = r.ruletype?.rulename;
         const isDynamic = (r.ruletype as any)?.dynamic === true;
 
-        // Determine the value source: CSV dynamic or static from rule config
+        // Determine the value source: CSV if matchedRow has the column, else static
         const columnName = r.column;
         const columnIndex = headers.length ? headers.indexOf(columnName) : -1;
-        const csvValue = (isDynamic && matchedRow && columnIndex >= 0) ? matchedRow[columnIndex] : undefined;
+        // Use CSV value whenever a matching row exists and the column is in the CSV headers
+        // (no longer requires isDynamic flag — column presence in CSV is sufficient)
+        const csvValue = (matchedRow && columnIndex >= 0) ? matchedRow[columnIndex] : undefined;
 
         if (name === 'opacity') {
           const staticOpacity = (r.ruletype as any).opacityvalue;
@@ -351,12 +355,36 @@ export class FeaturecollectionService {
       });
 
       (feature.properties as any).style = style;
+      // Tag feature with whether it matched a styling row
+      (feature.properties as any)._matchedStyleRow = !!matchedRow;
       return feature;
     });
 
+    // Filter: when styling data is loaded and rules reference CSV columns,
+    // only render features that matched a styling data row.
+    // Fallback: if filter produces 0 features, show all (graceful degradation).
+    const hasStyleData = rows.length > 0;
+    // A rule is effectively dynamic if its column exists in the CSV headers
+    const hasCsvColumnRules = rules.some(r => r.column && headers.includes(r.column));
+    
+    let resultFeatures = styledFeatures;
+    if (hasStyleData && hasCsvColumnRules) {
+      const matched = styledFeatures.filter(f => (f.properties as any)?._matchedStyleRow);
+      if (matched.length > 0) {
+        resultFeatures = matched;
+      }
+      // If 0 matched, keep all — CSV values may not align with feature properties
+    }
+    // Clean up internal flag from all features (prevents polluting saved map state)
+    layer.features.forEach(f => delete (f.properties as any)?._matchedStyleRow);
+    resultFeatures.forEach(f => delete (f.properties as any)?._matchedStyleRow);
+
+    const tEnd = performance.now();
+    console.log('[GEOJSON] getGeoJsonForLayer layer', layerIndex, '— features:', layer.features.length, '→', resultFeatures.length, '| setup:', (tSetup - t0).toFixed(1), 'ms', '| style+filter:', (tEnd - tSetup).toFixed(1), 'ms', '| total:', (tEnd - t0).toFixed(1), 'ms');
+
     return {
       type: 'FeatureCollection',
-      features: styledFeatures
+      features: resultFeatures
     };
   }
 }

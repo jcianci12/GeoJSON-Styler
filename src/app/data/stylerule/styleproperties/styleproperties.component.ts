@@ -24,17 +24,17 @@ export class StylepropertiesComponent implements OnInit {
 
   //we need a way to assign a variable to a dynamic type
   setProperty(event: any, property: string) {
-    //does the prop exist on the object?
     if (this.ruletype.hasOwnProperty(property)) {
       if (typeof event.source?.checked == 'boolean') {
         (this.ruletype as any)[property] = event.source.checked;
-      }
-      //check if its a number and handle accordingly
-      if (typeof event.target?.value == 'string') {
-        (this.ruletype as any)[property] = event.target.value;
-      }
-      if (typeof event.target?.value == 'number') {
-        (this.ruletype as any)[property] = parseFloat(event.target.value);
+      } else if (event.target?.value !== undefined) {
+        // Check the PROPERTY type, not event value (which is always string from HTML inputs)
+        const propType = typeof (this.ruletype as any)[property];
+        if (propType === 'number') {
+          (this.ruletype as any)[property] = parseFloat(event.target.value);
+        } else {
+          (this.ruletype as any)[property] = event.target.value;
+        }
       }
 
       console.log(this.ruletype);

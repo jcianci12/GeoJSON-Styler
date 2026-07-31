@@ -31,15 +31,15 @@ export class LoadsavebuttonComponent implements OnInit {
     },
   };
 
+  private saveDebounceTimer: any = null;
+
   ngOnInit() {
     console.log('[INIT] loadsavebutton ngOnInit START', performance.now().toFixed(1), 'ms');
     this.fcs.FeatureCollectionLayerObservable.pipe().subscribe(i => {
       this.featureCollection = i;
-      this.saveCookieState();
+      // Auto-save disabled — use "Save map state" button manually
     });
-    // Defer loadCookieState to avoid blocking app boot with 38MB demo data
-    // Called via loadSavedState() when user opens the menu
-    console.log('[INIT] loadsavebutton ngOnInit DONE (loadCookieState deferred)', performance.now().toFixed(1), 'ms');
+    console.log('[INIT] loadsavebutton ngOnInit DONE', performance.now().toFixed(1), 'ms');
   }
 
   loadSavedState() {
@@ -116,6 +116,16 @@ export class LoadsavebuttonComponent implements OnInit {
       await db.put('myData', data, 'key');
       console.log('[INIT] loadsavebutton IndexedDB saved', performance.now().toFixed(1), 'ms');
     }
+  }
+
+  private debouncedSaveCookieState() {
+    // Debounce: only save after 3s of inactivity on the Observable
+    if (this.saveDebounceTimer) {
+      clearTimeout(this.saveDebounceTimer);
+    }
+    this.saveDebounceTimer = setTimeout(() => {
+      this.saveCookieState();
+    }, 3000);
   }
 
 

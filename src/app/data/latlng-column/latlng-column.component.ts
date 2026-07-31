@@ -51,7 +51,7 @@ export class LatLngColumnComponent implements OnInit {
   onFileAdded(files: FileList) {
     const file = files[0];
     
-    this.fileHandler.processCSVFile(file)
+    this.fileHandler.processFile(file)
       .then(result => {
         this.csvData = result.csvData;
         this.headers = result.headers;
@@ -71,7 +71,7 @@ export class LatLngColumnComponent implements OnInit {
         this.autoDetectColumns();
       })
       .catch(error => {
-        this.snackBar.open('Error processing CSV file: ' + error.message, 'OK', { duration: 3000 });
+        this.snackBar.open('Error processing file: ' + error.message, 'OK', { duration: 3000 });
       });
   }
 

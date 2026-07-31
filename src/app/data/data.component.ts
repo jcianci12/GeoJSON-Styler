@@ -11,6 +11,7 @@ import { LatLngColumnMapping } from './latlng-column/latlng-column-mapping';
 import * as geojson from 'geojson';
 import * as L from 'leaflet';
 import { MapStateService } from '../services/map-state.service';
+import { xlsxFileToCsvString } from '../services/xlsx-to-csv';
 
 @Component({
   selector: 'app-data',
@@ -33,6 +34,9 @@ export class DataComponent implements OnInit {
   featureCollectionLayers!: FeatureCollectionLayer[];
   @Input() csvData: string = '';
   @Input() headers: string[] = [];
+
+  // Paste tab
+  pasteData: string = '';
 
   // Add property to store joined rows count
   joinedRowsCount: number = 0;
@@ -120,18 +124,68 @@ export class DataComponent implements OnInit {
   }
 
   addData(data: FileList) {
-    let filereader = new FileReader();
-    filereader.onload = (e) => {
-      this.d = filereader.result;
-      this.d = this.d.replace(/"/g, "");
-      this.featureCollectionLayers[this.featurecollectionlayerindex].styledata = this.d;
-      this.updateData();
-    };
-    filereader.readAsText(data[0]);
+    const file = data[0];
+    const ext = file.name.split('.').pop()?.toLowerCase();
+
+    if (ext === 'xlsx' || ext === 'xls') {
+      xlsxFileToCsvString(file).then(csvString => {
+        this.d = csvString.replace(/"/g, '');
+        this.featureCollectionLayers[this.featurecollectionlayerindex].styledata = this.d;
+        this.updateData();
+      }).catch(err => {
+        console.error('XLSX parse error:', err);
+      });
+    } else {
+      let filereader = new FileReader();
+      filereader.onload = (e) => {
+        this.d = filereader.result as string;
+        this.d = this.d.replace(/"/g, '');
+        this.featureCollectionLayers[this.featurecollectionlayerindex].styledata = this.d;
+        this.updateData();
+      };
+      filereader.readAsText(file);
+    }
   }
 
   addJSONData(data: string) {
     this.d = data;
+    this.updateData();
+  }
+
+  onPasteDataChange() {
+    if (!this.pasteData || !this.pasteData.trim()) return;
+    this.d = this.pasteData.replace(/"/g, '');
+    this.featureCollectionLayers[this.featurecollectionlayerindex].styledata = this.d;
+    this.updateData();
+  }
+
+  applyPasteData() {
+    if (!this.pasteData || !this.pasteData.trim()) return;
+
+    // Normalize the pasted data to comma-separated CSV
+    const lines = this.pasteData.split(/[\r\n]+/).filter(l => l.trim());
+    if (lines.length === 0) return;
+
+    // Auto-detect delimiter: tab, comma, or multiple spaces
+    const firstLine = lines[0];
+    let delimiter = ',';
+    if (firstLine.includes('\t')) {
+      delimiter = '\t';
+    } else if (!firstLine.includes(',') && firstLine.includes('  ')) {
+      // Multi-space separated
+      delimiter = '  ';
+    }
+
+    // Convert to comma-separated
+    const csvLines = lines.map(line => {
+      const cells = line.split(delimiter).map(c => c.trim()).filter(c => c.length > 0);
+      return cells.join(',');
+    });
+
+    const csv = csvLines.join('\n');
+    this.d = csv;
+    // styledata accepts string[][] (parsed CSV) or string (raw CSV)
+    this.featureCollectionLayers[this.featurecollectionlayerindex].styledata = csv as any;
     this.updateData();
   }
 

@@ -3,7 +3,7 @@
     <h3>Upload CSV Data</h3>
     <div class="upload-container">
       <app-fileupload 
-        [fileextension]="'csv'"
+        [fileextension]="'csv,xlsx'"
         (fileadded)="onFileAdded($event)">
       </app-fileupload>
       <div class="row-count" *ngIf="rowCount > 0">

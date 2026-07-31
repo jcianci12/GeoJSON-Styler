@@ -30,6 +30,7 @@ export class AppComponent implements OnInit {
   // Guard JSON pipe evaluation — only expensive when panel is open
   panelExpanded: boolean[] = [];
   combinedPanelExpanded = false;
+  showTrimmer = false;
   get triggerval() {
     return this._triggerval;
   }

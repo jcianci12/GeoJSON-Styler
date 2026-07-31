@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, OnDestroy, ChangeDetectorRef, NgZone } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import * as geojson from 'geojson';
 import * as L from 'leaflet';
@@ -73,7 +73,8 @@ export class MapComponent implements OnInit, OnDestroy {
     private snackbar: MatSnackBar,
     private mapState: MapStateService,
     private featurecollectionService: FeaturecollectionService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private ngZone: NgZone
   ) {
     console.log('[INIT] MapComponent constructor', performance.now().toFixed(1), 'ms');
   }
@@ -97,10 +98,12 @@ export class MapComponent implements OnInit, OnDestroy {
     this.subscriptions.push(
       this.featurecollectionService.FeatureCollectionLayerObservable.subscribe(layers => {
         console.log('[INIT] FeatureCollectionLayerObservable fired, layers:', layers.length, performance.now().toFixed(1), 'ms');
-        // Use setTimeout to defer the render to the next change detection cycle
-        setTimeout(() => {
+        // Debounce: wait 200ms after last emission before rendering
+        // Prevents 4+ re-renders when layer setup fires multiple emissions
+        if (this._renderDebounce) clearTimeout(this._renderDebounce);
+        this._renderDebounce = setTimeout(() => {
           this.renderFeaturecollectionLayers();
-        }, 0);
+        }, 200);
       })
     );
 
@@ -216,12 +219,52 @@ export class MapComponent implements OnInit, OnDestroy {
     this.initMap();
   }
 
+  private featureGroup: L.FeatureGroup | null = null;
+  private _renderDebounce: any = null;
+  private _hasInitialRender = false;
+
   initMap() {
     console.log('[INIT] initMap START', performance.now().toFixed(1), 'ms');
     this.map = L.map('map', this.options);
     console.log('[INIT] L.map created', performance.now().toFixed(1), 'ms');
-    this.map.on('zoomend', (e: L.LeafletEvent) => this.onMapZoomEnd(e));
-    this.map.on('moveend', () => this.onMapMoveEnd());
+    
+    // Run ALL map events outside Angular zone — prevents change detection
+    // on every mouse move during pan/zoom (zone.js patches DOM events)
+    this.ngZone.runOutsideAngular(() => {
+      // Hide overlay during pan to prevent expensive canvas redraws
+      this.map!.on('movestart', () => {
+        console.log('[MAP] movestart — hiding overlay', performance.now().toFixed(1), 'ms');
+        if (this.featureGroup && this.map?.hasLayer(this.featureGroup)) {
+          this.map.removeLayer(this.featureGroup);
+        }
+      });
+      
+      this.map!.on('moveend', () => {
+        const c = this.map!.getCenter();
+        console.log('[MAP] moveend — center:', c.lat.toFixed(4), c.lng.toFixed(4), 'zoom:', this.map!.getZoom(), '— showing overlay', performance.now().toFixed(1), 'ms');
+        // Re-enter zone for render so Angular detects changes
+        this.ngZone.run(() => {
+          this.renderFeaturecollectionLayers();
+        });
+      });
+
+      this.map!.on('zoomstart', () => {
+        console.log('[MAP] zoomstart', performance.now().toFixed(1), 'ms');
+        if (this.featureGroup && this.map?.hasLayer(this.featureGroup)) {
+          this.map.removeLayer(this.featureGroup);
+        }
+      });
+
+      this.map!.on('zoomend', () => {
+        console.log('[MAP] zoomend — zoom:', this.map!.getZoom(), performance.now().toFixed(1), 'ms');
+        this.ngZone.run(() => {
+          this.renderFeaturecollectionLayers();
+        });
+      });
+
+      this.map!.on('zoomend', (e: L.LeafletEvent) => this.onMapZoomEnd(e));
+      this.map!.on('moveend', () => this.onMapMoveEnd());
+    });
     let tileCount = 0;
     this.map.on('tileloadstart', () => { tileCount++; });
     this.map.on('tileload', () => { 
@@ -362,24 +405,79 @@ export class MapComponent implements OnInit, OnDestroy {
     return icon;
   }
 
+  // Add text labels at polygon centroids for features with labelText style
+  private addTextLabels(features: any[], group: L.FeatureGroup): number {
+    let count = 0;
+    features.forEach((feature: any) => {
+      const style = feature?.properties?.style;
+      const labelText = style?.labelText;
+      if (!labelText) return;
+
+      const center = this.getFeatureCenter(feature);
+      if (!center) return;
+
+      // Apply offset (degrees) from style rule
+      const latOff = Number(style.labelLatOffset) || 0;
+      const lngOff = Number(style.labelLngOffset) || 0;
+      if (count === 0) {
+        console.log('[TEXT] First label offset — latOff:', latOff, 'lngOff:', lngOff, 'center:', center.lat.toFixed(4), center.lng.toFixed(4), 'labelText:', labelText);
+      }
+      const pos = L.latLng(center.lat + latOff, center.lng + lngOff);
+
+      const css = (style.labelCss || 'color:#333;font-size:11px;font-weight:bold;text-shadow:0 0 3px #fff').replace(/colour/g, 'color');
+      const icon = L.divIcon({
+        className: 'map-text-label',
+        html: '<span style="' + css + ';white-space:nowrap;pointer-events:none;">' + labelText + '</span>',
+        iconSize: [0, 0],
+        iconAnchor: [0, 0]
+      });
+      const marker = L.marker(pos, { icon, interactive: false });
+      group.addLayer(marker);
+      count++;
+    });
+    return count;
+  }
+
+  // Compute approximate center of a GeoJSON feature from its coordinates
+  private getFeatureCenter(feature: any): L.LatLng | null {
+    try {
+      const geom = feature.geometry;
+      if (!geom) return null;
+      let coords = geom.coordinates;
+      // MultiPolygon: use first polygon's outer ring
+      if (geom.type === 'MultiPolygon' && Array.isArray(coords) && coords.length > 0) {
+        coords = coords[0];
+      }
+      if (Array.isArray(coords) && coords.length > 0 && Array.isArray(coords[0])) {
+        const ring = coords[0];
+        let sumLat = 0, sumLng = 0;
+        ring.forEach((c: number[]) => { sumLng += c[0]; sumLat += c[1]; });
+        return L.latLng(sumLat / ring.length, sumLng / ring.length);
+      }
+    } catch {}
+    return null;
+  }
+
   // Render layers using the FeaturecollectionService computed styles
   private renderFeaturecollectionLayers() {
-    console.log('[INIT] renderFeaturecollectionLayers START', performance.now().toFixed(1), 'ms');
+    const t0 = performance.now();
+    console.log('[RENDER] START', t0.toFixed(1), 'ms');
+    
     if (!this.map) {
-      console.log('[INIT] renderFeaturecollectionLayers - no map, returning');
+      console.log('[RENDER] no map, returning');
       return;
     }
 
     const fc = this.featurecollectionService.getGeoJsonForAllLayers();
-    console.log('[INIT] renderFeaturecollectionLayers - features:', fc.features.length, performance.now().toFixed(1), 'ms');
+    const t1 = performance.now();
+    console.log('[RENDER] getGeoJsonForAllLayers done —', fc.features.length, 'features,', (t1 - t0).toFixed(1), 'ms');
     
-    // Use setTimeout to defer the update to the next change detection cycle
     setTimeout(() => {
       this.currentFeatureCollection = fc as any;
       this.cdr.detectChanges();
     }, 0);
 
-    // Split features by geometry type — polygons/lines can use single canvas layer
+    // Split features by geometry type
     const polyFeatures: any[] = [];
     const pointFeatures: any[] = [];
     fc.features.forEach(f => {
@@ -390,11 +488,23 @@ export class MapComponent implements OnInit, OnDestroy {
         pointFeatures.push(f);
       }
     });
+    const t2 = performance.now();
+    console.log('[RENDER] Feature split — polys:', polyFeatures.length, 'points:', pointFeatures.length, (t2 - t1).toFixed(1), 'ms');
 
     const featureGroup = new FeatureGroup();
 
-    // Polygons + lines: single L.geoJSON with Canvas renderer — no DOM nodes per feature
+    // Count total vertices for complexity analysis
+    let totalVertices = 0;
+    let canvasCreateMs = 0;
     if (polyFeatures.length > 0) {
+      polyFeatures.forEach((f: any) => {
+        const coords = f.geometry?.coordinates;
+        if (coords && Array.isArray(coords)) {
+          totalVertices += JSON.stringify(coords).match(/\[/g)?.length || 0;
+        }
+      });
+      
+      const t3 = performance.now();
       const polyFC: any = { type: 'FeatureCollection', features: polyFeatures };
       const canvasLayer = L.geoJSON(polyFC, {
         renderer: L.canvas(),
@@ -403,13 +513,21 @@ export class MapComponent implements OnInit, OnDestroy {
           return {
             color: s.color || '#3388ff',
             fillColor: s.fillColor || s.color || '#3388ff',
-            fillOpacity: s.fillOpacity != null ? s.fillOpacity : (s.opacity != null ? s.opacity : 0.2),
+            fillOpacity: s.fillOpacity != null ? s.fillOpacity : (s.opacity != null ? s.opacity : 0.5),
             opacity: s.opacity != null ? s.opacity : 1,
             weight: s.weight != null ? s.weight : 2
           };
         }
       } as any);
       featureGroup.addLayer(canvasLayer);
+      canvasCreateMs = performance.now() - t3;
+      console.log('[RENDER] Canvas layer — ~' + totalVertices + ' vertices, ' + canvasCreateMs.toFixed(1) + 'ms');
+
+      // Add text labels for polygon features with labelText style
+      const textMarkerCount = this.addTextLabels(polyFeatures, featureGroup);
+      if (textMarkerCount > 0) {
+        console.log('[RENDER] Text labels — ' + textMarkerCount + ' markers');
+      }
     }
 
     // Points: individual markers (usually far fewer than polygons)
@@ -438,17 +556,25 @@ export class MapComponent implements OnInit, OnDestroy {
     });
 
     // Replace previous group if present
+    const t5 = performance.now();
     const existingFeatureGroup = this.mapState.featureGroup;
     if (existingFeatureGroup) {
       this.map.removeLayer(existingFeatureGroup);
     }
     this.map.addLayer(featureGroup);
     this.mapState.setFeatureGroup(featureGroup);
+    this.featureGroup = featureGroup;
+    const t6 = performance.now();
+    console.log('[RENDER] Map addLayer + cleanup —', (t6 - t5).toFixed(1), 'ms');
 
-    this.fitBounds();
-
+    const t7 = performance.now();
+    // Only fit bounds on first render — subsequent renders keep current view
+    if (!this._hasInitialRender) {
+      this.fitBounds();
+      this._hasInitialRender = true;
+    }
     this.snackbar.open(`Rendered ${fc.features.length} features`, 'OK', { duration: 3000 });
-    console.log('[INIT] renderFeaturecollectionLayers DONE', performance.now().toFixed(1), 'ms');
+    console.log('[RENDER] DONE — total:', (t7 - t0).toFixed(1), 'ms', '| geoJson:', (t1-t0).toFixed(1), 'ms', '| split:', (t2-t1).toFixed(1), 'ms', '| canvas:', canvasCreateMs.toFixed(1), 'ms', '| addLayer:', (t6-t5).toFixed(1), 'ms', '| vertices:~' + totalVertices);
   }
 
   handlePolygon(stylerules: stylerule[], feature: geojson.Feature<geojson.Geometry, geojson.GeoJsonProperties>, stylerow: string[], i: number, _fc: FeatureCollectionLayer): L.GeoJSON<any> {

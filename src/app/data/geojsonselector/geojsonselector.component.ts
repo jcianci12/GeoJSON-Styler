@@ -66,7 +66,8 @@ export class GeojsonselectorComponent implements OnInit {
           return;
         }
 
-        // Phase 3: chunked processing — replace features on existing layer
+        // Phase 3: chunked processing — replace features on existing layer, set inactive
+        // so layer doesn't auto-render. User enables via "Active" checkbox when ready.
         await this.fcs.replaceLayerFeaturesChunked(
           this.layerindex,
           features,
@@ -74,12 +75,13 @@ export class GeojsonselectorComponent implements OnInit {
             this.progress = p;
             this.progressPercent = p.total > 0 ? Math.round((p.loaded / p.total) * 100) : 0;
           },
-          500
+          500,
+          false  // setActive = false — don't render yet
         );
 
         this.isLoading = false;
-        // Clear input so same file can be re-selected
         event.target.value = '';
+        this.matsnack.open(`${features.length} features loaded. Check "Active" to render.`, 'OK', { duration: 3000 });
       } catch (e) {
         console.error('Error parsing JSON:', e);
         this.matsnack.open("File doesn't appear to be valid JSON", 'Okay', { duration: 2000 });

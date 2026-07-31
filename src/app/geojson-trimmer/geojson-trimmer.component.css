@@ -1,0 +1,116 @@
+.trimmer-container {
+  padding: 16px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.spacer {
+  flex: 1 1 auto;
+}
+
+.upload-section {
+  margin: 32px 0;
+  text-align: center;
+}
+
+.upload-section p {
+  color: #666;
+  margin-bottom: 16px;
+}
+
+.progress-text {
+  font-size: 13px;
+  color: #666;
+  margin-top: 8px;
+}
+
+.stats-bar {
+  display: flex;
+  gap: 24px;
+  margin: 16px 0;
+  font-size: 14px;
+  color: #555;
+}
+
+.stats-bar strong {
+  color: #333;
+}
+
+.filter-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.filter-field {
+  flex: 1;
+  min-width: 250px;
+}
+
+.property-select {
+  width: 200px;
+}
+
+.table-container {
+  max-height: 60vh;
+  overflow-y: auto;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+thead {
+  position: sticky;
+  top: 0;
+  background: #f5f5f5;
+  z-index: 1;
+}
+
+th {
+  text-align: left;
+  padding: 8px 12px;
+  border-bottom: 2px solid #ccc;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+td {
+  padding: 6px 12px;
+  border-bottom: 1px solid #eee;
+}
+
+tr.selected {
+  background: #e8f5e9;
+}
+
+tr:hover {
+  background: #fafafa;
+}
+
+.col-check {
+  width: 40px;
+  text-align: center;
+}
+
+.col-id {
+  width: 50px;
+  color: #999;
+}
+
+.col-name {
+  min-width: 150px;
+}
+
+.action-bar {
+  margin-top: 16px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}

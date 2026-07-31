@@ -30,6 +30,7 @@ import { JsontocsvPipe } from './jsontocsv.pipe';
 import { MapdataComponent } from './mapdata/mapdata.component';
 import { XypointsPipe } from './xypoints.pipe';
 import { LatLngColumnComponent } from './data/latlng-column/latlng-column.component';
+import { GeojsonTrimmerComponent } from './geojson-trimmer/geojson-trimmer.component';
 
 @NgModule({
   declarations: [
@@ -55,7 +56,8 @@ import { LatLngColumnComponent } from './data/latlng-column/latlng-column.compon
     JsontocsvPipe,
     MapdataComponent,
     XypointsPipe,
-    LatLngColumnComponent
+    LatLngColumnComponent,
+    GeojsonTrimmerComponent
   ],
   imports: [
     BrowserModule,

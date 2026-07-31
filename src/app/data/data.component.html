@@ -27,9 +27,23 @@
           <mat-tab-group>
             <mat-tab label="CSV">
               <p>Choose the csv formatted data you would like to use.</p>
-              <app-fileupload [fileextension]="'csv'" (fileadded)="addData($event)"></app-fileupload>
+              <app-fileupload [fileextension]="'csv,xlsx'" (fileadded)="addData($event)"></app-fileupload>
               
               
+            </mat-tab>
+            <mat-tab label="Paste">
+              <p>Paste tab, comma, or space-separated data below.</p>
+              <textarea
+                [(ngModel)]="pasteData"
+                placeholder="LGA&#9;Colour&#10;Brisbane (North)&#9;Green&#10;Gold Coast Council&#9;Green"
+                rows="6"
+                style="width: 100%; font-family: monospace; font-size: 13px; padding: 8px;">
+              </textarea>
+              <button mat-stroked-button color="primary" (click)="applyPasteData()" 
+                      [disabled]="!pasteData.trim()"
+                      style="margin-top: 8px;">
+                Update Layer
+              </button>
             </mat-tab>
             <mat-tab label="JSON">
               <app-jsonendpoint [endpointurl]="endpointurl" (dataChange)="addJSONData($event)"></app-jsonendpoint>

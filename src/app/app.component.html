@@ -2,10 +2,13 @@
   <mat-toolbar>
     
     <span>
-      <h1>GeoJSON Styler</h1>
+      <h1>{{ showTrimmer ? 'GeoJSON Trimmer' : 'GeoJSON Styler' }}</h1>
     </span>
     <span class="example-spacer"></span>
-    <button mat-button [matMenuTriggerFor]="menu">Load/Save Map State</button>
+    <button mat-button (click)="showTrimmer = !showTrimmer">
+      {{ showTrimmer ? '← Styler' : 'Trimmer' }}
+    </button>
+    <button mat-button *ngIf="!showTrimmer" [matMenuTriggerFor]="menu">Load/Save Map State</button>
     <mat-menu #menu="matMenu" (menuOpened)="onMenuOpened()">
       <app-loadsavebutton #loadSaveBtn></app-loadsavebutton>
 
@@ -16,7 +19,9 @@
   </mat-toolbar>
 </p>
 
-<div>
+<app-geojson-trimmer *ngIf="showTrimmer"></app-geojson-trimmer>
+
+<div *ngIf="!showTrimmer">
   <div class="container-fluid" style="min-height: 100vh">
     <div class="row">
       <div class="col">

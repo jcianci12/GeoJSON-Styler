@@ -2,9 +2,9 @@
     <label for="file">Choose File</label>
     <input type="file"
            id="file"
+           [accept]="acceptStr"
            onclick="this.value = null"
 
            #fileinput
            (change)="handleFileInput($event)">
 </div>
-
